@@ -11,7 +11,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-var jspb = require('./google-protobuf.js');
+var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 

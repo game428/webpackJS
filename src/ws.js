@@ -1,7 +1,7 @@
 import protobuf from './imProtobuf_pb.js';
 import proFormat from './proFormat.js';
 import declare from './declare.js';
-import pako from './pako.min.js';
+import pako from 'pako';
 let localWs = {
   ws: null,
   Global: null,
