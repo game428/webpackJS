@@ -13,6 +13,7 @@ module.exports = {
         publicPath: '/dist/',
         filename: 'MSIM.js',
         library: 'msim', // 指定的就是你使用require时的模块名
+        libraryExport: 'default', // 增加这个属性
         libraryTarget: 'umd', // libraryTarget会生成不同umd的代码,可以只是commonjs标准的，也可以是指amd标准的，也可以只是通过script标签引入的
     },
     module: {
