@@ -175,7 +175,7 @@ function login(options) {
       window.localStorage.setItem('wsUrl', options.wsUrl);
       window.localStorage.setItem('imToken', options.imToken);
       localWs.connect(Global, (res) => {
-        connSuc(this, resolve, res)
+        connSuc(this, resolve, reject, res)
       }, (err) => {
         connClose(this, reject, err)
       }, (data) => {
@@ -190,7 +190,7 @@ function login(options) {
 }
 
 // webSocket连接成功回调
-function connSuc(im, resolve, res) {
+function connSuc(im, resolve, reject, res) {
   if (im[IM.EVENT.CONNECT_SUC]) {
     im[IM.EVENT.CONNECT_SUC]({
       "name": IM.EVENT.CONNECT_SUC,
@@ -724,13 +724,24 @@ function sendMessage(msgObj) {
       if (typeof msgObj !== 'object') {
         return reject(parameterErr('参数错误'))
       }
-
-      if (msgObj.type === declare.MSG_TYPE.Img) {
-        if (!msgObj.hasOwnProperty('height') || msgObj.height < 0) {
-          return reject(parameterErr('height参数错误'))
-        } else if (!msgObj.hasOwnProperty('width') || msgObj.width < 0) {
-          return reject(parameterErr('width参数错误'))
-        }
+      if (!msgObj.hasOwnProperty('type')) {
+        return reject(parameterErr('type参数错误'))
+      }
+      switch (msgObj.type) {
+        case declare.MSG_TYPE.Text:
+          if (!msgObj.text) {
+            return reject(parameterErr('text参数错误'))
+          }
+          break;
+        case declare.MSG_TYPE.Img:
+          if (!msgObj.url) {
+            return reject(parameterErr('url参数错误'))
+          } else if (!msgObj.height) {
+            return reject(parameterErr('height参数错误'))
+          } else if (!msgObj.width) {
+            return reject(parameterErr('width参数错误'))
+          }
+          break;
       }
 
       // let callSign = new Date().getTime();
@@ -943,10 +954,11 @@ function formatMsg(msg, uid) {
   newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
   switch (newMsg.type) {
     case declare.MSG_TYPE.Text:
-      newMsg.text = newMsg.body
+      newMsg.text = newMsg.body;
       break;
     case declare.MSG_TYPE.Img:
-      newMsg.url = newMsg.body
+      newMsg.url = newMsg.body;
+      newMsg.progress = '100%';
       break;
   }
   return newMsg;

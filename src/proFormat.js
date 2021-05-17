@@ -176,7 +176,7 @@ function sendMsgPro(sign, options = {}) {
     protobufJS.setBody(options.text);
   }
   if (options.type === declare.MSG_TYPE.Img) {
-    protobufJS.setThumb(options.url);
+    protobufJS.setBody(options.url);
     protobufJS.setWidth(options.width);
     protobufJS.setHeight(options.height);
   }
