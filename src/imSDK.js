@@ -2,8 +2,8 @@ import proFormat from './proFormat.js';
 import declare from './declare.js'
 import localWs from './ws.js';
 import localNotice from './localNotice.js';
-import localDb from './db.js';
 import tool from './tool.js';
+import localDexie from './dexieDB.js';
 // import COS from './cos-js-sdk-v5.min.js';
 
 /**
@@ -32,8 +32,11 @@ let Global = {};
 
 function initGlobal() {
   Global = {
+    tabId: Global.tabId,
     chatPageSize: 20,
+    maxChatPageSize: 100,
     msgPageSize: 20,
+    maxMsgPageSize: 100,
     // bucket: 'msim-1252460681',
     // region: 'ap-chengdu',
     // cos: new COS({
@@ -42,7 +45,6 @@ function initGlobal() {
     // }),
     logoutState: false,
     loginState: false,
-    tabId: null,
     curTab: false,
     wsUrl: null,
     imToken: null,
@@ -53,7 +55,6 @@ function initGlobal() {
     chatSetKeys: new Set(),
     msgList: {},
     msgSetKeys: {},
-    msgSetSigns: {},
   }
 }
 
@@ -95,15 +96,19 @@ function create() {
     deleteConversation,
     createTextMessage,
     createImageMessage,
+    createCustomMessage,
     on,
     off,
     getToken,
   }
   Global.userId = JSON.parse(window.localStorage.getItem("userId") || "null");
   var result = new Promise((resolve, reject) => {
-    localDb.openDB((res) => {
+    localDexie.initDB().then(res => {
       resolve(IMSDK)
-    }, reject);
+    }).catch(err => {
+      let errResult = tool.resultErr(err, 'init', declare.ERROR_CODE.DBERR)
+      reject(errResult)
+    });
   });
 
   window.onunload = () => {
@@ -132,7 +137,7 @@ function onunload() {
   if (imWsTab.length === 0) {
     window.localStorage.clear();
     localWs.close();
-    localDb.deleteDB();
+    localDexie.deleteDB();
   } else {
     let wsCurId = window.localStorage.getItem("wsCurId") || "";
     if (wsCurId === Global.tabId) {
@@ -150,6 +155,16 @@ function onunload() {
 function login(options) {
   return new Promise((resolve, reject) => {
     try {
+      if (Global.userId) {
+        let errResult = tool.resultErr('已登录', 'login', declare.ERROR_CODE.SIGNED)
+        return reject(errResult);
+      } else if (tool.isNotObject(options, 'imToken')) {
+        let errResult = tool.parameterErr('imToken参数错误', 'login');
+        return reject(errResult)
+      } else if (tool.isNotWs(options.wsUrl)) {
+        let errResult = tool.parameterErr('wsUrl参数错误', 'login');
+        return reject(errResult)
+      }
       if (Global.loginState) {
         return reject({
           "code": declare.ERROR_CODE.REPEAT,
@@ -158,14 +173,6 @@ function login(options) {
       } else {
         Global.loginState = true;
       }
-      if (typeof options !== 'object') {
-        return reject(parameterErr('参数错误'))
-      } else if (!options.hasOwnProperty('wsUrl')) {
-        return reject(parameterErr('wsUrl参数错误'))
-      } else if (!options.hasOwnProperty('imToken')) {
-        return reject(parameterErr('imToken参数错误'))
-      }
-      window.localStorage.setItem('wsState', declare.WS_STATE.Connecting);
       window.localStorage.setItem("wsCurId", Global.tabId);
       // TODO 临时
       IM.testId = options.testId;
@@ -175,33 +182,30 @@ function login(options) {
       window.localStorage.setItem('wsUrl', options.wsUrl);
       window.localStorage.setItem('imToken', options.imToken);
       localWs.connect(Global, (res) => {
-        connSuc(this, resolve, reject, res)
+        connSuc(this, resolve, reject)
       }, (err) => {
         connClose(this, reject, err)
       }, (data) => {
         onMessage(this, data)
       });
     } catch (err) {
-      reject(err)
-    } finally {
       Global.loginState = false;
+      reject(err)
     }
   })
 }
 
 // webSocket连接成功回调
-function connSuc(im, resolve, reject, res) {
+function connSuc(im, resolve, reject) {
   if (im[IM.EVENT.CONNECT_SUC]) {
-    im[IM.EVENT.CONNECT_SUC]({
-      "name": IM.EVENT.CONNECT_SUC,
-      "data": res,
-    });
+    let result = tool.resultNotice(IM.EVENT.CONNECT_SUC, '连接成功')
+    im[IM.EVENT.CONNECT_SUC](result);
   }
   // demo环境
   im.getToken(IM.testId).then((res) => {
     Global.imToken = res.data.msg;
     window.localStorage.setItem('imToken', Global.imToken);
-    let callSign = new Date().getTime();
+    let callSign = tool.createSign();
     createCallEvent({
       "type": "login",
       "callSign": callSign,
@@ -212,8 +216,7 @@ function connSuc(im, resolve, reject, res) {
             "data": res.data,
           })
         }
-        let result = resultSuc({
-          code: res.data.code,
+        let result = tool.resultSuc('login', {
           msg: res.data.msg,
           updateTime: res.data.nowTime,
         });
@@ -221,6 +224,7 @@ function connSuc(im, resolve, reject, res) {
       },
       "callErr": (err) => {
         window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
+        // 可能出现code 9 11
         reject(err)
       },
     });
@@ -229,7 +233,7 @@ function connSuc(im, resolve, reject, res) {
   })
 
   // 正式环境
-  // let callSign = new Date().getTime();
+  // let callSign = tool.createSign();
   // createCallEvent({
   //   "type": "getToken",
   //   "callSign": callSign,
@@ -240,8 +244,7 @@ function connSuc(im, resolve, reject, res) {
   //         "data": res,
   //       })
   //     }
-  //     let result = resultSuc({
-  //       code: res.data.code,
+  //     let result = tool.resultSuc('login', {
   //       msg: res.data.msg,
   //       updateTime: res.data.nowTime,
   //     });
@@ -258,9 +261,10 @@ function connSuc(im, resolve, reject, res) {
 
 // webSocket连接失败回调
 function connClose(im, reject, err) {
-  Global.curTab = false;
+  Global.loginState = false;
   window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
-  reject(err);
+  let errResult = tool.resultErr(err, 'login', declare.ERROR_CODE.CONNECTERR)
+  return reject(errResult);
 }
 
 /** DEMO 使用 获取Token
@@ -268,7 +272,7 @@ function connClose(im, reject, err) {
  */
 function getToken(uid) {
   return new Promise((resolve, reject) => {
-    let callSign = new Date().getTime();
+    let callSign = tool.createSign();
     createCallEvent({
       "type": "getToken",
       "callSign": callSign,
@@ -282,21 +286,35 @@ function getToken(uid) {
   })
 }
 
+// 公共判断
+function preJudge(reject) {
+  if (Global.curTab && !Global.loginState) {
+    let errResult = tool.resultErr('未连接', 'wsConnect', declare.ERROR_CODE.DISCONNECT)
+    reject ? reject(errResult) : console.error(errResult);
+    return false;
+  } else if (!Global.userId) {
+    let errResult = tool.resultErr('IMSDK未登录', 'login', declare.ERROR_CODE.NOLOGIN)
+    reject ? reject(errResult) : console.error(errResult);
+    return false;
+  }
+  return true;
+}
+
 /** 退出登录
  * TODO 是服务器还是客户端断开连接
  */
 function logout() {
   return new Promise((resolve, reject) => {
     try {
-      if (Global.logoutState) {
-        return reject({
-          "code": declare.ERROR_CODE.REPEAT,
-          "msg": "正在退出中，请勿重复操作",
-        });
+      if (!preJudge(reject)) {
+        return
+      } else if (Global.logoutState) {
+        let errResult = tool.resultErr("正在退出中，请勿重复操作", 'logout', declare.ERROR_CODE.REPEAT)
+        return reject(errResult);
       } else {
         Global.logoutState = true;
       }
-      let callSign = new Date().getTime();
+      let callSign = tool.createSign();
       createCallEvent({
         "type": "logout",
         "callSign": callSign,
@@ -307,14 +325,15 @@ function logout() {
               "data": res.data,
             })
           }
-          let result = resultSuc({
+          let result = tool.resultSuc('logout', {
             code: res.data.code,
             msg: res.data.msg
           });
           resolve(result);
         },
         "callErr": (err) => {
-          reject(err)
+          let errResult = tool.resultErr(err, 'logout')
+          reject(errResult)
         }
       });
       if (Global.curTab) {
@@ -328,7 +347,8 @@ function logout() {
         })
       }
     } catch (err) {
-      reject(err)
+      let errResult = tool.resultErr(err, 'logout')
+      reject(errResult)
     } finally {
       Global.logoutState = false;
     }
@@ -343,6 +363,11 @@ function logout() {
 function getConversationList(options) {
   return new Promise((resolve, reject) => {
     try {
+      if (!preJudge(reject)) {
+        return
+      } else if (options && options.pageSize && options.pageSize > Global.maxChatPageSize) {
+        return reject(tool.parameterErr(`最大条数不能超过${Global.maxChatPageSize}条`, 'getConversationList'))
+      }
       let defaultOption = {
         tabId: Global.tabId,
         pageSize: Global.chatPageSize,
@@ -351,9 +376,6 @@ function getConversationList(options) {
       if (typeof options === 'object') {
         Object.assign(defaultOption, options);
       }
-      if (defaultOption.tabId !== Global.tabId) {
-        return getWsChats(defaultOption, resolve, reject);
-      }
       let resultData = [];
       if (Global.chatList.length > 0) {
         resultData = tool.getPageSize(defaultOption.uid, 'uid', Global.chatList);
@@ -361,11 +383,11 @@ function getConversationList(options) {
       if (resultData.length > 0) {
         resultChats(defaultOption, resolve, resultData)
       } else {
-        localDb.getChatList((data) => {
+        localDexie.getChatList().then((data) => {
           if (data && data.length > Global.chatList.length) {
             let newChats = [];
             data.forEach(chatItem => {
-              if (!Global.chatSetKeys.has(chatItem.uid)) {
+              if (!Global.chatSetKeys.has(chatItem.uid) && !chatItem.deleted) {
                 Global.chatSetKeys.add(chatItem.uid);
                 newChats.push(chatItem);
               }
@@ -392,7 +414,7 @@ function getConversationList(options) {
 
 // 从服务器获取会话列表
 function getWsChats(defaultOption, resolve, reject) {
-  let callSign = new Date().getTime();
+  let callSign = tool.createSign();
   createCallEvent({
     "type": "getConversationList",
     "callSign": callSign,
@@ -400,7 +422,7 @@ function getWsChats(defaultOption, resolve, reject) {
       if (res.chats && res.chats.length > 0) {
         getChatsSuc(defaultOption, res, resolve)
       } else {
-        let result = resultSuc({
+        let result = tool.resultSuc('getConversationList', {
           chats: [],
           hasMore: false
         });
@@ -425,20 +447,25 @@ function getWsChats(defaultOption, resolve, reject) {
 // 获取会话列表成功回调
 function getChatsSuc(defaultOption, res, resolve) {
   let newArr = [];
+  let resultArr = [];
   let resultData = [];
   res.chats.forEach(chatItem => {
     if (!Global.chatSetKeys.has(chatItem.uid)) {
-      Global.chatSetKeys.add(chatItem.uid);
       let newChatItem = chatItem;
       newChatItem.showTime = parseInt(newChatItem.showMsgTime / 1000);
+      newChatItem.chatId = tool.splicingSingleId(chatItem.uid);
       newArr.push(newChatItem);
+      if (!chatItem.deleted) {
+        Global.chatSetKeys.add(chatItem.uid);
+        resultArr.push(newChatItem);
+      }
     }
   });
-  if (newArr.length > 0) {
-    if (Global.curTab) {
-      localDb.addChatList(newArr)
-    }
-    let allArr = [].concat(newArr, Global.chatList);
+  if (newArr.length > 0 && Global.curTab) {
+    localDexie.addChatList(newArr)
+  }
+  if (resultArr.length > 0) {
+    let allArr = [].concat(resultArr, Global.chatList);
     Global.chatList = tool.sort(allArr, 'showTime')
     resultData = tool.getPageSize(defaultOption.uid, 'uid', Global.chatList);
   }
@@ -456,7 +483,7 @@ function resultChats(defaultOption, resolve, chats, res) {
   if (res) {
     hasMore = res.hasMore;
   }
-  let result = resultSuc({
+  let result = tool.resultSuc('getConversationList', {
     chats: resultData,
     hasMore: hasMore
   });
@@ -474,17 +501,23 @@ function resultChats(defaultOption, resolve, chats, res) {
 function deleteConversation(options) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof options !== 'object') {
-        return reject(parameterErr('参数错误'))
-      } else if (!options.hasOwnProperty('uid')) {
-        return reject(parameterErr('uid参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(options, 'uid')) {
+        let errResult = tool.parameterErr('uid参数不存在', 'deleteConversation');
+        return reject(errResult)
       }
-      let callSign = new Date().getTime();
+      let callSign = tool.createSign();
       createCallEvent({
         "type": "deleteConversation",
         "callSign": callSign,
         "callSuc": (res) => {
-          let result = resultSuc({
+          if (Global.chatSetKeys.has(options.uid)) {
+            Global.chatSetKeys.delete(options.uid);
+            Global.chatList = Global.chatList.filter(chat => chat.uid != options.uid);
+          }
+
+          let result = tool.resultSuc('deleteConversation', {
             uid: options.uid,
             updateTime: res.data.updateTime,
             deleted: res.data.deleted,
@@ -498,9 +531,10 @@ function deleteConversation(options) {
         localWs.sendMessage(msg);
       } else {
         localNotice.delChatNotice({
-          callSign: callSign,
-          tabId: Global.tabId,
-          options: options,
+          "callSign": callSign,
+          "tabId": Global.tabId,
+          "options": options,
+          "state": declare.LOCAL_OPERATION_STATUS.Pending,
         })
       }
     } catch (err) {
@@ -519,13 +553,17 @@ function deleteConversation(options) {
 function getMessageList(options) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof options !== 'object') {
-        return reject(parameterErr('参数错误'))
-      } else if (!options.hasOwnProperty('uid')) {
-        return reject(parameterErr('uid参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(options, 'uid')) {
+        let errResult = tool.parameterErr('uid参数不存在', 'getMessageList');
+        return reject(errResult)
+      } else if (options.pageSize && options.pageSize > Global.maxMsgPageSize) {
+        let errResult = tool.parameterErr(`最大条数不能超过${Global.maxMsgPageSize}条`, 'getMessageList');
+        return reject(errResult)
       }
       if (options.msgEnd === 1) {
-        let result = resultSuc({
+        let result = tool.resultSuc('getMessageList', {
           uid: options.uid,
           messages: [],
           hasMore: false
@@ -538,15 +576,11 @@ function getMessageList(options) {
       }
       Object.assign(defaultOption, options)
       let resultData = [];
-      let chatId = splicingSingleId(defaultOption.uid);
+      let chatId = tool.splicingSingleId(defaultOption.uid);
       if (!Global.msgSetKeys[chatId]) {
         Global.msgSetKeys[chatId] = new Set();
-        Global.msgSetSigns[chatId] = new Set();
         Global.msgList[chatId] = [];
       };
-      if (defaultOption.tabId !== Global.tabId) {
-        return getWsMsgs(defaultOption, resolve, reject);
-      }
       let msgs = Global.msgList[chatId];
       let setKeys = Global.msgSetKeys[chatId];
       if (msgs.length > 0) {
@@ -555,7 +589,7 @@ function getMessageList(options) {
       if (resultData.length > 0) {
         resultMsgs(defaultOption, resolve, resultData)
       } else {
-        localDb.getMsgList(chatId, (data) => {
+        localDexie.getMsgList(chatId).then((data) => {
           if (data && data.length > msgs.length) {
             let newMsgs = [];
             data.forEach(msg => {
@@ -585,7 +619,7 @@ function getMessageList(options) {
 
 // 从服务器获取消息列表
 function getWsMsgs(defaultOption, resolve, reject) {
-  let callSign = new Date().getTime();
+  let callSign = tool.createSign();
   createCallEvent({
     "type": "getMessageList",
     "callSign": callSign,
@@ -593,7 +627,7 @@ function getWsMsgs(defaultOption, resolve, reject) {
       if (res.messages && res.messages.length > 0) {
         getMsgsSuc(defaultOption, res, resolve)
       } else {
-        let result = resultSuc({
+        let result = tool.resultSuc('getMessageList', {
           uid: defaultOption.uid,
           messages: [],
           hasMore: false
@@ -619,9 +653,8 @@ function getWsMsgs(defaultOption, resolve, reject) {
 // 获取消息列表成功回调
 function getMsgsSuc(defaultOption, res, resolve) {
   let newMsgs = [];
-  let chatId = splicingSingleId(defaultOption.uid);
+  let chatId = tool.splicingSingleId(defaultOption.uid);
   let setKeys = Global.msgSetKeys[chatId];
-  let setSigns = Global.msgSetSigns[chatId];
   let msgs = Global.msgList[chatId];
   let resultData = [];
   res.messages.forEach(msg => {
@@ -631,19 +664,18 @@ function getMsgsSuc(defaultOption, res, resolve) {
         let revokeMsg = msgs.find(msgItem => msgItem.msgId === msgId);
         revokeMsg.type = declare.MSG_TYPE.Revoked;
         if (Global.curTab) {
-          localDb.updateMsg(revokeMsg);
+          localDexie.updateMsg(revokeMsg);
         }
       }
-    } else if (!setKeys.has(msg.msgId) && (!msg.sign || !setSigns.has(msg.sign))) {
-      setSigns.add(msg.sign);
+    } else if (!setKeys.has(msg.msgId)) {
       setKeys.add(msg.msgId);
-      let newMsg = formatMsg(msg, defaultOption.uid)
+      let newMsg = tool.formatMsg(msg, defaultOption.uid)
       newMsgs.push(newMsg);
     }
   });
   if (newMsgs.length > 0) {
     if (Global.curTab) {
-      localDb.addMsgList(newMsgs)
+      localDexie.addMsgList(newMsgs)
     }
     let allArr = [].concat(msgs, newMsgs)
     Global.msgList[chatId] = tool.sort(allArr, 'showMsgTime')
@@ -662,7 +694,7 @@ function resultMsgs(defaultOption, resolve, msgs) {
   if (resultData.length > 0) {
     hasMore = resultData[resultData.length - 1].msgId !== 1;
   }
-  let result = resultSuc({
+  let result = tool.resultSuc('getMessageList', {
     uid: defaultOption.uid,
     messages: resultData,
     hasMore: hasMore
@@ -672,24 +704,22 @@ function resultMsgs(defaultOption, resolve, msgs) {
 
 /** 设置已读
  * @param {*} uid 会话用户id
- * @param {*} msgId 消息id
  */
 function setMessageRead(options) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof options !== 'object') {
-        return reject(parameterErr('参数错误'))
-      } else if (!options.hasOwnProperty('uid')) {
-        return reject(parameterErr('uid参数错误'))
-      } else if (!options.hasOwnProperty('msgId')) {
-        return reject(parameterErr('msgId参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(options, 'uid')) {
+        let errResult = tool.parameterErr('uid参数不存在', 'setMessageRead');
+        return reject(errResult)
       }
-      let callSign = new Date().getTime();
+      let callSign = tool.createSign();
       createCallEvent({
         "type": "setMessageRead",
         "callSign": callSign,
         "callSuc": (res) => {
-          let result = resultSuc({
+          let result = tool.resultSuc('setMessageRead', {
             uid: res.uid,
             msgId: options.msgId,
             msgTime: res.updateTime,
@@ -721,31 +751,43 @@ function setMessageRead(options) {
 function sendMessage(msgObj) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof msgObj !== 'object') {
-        return reject(parameterErr('参数错误'))
-      }
-      if (!msgObj.hasOwnProperty('type')) {
-        return reject(parameterErr('type参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(msgObj, 'type')) {
+        let errResult = tool.parameterErr('type参数不存在', 'sendMessage');
+        return reject(errResult)
       }
       switch (msgObj.type) {
         case declare.MSG_TYPE.Text:
-          if (!msgObj.text) {
-            return reject(parameterErr('text参数错误'))
+          if (tool.isNotString(msgObj.text)) {
+            let errResult = tool.parameterErr('text参数不存在', 'sendMessage');
+            return reject(errResult)
+          } else if (new Blob([msgObj.text], {type : 'application/json'}).size > 3 * 1024) {
+            let errResult = tool.parameterErr('长度超过3K', 'sendMessage');
+            return reject(errResult)
           }
           break;
         case declare.MSG_TYPE.Img:
-          if (!msgObj.url) {
-            return reject(parameterErr('url参数错误'))
-          } else if (!msgObj.height) {
-            return reject(parameterErr('height参数错误'))
-          } else if (!msgObj.width) {
-            return reject(parameterErr('width参数错误'))
+          if (tool.isNotHttp(msgObj.url)) {
+            let errResult = tool.parameterErr('url参数错误', 'sendMessage');
+            return reject(errResult)
+          } else if (tool.isNotEmpty(msgObj.height)) {
+            let errResult = tool.parameterErr('height参数不存在', 'sendMessage');
+            return reject(errResult)
+          } else if (tool.isNotEmpty(msgObj.width)) {
+            let errResult = tool.parameterErr('width参数不存在', 'sendMessage');
+            return reject(errResult)
+          }
+          break;
+        case declare.MSG_TYPE.Custom:
+          if (tool.isNotEmpty(msgObj.data)) {
+            let errResult = tool.parameterErr('data参数不存在', 'sendMessage');
+            return reject(errResult)
           }
           break;
       }
 
-      // let callSign = new Date().getTime();
-      let callSign = msgObj.showMsgTime * 1000;
+      let callSign = tool.createSign(msgObj.showMsgTime);
       createCallEvent({
         "type": "sendMessage",
         "callSign": callSign,
@@ -783,7 +825,7 @@ function sendMsgSuc(im, msgObj, res, resolve) {
       "data": newMsg,
     })
   }
-  let result = resultSuc({
+  let result = tool.resultSuc('sendMessage', {
     uid: msgObj.toUid,
     msgId: res.data.msgId,
     msgTime: res.data.msgTime,
@@ -798,10 +840,43 @@ function sendMsgSuc(im, msgObj, res, resolve) {
 function resendMessage(msgObj) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof msgObj !== 'object') {
-        return reject(parameterErr('参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(msgObj, 'type')) {
+        let errResult = tool.parameterErr('type参数不存在', 'resendMessage');
+        return reject(errResult)
       }
-      let callSign = new Date().getTime();
+      switch (msgObj.type) {
+        case declare.MSG_TYPE.Text:
+          if (tool.isNotString(msgObj.text)) {
+            let errResult = tool.parameterErr('text参数不存在', 'resendMessage');
+            return reject(errResult)
+          } else if (new Blob([msgObj.text], {type : 'application/json'}).size > 3 * 1024) {
+            let errResult = tool.parameterErr('长度超过8K', 'resendMessage');
+            return reject(errResult)
+          }
+          break;
+        case declare.MSG_TYPE.Img:
+          if (tool.isNotHttp(msgObj.url)) {
+            let errResult = tool.parameterErr('url参数错误', 'resendMessage');
+            return reject(errResult)
+          } else if (tool.isNotEmpty(msgObj.height)) {
+            let errResult = tool.parameterErr('height参数不存在', 'resendMessage');
+            return reject(errResult)
+          } else if (tool.isNotEmpty(msgObj.width)) {
+            let errResult = tool.parameterErr('width参数不存在', 'resendMessage');
+            return reject(errResult)
+          }
+          break;
+        case declare.MSG_TYPE.Custom:
+          if (tool.isNotEmpty(msgObj.data)) {
+            let errResult = tool.parameterErr('data参数不存在', 'resendMessage');
+            return reject(errResult)
+          }
+          break;
+      }
+
+      let callSign = tool.createSign(msgObj.showMsgTime);
       createCallEvent({
         "type": "resendMessage",
         "callSign": callSign,
@@ -839,7 +914,7 @@ function resendMsgSuc(im, msgObj, res, resolve) {
       "data": newMsg,
     })
   }
-  let result = resultSuc({
+  let result = tool.resultSuc('resendMessage', {
     uid: msgObj.toUid,
     msgId: res.data.msgId,
     msgTime: res.data.msgTime,
@@ -855,14 +930,19 @@ function resendMsgSuc(im, msgObj, res, resolve) {
 function revokeMessage(options) {
   return new Promise((resolve, reject) => {
     try {
-      if (typeof options !== 'object') {
-        return reject(parameterErr('参数错误'))
-      } else if (!options.hasOwnProperty('uid')) {
-        return reject(parameterErr('uid参数错误'))
-      } else if (!options.hasOwnProperty('msgId')) {
-        return reject(parameterErr('msgId参数错误'))
+      if (!preJudge(reject)) {
+        return
+      } else if (tool.isNotObject(options)) {
+        let errResult = tool.parameterErr('参数错误', 'revokeMessage');
+        return reject(errResult)
+      } else if (tool.isNotEmpty(options.uid)) {
+        let errResult = tool.parameterErr('uid参数不存在', 'revokeMessage');
+        return reject(errResult)
+      } else if (tool.isNotEmpty(options.msgId)) {
+        let errResult = tool.parameterErr('msgId参数不存在', 'revokeMessage');
+        return reject(errResult)
       }
-      let callSign = new Date().getTime() * 1000;
+      let callSign = tool.createSign();
       createCallEvent({
         "type": "revokeMessage",
         "callSign": callSign,
@@ -896,7 +976,7 @@ function revokeMsgSuc(im, options, res, resolve) {
       "data": res.data,
     })
   }
-  let result = resultSuc({
+  let result = tool.resultSuc('revokeMessage', {
     uid: options.uid,
     msgId: options.msgId,
     type: declare.MSG_TYPE.Revoked,
@@ -906,98 +986,108 @@ function revokeMsgSuc(im, options, res, resolve) {
 
 /** 创建文本消息 TODO
  */
-function createTextMessage({
-  to,
-  payload,
-}) {
-  let newMsg = msgBase(to, Global.userId);
-  Object.assign(newMsg, {
-    type: declare.MSG_TYPE.Text,
-    text: payload.text,
-  })
-  return newMsg;
+function createTextMessage(options) {
+  try {
+    if (!preJudge()) {
+      return
+    } else if (tool.isNotObject(options, 'to')) {
+      throw 'to参数不存在';
+    } else if (tool.isNotObject(options.payload) || tool.isNotString(options.payload.text)) {
+      throw 'text参数不存在';
+    }
+    let newMsg = tool.msgBase(options.to, Global.userId);
+    Object.assign(newMsg, {
+      type: declare.MSG_TYPE.Text,
+      text: options.payload.text,
+    })
+    return newMsg;
+  } catch (err) {
+    console.error(tool.parameterErr(err, 'createTextMessage'))
+  }
 }
 
 /** 创建图片消息 TODO
  */
-function createImageMessage({
-  to,
-  payload,
-}) {
-  let newMsg = msgBase(to, Global.userId);
-  Object.assign(newMsg, {
-    type: declare.MSG_TYPE.Img,
-    url: payload.url,
-    path: payload.path,
-    file: payload.file,
-    width: payload.width, //封面图的宽度
-    height: payload.height, //封面图的高度
-  })
-  return newMsg;
-}
-
-// 拼接单聊chatId
-function splicingSingleId(uid) {
-  return 'single_' + uid;
-}
-
-// 把消息转为本地格式
-function formatMsg(msg, uid) {
-  let newMsg = msg;
-  let msgTime = newMsg.msgTime;
-  if (newMsg.sign && uid == msg.fromUid) {
-    msgTime = newMsg.sign;
-  }
-  newMsg.showMsgTime = parseInt(msgTime / 1000);
-  newMsg.chatId = splicingSingleId(uid);
-  newMsg.onlyId = tool.uuid();
-  newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
-  switch (newMsg.type) {
-    case declare.MSG_TYPE.Text:
-      newMsg.text = newMsg.body;
-      break;
-    case declare.MSG_TYPE.Img:
-      newMsg.url = newMsg.body;
-      newMsg.progress = '100%';
-      break;
-  }
-  return newMsg;
-}
-
-// 创建消息基础属性
-function msgBase(toUid, fromUid) {
-  return {
-    onlyId: tool.uuid(),
-    chatId: splicingSingleId(toUid),
-    toUid: toUid,
-    fromUid: fromUid,
-    msgId: 0,
-    showMsgTime: (new Date).getTime(),
-    sendStatus: declare.SEND_STATE.BFIM_MSG_STATUS_SENDING,
+function createImageMessage(options) {
+  try {
+    if (!preJudge()) {
+      return
+    } else if (tool.isNotObject(options, 'to')) {
+      throw 'to参数不存在';
+    }
+    let newMsg = tool.msgBase(options.to, Global.userId);
+    let payload = options.payload || {};
+    Object.assign(newMsg, {
+      type: declare.MSG_TYPE.Img,
+      url: payload.url,
+      path: payload.path,
+      file: payload.file,
+      width: payload.width, //图片的宽度
+      height: payload.height, //图片的高度
+    })
+    return newMsg;
+  } catch (err) {
+    console.error(tool.parameterErr(err, 'createImageMessage'))
   }
 }
+
+/** 创建自定义消息 TODO
+ */
+function createCustomMessage(options) {
+  try {
+    if (!preJudge()) {
+      return
+    } else if (tool.isNotObject(options, 'to')) {
+      throw 'to参数不存在';
+    } else if (tool.isNotObject(options.payload) || tool.isNotString(options.payload.content)) {
+      throw 'content参数不存在';
+    }
+    let newMsg = tool.msgBase(options.to, Global.userId);
+    Object.assign(newMsg, {
+      type: declare.MSG_TYPE.Custom,
+      data: options.payload.content,
+    })
+    return newMsg;
+  } catch (err) {
+    console.error(tool.parameterErr(err, 'createCustomMessage'))
+  }
+}
+
 
 // 更新会话
-function updateChat(im, options) {
+function updateChat(im, options, fromUid) {
   let newChat;
   if (Global.chatSetKeys.has(options.uid)) {
     newChat = Global.chatList.find(chat => chat.uid === options.uid);
-    if (options.type === declare.MSG_TYPE.Revoked && options.msgEnd !== newChat.msgEnd) return;
+    // 如果是撤回消息，且消息id不是最后一条则不更新
+    if (options.showMsgType === declare.MSG_TYPE.Revoked && options.msgEnd !== newChat.msgEnd) return;
+    // 如果更新时间低于当前会话的时间则不更新
+    if (options.showMsgTime < newChat.showMsgTime) return;
+    if (tool.isSo(options.showMsgType) && fromUid !== Global.userId && Global.curTab) {
+      options.unread = (newChat.unread || 0) + 1;
+    }
     Object.assign(newChat, options);
     newChat.showTime = parseInt(newChat.showMsgTime / 1000);
     updateChatNotice(im, newChat)
   } else {
-    localDb.getChat(options.uid, (res) => {
-      if (res) {
-        newChat = res;
-        if (options.type === declare.MSG_TYPE.Revoked && options.msgEnd !== newChat.msgEnd) return;
+    localDexie.getChat(options.uid).then((res) => {
+      if (res && res.length === 1) {
+        newChat = res[0];
+        // 如果是撤回消息，且消息id不是最后一条则不更新
+        if (options.showMsgType === declare.MSG_TYPE.Revoked && options.msgEnd !== newChat.msgEnd) return;
+        // 如果更新时间低于当前会话的时间则不更新
+        if (options.showMsgTime < newChat.showMsgTime) return;
+        if (tool.isSo(options.showMsgType) && fromUid !== Global.userId && Global.curTab) {
+          options.unread = (newChat.unread || 0) + 1;
+        }
         Object.assign(newChat, options);
+        newChat.deleted = options.deleted;
         newChat.showTime = parseInt(newChat.showMsgTime / 1000);
         Global.chatSetKeys.add(options.uid);
         Global.chatList.unshift(newChat);
         updateChatNotice(im, newChat)
       } else if (Global.curTab) {
-        let callSign = new Date().getTime();
+        let callSign = tool.createSign();
         createCallEvent({
           "type": "updateChat",
           "callSign": callSign,
@@ -1005,13 +1095,14 @@ function updateChat(im, options) {
             if (res.data) {
               newChat = res.data;
               newChat.showTime = parseInt(newChat.showMsgTime / 1000);
+              newChat.chatId = tool.splicingSingleId(newChat.uid);
               Global.chatSetKeys.add(options.uid);
               Global.chatList.unshift(newChat);
               updateChatNotice(im, newChat)
             }
           },
           "callErr": (err) => {
-            console.log(err);
+            console.error(err);
           }
         });
         var msg = proFormat.compress(proFormat.chatPro(callSign, options.uid), declare.PID.GetChat);
@@ -1027,52 +1118,18 @@ function updateChat(im, options) {
 // 更新会话通知
 function updateChatNotice(im, newChat) {
   if (Global.curTab) {
-    localDb.updateChat(newChat);
+    localDexie.updateChat(newChat);
     localNotice.updateChatNotice({
       type: declare.PID.ChatItemUpdate,
       data: newChat
     });
   }
   if (im[IM.EVENT.CONVERSATION_LIST_UPDATED]) {
-    let result = resultNotice({
-      "name": IM.EVENT.CONVERSATION_LIST_UPDATED,
-      "data": JSON.parse(JSON.stringify(newChat)),
-    })
+    let result = tool.resultNotice(IM.EVENT.CONVERSATION_LIST_UPDATED, newChat)
     im[IM.EVENT.CONVERSATION_LIST_UPDATED](result);
   }
 }
 
-// 通知回调参数
-function resultNotice({
-  name,
-  data
-}) {
-  return {
-    "name": name,
-    "data": JSON.parse(JSON.stringify(data)),
-  }
-}
-
-// 参数错误
-function parameterErr(msg) {
-  return new Error(msg);
-}
-
-// 成功回调参数
-function resultSuc(data) {
-  return {
-    code: declare.ERROR_CODE.SUCCESS,
-    data: JSON.parse(JSON.stringify(data)),
-  }
-}
-
-// 失败回调参数
-function resultErr(data, code) {
-  return {
-    code: code || declare.ERROR_CODE.ERROR,
-    data: JSON.parse(JSON.stringify(data)),
-  }
-}
 
 // 注册回调事件
 function createCallEvent({
@@ -1148,14 +1205,12 @@ function handleLogin(im, options) {
   }
   Global.userId = options.data.uid;
   if (im[IM.EVENT.LOGIN]) {
-    im[IM.EVENT.LOGIN]({
-      "name": IM.EVENT.LOGIN,
-      "data": {
-        "code": options.data.code,
-        "msg": options.data.msg,
-        "updateTime": options.data.nowTime,
-      },
-    });
+    let result = tool.resultNotice(IM.EVENT.LOGIN, {
+      "code": options.data.code,
+      "msg": options.data.msg,
+      "updateTime": options.data.nowTime,
+    })
+    im[IM.EVENT.LOGIN](result);
   }
 }
 
@@ -1163,20 +1218,18 @@ function handleLogin(im, options) {
 function handleLogout(im, options) {
   if (Global.curTab) {
     localWs.close();
-    localDb.clear();
+    localDexie.clear();
     localNotice.clear();
     localNotice.offlineNotice(options);
   }
-  if (im[IM.EVENT.LOGOUT]) {
-    im[IM.EVENT.LOGOUT]({
-      "name": IM.EVENT.LOGOUT,
-      "data": {
-        "code": options.data.code,
-        "msg": options.data.msg,
-      },
-    });
-  }
   initGlobal();
+  if (im[IM.EVENT.LOGOUT]) {
+    let result = tool.resultNotice(IM.EVENT.LOGOUT, {
+      "code": options.data.code,
+      "msg": options.data.msg,
+    });
+    im[IM.EVENT.LOGOUT](result);
+  }
 }
 
 // 处理被动错误
@@ -1187,19 +1240,13 @@ function handleError(im, options) {
   switch (options.data.type) {
     case declare.ERROR_CODE.KICKED_OUT:
       if (im[IM.EVENT.KICKED_OUT]) {
-        let result = resultNotice({
-          "name": IM.EVENT.KICKED_OUT,
-          "data": options.data,
-        })
+        let result = tool.resultNotice(IM.EVENT.KICKED_OUT, options.data);
         im[IM.EVENT.KICKED_OUT](result);
       }
       break;
     case declare.ERROR_CODE.TOKEN_NOT_FOUND:
       if (im[IM.EVENT.TOKEN_NOT_FOUND]) {
-        let result = resultNotice({
-          "name": IM.EVENT.TOKEN_NOT_FOUND,
-          "data": options.data,
-        })
+        let result = tool.resultNotice(IM.EVENT.TOKEN_NOT_FOUND, options.data);
         im[IM.EVENT.TOKEN_NOT_FOUND](result);
       }
       break;
@@ -1214,30 +1261,26 @@ function handleMsg(im, options) {
   }
   let msg = options.data;
   let uid = Global.userId === msg.fromUid ? msg.toUid : msg.fromUid;
-  let chatId = splicingSingleId(uid);
+  let chatId = tool.splicingSingleId(uid);
   let setKeys = Global.msgSetKeys[chatId];
   let msgs = Global.msgList[chatId];
   switch (msg.type) {
     case declare.MSG_TYPE.Revoke:
       let msgId = parseInt(msg.body);
       if (Global.curTab) {
-        localDb.updateMsg({
-          fromUid: msg.fromUid,
-          toUid: msg.toUid,
-          msgId: msgId,
+        let onlyId = tool.createOnlyId(msg.fromUid, msg.sign || msg.msgTime)
+        localDexie.updateMsg({
+          onlyId: onlyId,
           type: declare.MSG_TYPE.Revoked,
         });
       }
       if (im[IM.EVENT.MESSAGE_REVOKED]) {
-        let result = resultNotice({
-          "name": IM.EVENT.MESSAGE_REVOKED,
-          "data": {
-            "uid": uid,
-            "fromUid": msg.fromUid,
-            "toUid": msg.toUid,
-            "msgId": msgId,
-            "type": declare.MSG_TYPE.Revoked,
-          },
+        let result = tool.resultNotice(IM.EVENT.MESSAGE_REVOKED, {
+          "uid": uid,
+          "fromUid": msg.fromUid,
+          "toUid": msg.toUid,
+          "msgId": msgId,
+          "type": declare.MSG_TYPE.Revoked,
         })
         im[IM.EVENT.MESSAGE_REVOKED](result);
       }
@@ -1247,36 +1290,38 @@ function handleMsg(im, options) {
       }
       break;
     default:
-      let newMsg = msg.onlyId ? msg : formatMsg(msg, uid)
+      let newMsg = msg.onlyId ? msg : tool.formatMsg(msg, uid)
       let showMsg;
       if (newMsg.type === declare.MSG_TYPE.Text) {
         showMsg = newMsg.text;
       } else if (newMsg.type === declare.MSG_TYPE.Img) {
         showMsg = newMsg.url;
+      } else {
+        showMsg = newMsg.data;
       }
-      updateChat(im, {
-        uid: uid,
-        msgEnd: newMsg.msgId,
-        showMsgType: newMsg.type,
-        showMsg: showMsg,
-        showMsgTime: newMsg.msgTime,
-      })
       if (Global.curTab) {
-        localDb.addMsg(newMsg);
+        localDexie.addMsg(newMsg);
+        updateChat(im, {
+          uid: uid,
+          msgEnd: newMsg.msgId,
+          showMsgType: newMsg.type,
+          showMsg: showMsg,
+          showMsgTime: newMsg.msgTime,
+        }, newMsg.fromUid)
       };
       if (im[IM.EVENT.MESSAGE_RECEIVED]) {
-        let result = resultNotice({
-          "name": IM.EVENT.MESSAGE_RECEIVED,
-          "data": {
-            "uid": uid,
-            "message": newMsg
-          },
+        let result = tool.resultNotice(IM.EVENT.MESSAGE_RECEIVED, {
+          "uid": uid,
+          "message": newMsg
         })
         im[IM.EVENT.MESSAGE_RECEIVED](result);
       }
       if (setKeys && !setKeys.has(msg.msgId)) {
         setKeys.add(msg.msgId);
         msgs.unshift(newMsg);
+        if (msgs.length > 1 && newMsg.msgId < msgs[1].msgId) {
+          Global.msgList[chatId] = tool.sort(msgs, 'showMsgTime')
+        }
       }
       break;
   }

@@ -24,7 +24,8 @@ let proFormat = {
 function compress(bytes, pid) {
   let compressBytes = bytes;
   let isCompress = 0;
-  if (bytes.length > 5000) {
+  if (bytes.length > 10) {
+    isCompress = 1;
     compressBytes = pako.deflate(bytes, {
       level: 5,
       to: 'Uint8Array'
@@ -172,18 +173,38 @@ function sendMsgPro(sign, options = {}) {
   protobufJS.setSign(sign);
   protobufJS.setType(options.type);
   protobufJS.setToUid(options.toUid);
-  if (options.type === declare.MSG_TYPE.Text) {
-    protobufJS.setBody(options.text);
+  switch (options.type) {
+    case declare.MSG_TYPE.Text:
+      protobufJS.setBody(options.text);
+      break;
+    case declare.MSG_TYPE.Img:
+      protobufJS.setBody(options.url);
+      protobufJS.setWidth(options.width);
+      protobufJS.setHeight(options.height);
+      break;
+    case declare.MSG_TYPE.Video:
+      protobufJS.setBody(options.url);
+      protobufJS.setThumb(options.thumb);
+      protobufJS.setWidth(options.width);
+      protobufJS.setHeight(options.height);
+      protobufJS.setDuration(options.duration);
+      break;
+    case declare.MSG_TYPE.Audio:
+      protobufJS.setBody(options.url);
+      protobufJS.setDuration(options.duration);
+      break;
+    case declare.MSG_TYPE.GS:
+      protobufJS.setLat(options.lat);
+      protobufJS.setLng(options.lng);
+      protobufJS.setZoom(options.zoom);
+      break;
+    case declare.MSG_TYPE.Custom:
+      protobufJS.setBody(options.data);
+      break;
+    default:
+      protobufJS.setBody(options.data);
+      break;
   }
-  if (options.type === declare.MSG_TYPE.Img) {
-    protobufJS.setBody(options.url);
-    protobufJS.setWidth(options.width);
-    protobufJS.setHeight(options.height);
-  }
-  // protobufJS.setDuration(options.duration);
-  // protobufJS.setLat(options.lat);
-  // protobufJS.setLng(options.lng);
-  // protobufJS.setZoom(options.zoom);
   let bytes = protobufJS.serializeBinary();
   return bytes;
 }
@@ -208,14 +229,12 @@ function revokeMsgPro(sign, options = {}) {
  * 
  * @param {*} sign 
  * @param {*} uid 会话id
- * @param {*} msgId 已读消息id
  * @returns 
  */
 function readMsgPro(sign, options = {}) {
   let protobufJS = new protobuf.MsgRead();
   protobufJS.setSign(sign);
   protobufJS.setToUid(options.uid);
-  protobufJS.setMsgId(options.msgId);
   let bytes = protobufJS.serializeBinary();
   return bytes;
 }

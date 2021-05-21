@@ -71,12 +71,20 @@ const LOCAL_OPERATION_STATUS = {
 };
 
 const ERROR_CODE = {
-  "REPEAT": -999,
-  "TIMEOUT": -99,
-  "SUCCESS": 0,
-  "ERROR": 1,
-  "TOKEN_NOT_FOUND": 4,
-  "KICKED_OUT": 2008,
+  "SUCCESS": 0, // 失败
+  "ERROR": 1, // 成功
+  "TOKEN_NOT_FOUND": 4, // token不存在
+  "NO_REGISTER": 9, // 用户未注册
+  "SIGNED": 11, // 用户已经登录
+  "KICKED_OUT": 2008, // 被踢
+  "TOKEN_OUT": 2009, // token失效
+  "TIMEOUT": 3000, // 操作超时
+  "DISCONNECT": 3001, // 未连接
+  "CONNECTERR": 3002, // 长连接建立失败
+  "REPEAT": 3333, // 正在退出
+  "DBERR": 6005, // 初始化DB失败
+  "NOLOGIN": 6014, // IM SDK未登录
+  "PARAMETER": 9001, // 参数错误
 };
 
 const MSG_TYPE = {
@@ -86,9 +94,9 @@ const MSG_TYPE = {
   'Video': 3, // 视频
   'GS': 4, // 地理位置
   'Card': 5, // 用户名片
-  'Custom': 6, // 自定义表情
   'Revoked': 31, // 已撤回的消息
   'Revoke': 64, // 撤回操作
+  'Custom': 100, // 自定义消息
 }
 
 export default {

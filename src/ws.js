@@ -49,6 +49,7 @@ function reset() {
 
 // 初始化ws
 function createWs(wsUrl, connSuc, connErr) {
+  window.localStorage.setItem('wsState', declare.WS_STATE.Connecting);
   localWs.ws = new WebSocket(wsUrl);
   localWs.ws.binaryType = 'arraybuffer';
   localWs.ws.onopen = (evt) => {
@@ -68,7 +69,7 @@ function createWs(wsUrl, connSuc, connErr) {
     console.log("Connection closed.", evt);
     clearInterval(localWs.heartBeatTimer);
     reconnect(wsUrl, connSuc, connErr);
-    if (typeof connErr === 'function') connErr();
+    if (typeof connErr === 'function') connErr(evt);
   };
   localWs.ws.onerror = (err) => {
     console.log('连接错误');
@@ -82,7 +83,7 @@ function reconnect(wsUrl, connSuc, connErr) {
   setTimeout(function () {
     localWs.reconnectNum += 1;
     createWs(wsUrl, connSuc, connErr);
-  }, 2000 * localWs.reconnectNum);
+  }, 1000 * localWs.reconnectNum * localWs.reconnectNum);
 }
 
 // 收到消息

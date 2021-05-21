@@ -31,6 +31,8 @@ function watchStorage(storage, IMSDK, Global, onMessage) {
 
   // 指定当前tab连接ws
   if (storage.key == 'wsConnTab' && storage.newValue === Global.tabId) {
+    Global.userId = null;
+    Global.loginState = false;
     let wsUrl = window.localStorage.getItem('wsUrl')
     let imToken = window.localStorage.getItem('imToken')
     let userId = window.localStorage.getItem('userId')
@@ -166,6 +168,28 @@ function splicingRevokeMsg(tabId, onlyId) {
   return declare.LOCAL_EVENT.RevokeMsg + tabId + '_' + onlyId;
 }
 
+function noticeCall(key, Global, localObj) {
+  window.localStorage.removeItem(key);
+  let callEvent = Global.callEvent[localObj.callSign];
+  if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
+    callEvent && callEvent.callSuc(localObj);
+  } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
+    callEvent && callEvent.callErr(localObj);
+  }
+}
+
+function noticeCatch(err, key, localObj) {
+  localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
+  localObj.err = err;
+  window.localStorage.setItem(key, JSON.stringify(localObj))
+}
+
+function noticeSuc(data, key, localObj) {
+  localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
+  localObj.data = data;
+  window.localStorage.setItem(key, JSON.stringify(localObj))
+}
+
 // 处理会话列表
 function handleChatList(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
@@ -173,21 +197,14 @@ function handleChatList(storage, IMSDK, Global) {
     localObj.options.tabId = localObj.tabId;
     IMSDK.getConversationList(localObj.options).then(res => {
       localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.hasMore = res.hasMore;
-      localObj.chats = res.chats;
+      localObj.hasMore = res.data.hasMore;
+      localObj.chats = res.data.chats;
       window.localStorage.setItem(storage.key, JSON.stringify(localObj))
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingGetChats(Global.tabId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -195,22 +212,13 @@ function handleChatList(storage, IMSDK, Global) {
 function handleDelChat(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.deleteConversation(localObj.options.uid).then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+    IMSDK.deleteConversation(localObj.options).then(res => {
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingDelChat(Global.tabId, localObj.options.uid)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -221,21 +229,14 @@ function handleMsgList(storage, IMSDK, Global) {
     localObj.options.tabId = localObj.tabId;
     IMSDK.getMessageList(localObj.options).then(res => {
       localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.hasMore = res.hasMore;
-      localObj.messages = res.messages;
+      localObj.hasMore = res.data.hasMore;
+      localObj.messages = res.data.messages;
       window.localStorage.setItem(storage.key, JSON.stringify(localObj))
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingGetMsgs(Global.tabId, localObj.options.uid)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -244,21 +245,12 @@ function handleSendMsg(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     IMSDK.sendMessage(localObj.options).then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingSendMsg(Global.tabId, localObj.options.onlyId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -266,22 +258,13 @@ function handleSendMsg(storage, IMSDK, Global) {
 function handleResendMsg(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.sendMessage(localObj.options).then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+    IMSDK.resendMessage(localObj.options).then(res => {
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingResendMsg(Global.tabId, localObj.options.onlyId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -290,21 +273,12 @@ function handleReadMsg(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     IMSDK.setMessageRead(localObj.options).then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingReadMsg(Global.tabId, localObj.options.onlyId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -313,21 +287,12 @@ function handleRevokeMsg(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     IMSDK.revokeMessage(localObj.options).then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingRevokeMsg(Global.tabId, localObj.options.onlyId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
@@ -336,21 +301,12 @@ function handleLogout(storage, IMSDK, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     IMSDK.logout().then(res => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
-      localObj.data = res.data;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
-      localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
-      localObj.err = err;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      noticeCatch(err, storage.key, localObj)
     })
   } else if (storage.key === splicingLogout(Global.tabId)) {
-    window.localStorage.removeItem(storage.key);
-    if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
-      Global.callEvent[localObj.callSign].callSuc(localObj);
-    } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-      Global.callEvent[localObj.callSign].callErr(localObj);
-    }
+    noticeCall(storage.key, Global, localObj)
   }
 }
 
