@@ -15,7 +15,7 @@ const IM = {
   EVENT: {
     "CONNECT_SUC": 'onConnectSuc', // 连接成功
     "CONNECT_ERR": 'onConnectErr', // 连接失败
-    "RECONNECTION": 'onReconnection', // 开始重连
+    "RECONNECTION": 'onReconnection', // 开始连接
     "LOGIN": 'onLogin', // 登录成功
     "LOGOUT": 'onLogout', // 退出成功
     "MESSAGE_RECEIVED": 'onMessageReceived', // 接收消息监听
@@ -37,6 +37,7 @@ function initGlobal() {
     maxChatPageSize: 100,
     msgPageSize: 20,
     maxMsgPageSize: 100,
+    heartBeatTimer: null, // 全局定时器
     // bucket: 'msim-1252460681',
     // region: 'ap-chengdu',
     // cos: new COS({
@@ -49,7 +50,7 @@ function initGlobal() {
     wsUrl: null,
     imToken: null,
     userId: null,
-    callEvent: {},
+    callEvents: {},
     hasChatMore: true,
     chatList: [],
     chatSetKeys: new Set(),
@@ -99,7 +100,6 @@ function create() {
     createCustomMessage,
     on,
     off,
-    getToken,
   }
   Global.userId = JSON.parse(window.localStorage.getItem("userId") || "null");
   var result = new Promise((resolve, reject) => {
@@ -115,7 +115,15 @@ function create() {
     onunload()
   };
   window.addEventListener("storage", storage => {
-    localNotice.watchStorage(storage, IMSDK, Global, (data) => {
+    localNotice.watchStorage(storage, IMSDK, Global, () => {
+      if (IMSDK[IM.EVENT.RECONNECTION]) {
+        let result = tool.resultNotice(IM.EVENT.RECONNECTION, {
+          "code": declare.ERROR_CODE.CONNECTING,
+          "msg": '开始连接，连接中',
+        });
+        IMSDK[IM.EVENT.RECONNECTION](result);
+      }
+    }, (data) => {
       onMessage(IMSDK, data)
     });
   });
@@ -201,8 +209,12 @@ function connSuc(im, resolve, reject) {
     let result = tool.resultNotice(IM.EVENT.CONNECT_SUC, '连接成功')
     im[IM.EVENT.CONNECT_SUC](result);
   }
+
+  // 启动全局定时器
+  globalTimer();
+
   // demo环境
-  im.getToken(IM.testId).then((res) => {
+  getToken(IM.testId).then((res) => {
     Global.imToken = res.data.msg;
     window.localStorage.setItem('imToken', Global.imToken);
     let callSign = tool.createSign();
@@ -211,6 +223,7 @@ function connSuc(im, resolve, reject) {
       "callSign": callSign,
       "callSuc": (res) => {
         if (Global.curTab) {
+          Global.loginState = true;
           handleLogin(im, {
             "type": declare.PID.ImLogin,
             "data": res.data,
@@ -262,9 +275,36 @@ function connSuc(im, resolve, reject) {
 // webSocket连接失败回调
 function connClose(im, reject, err) {
   Global.loginState = false;
+  if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
   window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
   let errResult = tool.resultErr(err, 'login', declare.ERROR_CODE.CONNECTERR)
   return reject(errResult);
+}
+
+// 启动定时器
+function globalTimer() {
+  let count = 0;
+  if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
+  Global.heartBeatTimer = setInterval(() => {
+    count += 1;
+    if (count % 30 === 0) {
+      localWs.heartBeatCall();
+    }
+    if (Global.callEvents && Object.keys(Global.callEvents).length > 0) {
+      let time = new Date().getTime();
+      let signTime = tool.createSign(time - IM.timeOut);
+      for (let key in Global.callEvents) {
+        if (key <= signTime) {
+          let callEvent = Global.callEvents[key];
+          delete Global.callEvents[key];
+          callEvent.callErr(new Error(JSON.stringify({
+            "code": declare.ERROR_CODE.TIMEOUT,
+            "msg": callEvent.type + ': connection timed out'
+          })))
+        }
+      }
+    }
+  }, 1000);
 }
 
 /** DEMO 使用 获取Token
@@ -762,7 +802,9 @@ function sendMessage(msgObj) {
           if (tool.isNotString(msgObj.text)) {
             let errResult = tool.parameterErr('text参数不存在', 'sendMessage');
             return reject(errResult)
-          } else if (new Blob([msgObj.text], {type : 'application/json'}).size > 3 * 1024) {
+          } else if (new Blob([msgObj.text], {
+              type: 'application/json'
+            }).size > 3 * 1024) {
             let errResult = tool.parameterErr('长度超过3K', 'sendMessage');
             return reject(errResult)
           }
@@ -851,7 +893,9 @@ function resendMessage(msgObj) {
           if (tool.isNotString(msgObj.text)) {
             let errResult = tool.parameterErr('text参数不存在', 'resendMessage');
             return reject(errResult)
-          } else if (new Blob([msgObj.text], {type : 'application/json'}).size > 3 * 1024) {
+          } else if (new Blob([msgObj.text], {
+              type: 'application/json'
+            }).size > 3 * 1024) {
             let errResult = tool.parameterErr('长度超过8K', 'resendMessage');
             return reject(errResult)
           }
@@ -1138,27 +1182,15 @@ function createCallEvent({
   callSuc,
   callErr
 }) {
-  let timer = null;
-  if (Global.curTab) {
-    setTimeout(() => {
-      delete Global.callEvent[callSign];
-      callErr(new Error(JSON.stringify({
-        "code": declare.ERROR_CODE.TIMEOUT,
-        "msg": type + ': connection timed out'
-      })))
-    }, IM.timeOut);
-  }
-  Global.callEvent[callSign] = {
+  Global.callEvents[callSign] = {
     "tabId": Global.tabId,
-    "timer": timer,
+    "type": type,
     "callSuc": (res) => {
-      timer && clearTimeout(timer);
-      delete Global.callEvent[callSign];
+      delete Global.callEvents[callSign];
       callSuc(res);
     },
     "callErr": (err) => {
-      timer && clearTimeout(timer);
-      delete Global.callEvent[callSign];
+      delete Global.callEvents[callSign];
       callErr(err)
     },
   }

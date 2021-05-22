@@ -26,11 +26,16 @@ function clear() {
 /**监控localStorage
  * 
  */
-function watchStorage(storage, IMSDK, Global, onMessage) {
+function watchStorage(storage, IMSDK, Global, onConn, onMessage) {
   if (!storage.key) return;
 
+  // 开始连接
+  if (storage.key === 'wsState' && storage.newValue === declare.WS_STATE.Connecting) {
+    onConn();
+  }
+
   // 指定当前tab连接ws
-  if (storage.key == 'wsConnTab' && storage.newValue === Global.tabId) {
+  if (storage.key === 'wsConnTab' && storage.newValue === Global.tabId) {
     Global.userId = null;
     Global.loginState = false;
     let wsUrl = window.localStorage.getItem('wsUrl')
@@ -170,11 +175,11 @@ function splicingRevokeMsg(tabId, onlyId) {
 
 function noticeCall(key, Global, localObj) {
   window.localStorage.removeItem(key);
-  let callEvent = Global.callEvent[localObj.callSign];
+  let callEvent = Global.callEvents[localObj.callSign];
   if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
     callEvent && callEvent.callSuc(localObj);
   } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
-    callEvent && callEvent.callErr(localObj);
+    callEvent && callEvent.callErr(localObj.err);
   }
 }
 

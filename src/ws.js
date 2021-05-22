@@ -7,9 +7,9 @@ let localWs = {
   Global: null,
   heartRate: 3000,
   heartBeatTime: null, // 心跳检查时间
-  heartBeatTimer: null, // 心跳定时器
   reconnectNum: 0, // 重连次数
   onMessage: null, // 处理被动接收消息
+  connState: false,
 }
 
 // 连接ws
@@ -38,11 +38,9 @@ localWs.close = function () {
 }
 
 function reset() {
-  if (localWs.heartBeatTimer) clearInterval(localWs.heartBeatTimer);
   localWs.ws = null;
   localWs.Global = null;
   localWs.heartBeatTime = null;
-  localWs.heartBeatTimer = null;
   localWs.chatListId = null;
   localWs.chatFormatList = null;
 }
@@ -53,23 +51,15 @@ function createWs(wsUrl, connSuc, connErr) {
   localWs.ws = new WebSocket(wsUrl);
   localWs.ws.binaryType = 'arraybuffer';
   localWs.ws.onopen = (evt) => {
+    localWs.reconnectNum = 0;
     localWs.heartBeatTime = new Date().getTime();
     if (typeof connSuc === 'function') connSuc();
-    localWs.heartBeatTimer = setInterval(() => {
-      let date = new Date().getTime();
-      if (localWs.heartBeatTime + localWs.heartRate <= date) {
-        var msg = proFormat.compress(proFormat.pingPro(), declare.PID.Ping);
-        localWs.ws.send(msg);
-      }
-      localWs.heartBeatTime = date
-    }, localWs.heartRate)
   };
   localWs.ws.onmessage = onmessage;
-  localWs.ws.onclose = (evt) => {
-    console.log("Connection closed.", evt);
-    clearInterval(localWs.heartBeatTimer);
+  localWs.ws.onclose = (err) => {
+    console.log("Connection closed.", err);
     reconnect(wsUrl, connSuc, connErr);
-    if (typeof connErr === 'function') connErr(evt);
+    if (typeof connErr === 'function') connErr(err);
   };
   localWs.ws.onerror = (err) => {
     console.log('连接错误');
@@ -77,12 +67,24 @@ function createWs(wsUrl, connSuc, connErr) {
   };
 }
 
+localWs.heartBeatCall = function () {
+  let date = new Date().getTime();
+  if (localWs.heartBeatTime + localWs.heartRate <= date) {
+    var msg = proFormat.compress(proFormat.pingPro(), declare.PID.Ping);
+    localWs.ws.send(msg);
+  }
+  localWs.heartBeatTime = date
+}
+
 // 重连
 function reconnect(wsUrl, connSuc, connErr) {
+  if (localWs.connState) return;
+  localWs.connState = true;
   if (localWs.reconnectNum >= 5) return; //最多重连5次，设置延迟避免请求过多
   setTimeout(function () {
     localWs.reconnectNum += 1;
     createWs(wsUrl, connSuc, connErr);
+    localWs.connState = false;
   }, 1000 * localWs.reconnectNum * localWs.reconnectNum);
 }
 
@@ -133,7 +135,7 @@ function onmessage(evt) {
 function handleResult(result) {
   let resultPro = protobuf.Result.deserializeBinary(result).toObject();
   const code = resultPro.code;
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   console.log('result', resultPro)
   if (resultPro.hasOwnProperty('sign')) {
@@ -185,7 +187,7 @@ function handleResult(result) {
 // 处理会话列表
 function handleChatList(result) {
   let resultPro = protobuf.ChatList.deserializeBinary(result).toObject();
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];
@@ -200,7 +202,7 @@ function handleChatList(result) {
 // 处理消息列表
 function handleMsgList(result) {
   let resultPro = protobuf.ChatRBatch.deserializeBinary(result).toObject();
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];
@@ -215,7 +217,7 @@ function handleMsgList(result) {
 // 处理发送消息成功
 function handleSend(result) {
   let resultPro = protobuf.ChatSR.deserializeBinary(result).toObject();
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];
@@ -229,7 +231,7 @@ function handleSend(result) {
 // 处理撤回消息成功
 function handleRevoke(result) {
   let resultPro = protobuf.ChatR.deserializeBinary(result).toObject();
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];
@@ -250,7 +252,7 @@ function handleRevoke(result) {
 // 处理获取指定会话信息
 function handleGetChat(result) {
   let resultPro = protobuf.ChatItem.deserializeBinary(result).toObject();
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];
@@ -268,7 +270,7 @@ function handleUpdateChat(result) {
     type: declare.PID.ChatItemUpdate,
     data: resultPro,
   });
-  var callEvents = localWs.Global.callEvent;
+  var callEvents = localWs.Global.callEvents;
   var callEvent = null;
   if (resultPro.hasOwnProperty('sign')) {
     callEvent = callEvents[resultPro.sign];

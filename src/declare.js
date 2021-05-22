@@ -81,6 +81,7 @@ const ERROR_CODE = {
   "TIMEOUT": 3000, // 操作超时
   "DISCONNECT": 3001, // 未连接
   "CONNECTERR": 3002, // 长连接建立失败
+  "CONNECTING": 3003, // 连接中
   "REPEAT": 3333, // 正在退出
   "DBERR": 6005, // 初始化DB失败
   "NOLOGIN": 6014, // IM SDK未登录
