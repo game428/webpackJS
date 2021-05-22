@@ -4,6 +4,7 @@ const TerserPlugin = require("terser-webpack-plugin");
 const {
     CleanWebpackPlugin
 } = require('clean-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
     mode: 'production', // production
@@ -38,6 +39,7 @@ module.exports = {
     optimization: {
         minimize: true,
         minimizer: [
+            new UglifyJsPlugin(),
             new TerserPlugin({
                 extractComments: false, //不将注释提取到单独的文件中
             }),

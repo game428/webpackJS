@@ -1249,6 +1249,7 @@ function handleLogin(im, options) {
 // 处理退出通知
 function handleLogout(im, options) {
   if (Global.curTab) {
+    if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
     localWs.close();
     localDexie.clear();
     localNotice.clear();

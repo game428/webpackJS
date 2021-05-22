@@ -14,7 +14,8 @@
     "webpack-cli": "^4.7.0"
   },
   "devDependencies": {
-    "clean-webpack-plugin": "^4.0.0-alpha.0"
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "uglifyjs-webpack-plugin": "^2.2.0"
   },
   "files": [
     "src"
