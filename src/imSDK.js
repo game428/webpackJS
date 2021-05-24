@@ -175,7 +175,7 @@ function login(options) {
       }
       if (Global.loginState) {
         return reject({
-          "code": declare.ERROR_CODE.REPEAT,
+          "code": declare.ERROR_CODE.LOGGING,
           "msg": "正在登录中，请勿重复操作",
         });
       } else {
@@ -213,63 +213,47 @@ function connSuc(im, resolve, reject) {
   // 启动全局定时器
   globalTimer();
 
-  // demo环境
-  getToken(IM.testId).then((res) => {
-    Global.imToken = res.data.msg;
-    window.localStorage.setItem('imToken', Global.imToken);
-    let callSign = tool.createSign();
-    createCallEvent({
-      "type": "login",
-      "callSign": callSign,
-      "callSuc": (res) => {
-        if (Global.curTab) {
-          Global.loginState = true;
-          handleLogin(im, {
-            "type": declare.PID.ImLogin,
-            "data": res.data,
-          })
-        }
-        let result = tool.resultSuc('login', {
-          msg: res.data.msg,
-          updateTime: res.data.nowTime,
-        });
-        resolve(result);
-      },
-      "callErr": (err) => {
-        window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
-        // 可能出现code 9 11
-        reject(err)
-      },
-    });
-    var msg = proFormat.compress(proFormat.loginPro(callSign, Global.imToken), declare.PID.ImLogin);
-    localWs.sendMessage(msg);
-  })
+  if (!Global.imToken || Global.imToken === 'testImToken') {
+    // demo环境
+    getToken(IM.testId).then((res) => {
+      Global.imToken = res.data.msg;
+      window.localStorage.setItem('imToken', Global.imToken);
+      loginIm(resolve, reject);
+    })
+  } else {
+    loginIm(resolve, reject);
+  }
+}
 
-  // 正式环境
-  // let callSign = tool.createSign();
-  // createCallEvent({
-  //   "type": "getToken",
-  //   "callSign": callSign,
-  //   "callSuc": (res) => {
-  //     if (Global.curTab) {
-  //       handleLogin(im, {
-  //         "type": declare.PID.ImLogin,
-  //         "data": res,
-  //       })
-  //     }
-  //     let result = tool.resultSuc('login', {
-  //       msg: res.data.msg,
-  //       updateTime: res.data.nowTime,
-  //     });
-  //     resolve(result);
-  //   },
-  //   "callErr": (err) => {
-  //     window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
-  //     reject(err)
-  //   },
-  // });
-  // var msg = proFormat.compress(proFormat.loginPro(callSign, Global.imToken), declare.PID.Login);
-  // localWs.sendMessage(msg);
+// 登录服务器
+function loginIm(resolve, reject) {
+  let callSign = tool.createSign();
+  createCallEvent({
+    "type": "login",
+    "callSign": callSign,
+    "callSuc": (res) => {
+      if (Global.curTab) {
+        Global.loginState = true;
+        handleLogin(im, {
+          "type": declare.PID.ImLogin,
+          "data": res.data,
+        })
+      }
+      let result = tool.resultSuc('login', {
+        msg: res.data.msg,
+        updateTime: res.data.nowTime,
+      });
+      resolve(result);
+    },
+    "callErr": (err) => {
+      window.localStorage.setItem('wsState', declare.WS_STATE.Disconnect);
+      // 可能出现code 9 11
+      let errResult = tool.serverErr(err, 'login')
+      reject(errResult)
+    },
+  });
+  var msg = proFormat.compress(proFormat.loginPro(callSign, Global.imToken), declare.PID.ImLogin);
+  localWs.sendMessage(msg);
 }
 
 // webSocket连接失败回调
@@ -311,6 +295,7 @@ function globalTimer() {
  * 
  */
 function getToken(uid) {
+  console.log(111, '获取token')
   return new Promise((resolve, reject) => {
     let callSign = tool.createSign();
     createCallEvent({
@@ -319,7 +304,10 @@ function getToken(uid) {
       "callSuc": (res) => {
         resolve(res)
       },
-      "callErr": (err) => reject(err)
+      "callErr": (err) => {
+        let errResult = tool.serverErr(err, 'getToken')
+        reject(errResult)
+      }
     });
     var msg = proFormat.compress(proFormat.tokenPro(callSign, uid), declare.PID.GetImToken);
     localWs.sendMessage(msg);
@@ -341,7 +329,7 @@ function preJudge(reject) {
 }
 
 /** 退出登录
- * TODO 是服务器还是客户端断开连接
+ *
  */
 function logout() {
   return new Promise((resolve, reject) => {
@@ -349,7 +337,7 @@ function logout() {
       if (!preJudge(reject)) {
         return
       } else if (Global.logoutState) {
-        let errResult = tool.resultErr("正在退出中，请勿重复操作", 'logout', declare.ERROR_CODE.REPEAT)
+        let errResult = tool.resultErr("正在退出中，请勿重复操作", 'logout', declare.ERROR_CODE.EXITING)
         return reject(errResult);
       } else {
         Global.logoutState = true;
@@ -372,7 +360,7 @@ function logout() {
           resolve(result);
         },
         "callErr": (err) => {
-          let errResult = tool.resultErr(err, 'logout')
+          let errResult = tool.serverErr(err, 'logout')
           reject(errResult)
         }
       });
@@ -395,7 +383,7 @@ function logout() {
   });
 }
 
-/** 获取会话列表 TODO 如果已经获取到hasMore 为 false的数据则不在发送请求
+/** 获取会话列表
  * 
  * @param {*} uid 用户id，从哪一条开始往后取
  * @param {number} pageSize 分页条数，默认20
@@ -469,7 +457,10 @@ function getWsChats(defaultOption, resolve, reject) {
         return resolve(result);
       }
     },
-    "callErr": (err) => reject(err)
+    "callErr": (err) => {
+      let errResult = tool.serverErr(err, 'getConversationList')
+      reject(errResult)
+    },
   });
   if (Global.curTab) {
     var msg = proFormat.compress(proFormat.chatListPro(callSign, defaultOption.uid, defaultOption.updateTime), declare.PID.GetChatList);
@@ -534,7 +525,7 @@ function resultChats(defaultOption, resolve, chats, res) {
  */
 // function getConversationProfile() {}
 
-/** 删除会话 TODO
+/** 删除会话
  * 
  * @param {*} uid 会话用户id
  */
@@ -564,7 +555,10 @@ function deleteConversation(options) {
           });
           return resolve(result);
         },
-        "callErr": (err) => reject(err)
+        "callErr": (err) => {
+          let errResult = tool.serverErr(err, 'deleteConversation')
+          reject(errResult)
+        }
       });
       if (Global.curTab) {
         var msg = proFormat.compress(proFormat.delChatPro(callSign, options.uid), declare.PID.DelChat);
@@ -675,7 +669,10 @@ function getWsMsgs(defaultOption, resolve, reject) {
         resolve(result);
       }
     },
-    "callErr": (err) => reject(err)
+    "callErr": (err) => {
+      let errResult = tool.serverErr(err, 'getMessageList')
+      reject(errResult)
+    }
   });
   if (Global.curTab) {
     var msg = proFormat.compress(proFormat.getMsgPro(callSign, defaultOption.uid, defaultOption.msgEnd, defaultOption.pageSize), declare.PID.GetHistory);
@@ -766,7 +763,10 @@ function setMessageRead(options) {
           });
           resolve(result);
         },
-        "callErr": (err) => reject(err)
+        "callErr": (err) => {
+          let errResult = tool.serverErr(err, 'setMessageRead')
+          reject(errResult)
+        }
       });
       if (Global.curTab) {
         var msg = proFormat.compress(proFormat.readMsgPro(callSign, options), declare.PID.MsgRead);
@@ -785,7 +785,7 @@ function setMessageRead(options) {
   })
 }
 
-/** 发送消息 TODO 参数待定
+/** 发送消息
  * @param {object} msgObj 消息对象
  */
 function sendMessage(msgObj) {
@@ -836,7 +836,10 @@ function sendMessage(msgObj) {
         "callSuc": (res) => {
           sendMsgSuc(this, msgObj, res, resolve)
         },
-        "callErr": (err) => reject(err)
+        "callErr": (err) => {
+          let errResult = tool.serverErr(err, 'sendMessage');
+          reject(errResult);
+        }
       });
       if (Global.curTab) {
         var msg = proFormat.compress(proFormat.sendMsgPro(callSign, msgObj), declare.PID.ChatS);
@@ -876,7 +879,7 @@ function sendMsgSuc(im, msgObj, res, resolve) {
   resolve(result);
 }
 
-/** 重发消息 TODO 参数待定
+/** 重发消息
  * @param {object} msgObj 消息对象
  */
 function resendMessage(msgObj) {
@@ -927,7 +930,10 @@ function resendMessage(msgObj) {
         "callSuc": (res) => {
           resendMsgSuc(this, msgObj, res, resolve)
         },
-        "callErr": (err) => reject(err)
+        "callErr": (err) => {
+          let errResult = tool.serverErr(err, 'resendMessage');
+          reject(errResult);
+        }
       });
       if (Global.curTab) {
         var msg = proFormat.compress(proFormat.sendMsgPro(callSign, msgObj), declare.PID.ChatS);
@@ -967,7 +973,7 @@ function resendMsgSuc(im, msgObj, res, resolve) {
   resolve(result);
 }
 
-/** 撤回消息 TODO
+/** 撤回消息
  * @param {*} uid 会话用户id
  * @param {*} msgId 消息id
  */
@@ -993,7 +999,10 @@ function revokeMessage(options) {
         "callSuc": (res) => {
           revokeMsgSuc(this, options, res, resolve)
         },
-        "callErr": (err) => reject(err)
+        "callErr": (err) => {
+          let errResult = tool.serverErr(err, 'revokeMessage');
+          reject(errResult);
+        }
       });
       if (Global.curTab) {
         var msg = proFormat.compress(proFormat.revokeMsgPro(callSign, options), declare.PID.Revoke);
@@ -1012,7 +1021,7 @@ function revokeMessage(options) {
   })
 }
 
-// 测回消息成功回调 TODO 接收参数，不在接收消息对象
+// 测回消息成功回调
 function revokeMsgSuc(im, options, res, resolve) {
   if (Global.curTab) {
     handleMsg(im, {
@@ -1028,7 +1037,7 @@ function revokeMsgSuc(im, options, res, resolve) {
   resolve(result);
 }
 
-/** 创建文本消息 TODO
+/* 创建文本消息
  */
 function createTextMessage(options) {
   try {
@@ -1050,7 +1059,7 @@ function createTextMessage(options) {
   }
 }
 
-/** 创建图片消息 TODO
+/* 创建图片消息
  */
 function createImageMessage(options) {
   try {
@@ -1075,7 +1084,8 @@ function createImageMessage(options) {
   }
 }
 
-/** 创建自定义消息 TODO
+// TODO 
+/** 创建自定义消息
  */
 function createCustomMessage(options) {
   try {
@@ -1146,7 +1156,8 @@ function updateChat(im, options, fromUid) {
             }
           },
           "callErr": (err) => {
-            console.error(err);
+            let errResult = tool.serverErr(err, 'updateChat')
+            console.error(errResult);
           }
         });
         var msg = proFormat.compress(proFormat.chatPro(callSign, options.uid), declare.PID.GetChat);

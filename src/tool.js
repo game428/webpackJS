@@ -13,6 +13,7 @@ const tool = {
   createOnlyId,
   createSign,
   resultErr,
+  serverErr,
   parameterErr,
   resultSuc,
   resultNotice,
@@ -119,6 +120,15 @@ function resultErr(msg, name, code) {
     code: code || declare.ERROR_CODE.ERROR,
     name: name,
     msg: JSON.parse(JSON.stringify(msg)),
+  }
+}
+
+// 失败回调参数
+function serverErr(data, name) {
+  return {
+    name: name,
+    code: data.code || declare.ERROR_CODE.ERROR,
+    msg: data.msg,
   }
 }
 

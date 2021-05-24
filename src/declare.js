@@ -82,7 +82,8 @@ const ERROR_CODE = {
   "DISCONNECT": 3001, // 未连接
   "CONNECTERR": 3002, // 长连接建立失败
   "CONNECTING": 3003, // 连接中
-  "REPEAT": 3333, // 正在退出
+  "EXITING": 3333, // 正在退出
+  "LOGGING": 3334, // 正在登录
   "DBERR": 6005, // 初始化DB失败
   "NOLOGIN": 6014, // IM SDK未登录
   "PARAMETER": 9001, // 参数错误
