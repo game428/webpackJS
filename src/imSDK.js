@@ -218,15 +218,15 @@ function connSuc(im, resolve, reject) {
     getToken(IM.testId).then((res) => {
       Global.imToken = res.data.msg;
       window.localStorage.setItem('imToken', Global.imToken);
-      loginIm(resolve, reject);
+      loginIm(im, resolve, reject);
     })
   } else {
-    loginIm(resolve, reject);
+    loginIm(im, resolve, reject);
   }
 }
 
 // 登录服务器
-function loginIm(resolve, reject) {
+function loginIm(im, resolve, reject) {
   let callSign = tool.createSign();
   createCallEvent({
     "type": "login",
