@@ -1,14 +1,17 @@
 import Dexie from 'dexie';
+import declare from './declare.js'
 
 const DBName = 'imWsDB';
 var db = null;
-var version = 1;
+let version = 1;
+let sdkKey = 'msimSdkInfo'
 let schemas = {};
 let chatKeys = [
-  "&chatId",
+  "&conversationID",
   "uid", // 用户Id
   "msgEnd", // 最后一条消息id
   "msgLastRead", // 最后一条标记为已读的消息id
+  "showMsgId", // 最后一条消息Id
   "showMsgType", // 最后一条消息类型 仅websocket端 返回
   "showMsg", // 最后一条消息内容 仅websocket端 返回
   "showMsgTime", // 最后一条消息服务器时间
@@ -26,7 +29,7 @@ let chatKeys = [
 ]
 let msgKeys = [
   "&onlyId", // 拼接唯一id
-  "chatId", // 所属会话id
+  "conversationID", // 所属会话id
   "fromUid", // 发送方用户ID
   "toUid", // 接收方用户ID
   "msgId", // 消息id
@@ -46,96 +49,185 @@ let msgKeys = [
   "lat", // 维度
   "lng", // 经度
   "zoom", // 地图缩放层级
-  "data", // 未定义type，传输的body
+  "content", // 未定义type，传输的body
   "sput", // sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
   "newMsg", //是否显示 new message
 ]
+let chatIdKeys = [
+  "&conversationID", // 唯一id
+]
+let sdkInfoKeys = [
+  '&sdkKeys', // 唯一id
+  'chatsSync',
+  'loginState',
+  'connState',
+  'wsUrl',
+  'imToken',
+  'uid',
+]
+
+// 会话表
 schemas['chatList'] = chatKeys.join();
+// 消息表
 schemas['msgList'] = msgKeys.join();
+// 以获取过消息的会话表
+schemas['chatHistory'] = chatIdKeys.join();
+// sdk信息表
+schemas['sdkInfo'] = sdkInfoKeys.join();
 
 let localDexie = {};
 
-localDexie.initDB = () => {
+localDexie.initDB = function(Global) {
   try {
-    return new Promise(((resolve, reject) => {
-      let indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-      if (!indexedDB) {
-        reject()
-      }
-      db = new Dexie(DBName);
-      db.version(version).stores(schemas);
-      //打开数据库时，会判断当前version值是否大于已经存在的version值，若大于则会upgrade即升到最高版本
-      db.open().then(result => {
-        //打开成功后
-        version = db.verno;
-        resolve(db);
-      }).catch(err => {
-        reject(err);
+    let indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+    if (!indexedDB) return console.error('浏览器不支持indexDB');
+    db = new Dexie(DBName);
+    db.version(version).stores(schemas);
+    //打开数据库时，会判断当前version值是否大于已经存在的version值，若大于则会upgrade即升到最高版本
+    db.open().then(result => {
+      //打开成功后
+      version = db.verno;
+      localDexie.getInfo().then(info => {
+        if (!info) {
+          localDexie.initInfo();
+        } else {
+          if (info.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
+            Global.initChats();
+          } else {
+            Global.chatsSync = info.chatsSync;
+          }
+          Global.connState = info.connState;
+          Global.loginState = info.loginState;
+          Global.uid = info.uid;
+        }
       });
-    }));
+    }).catch(err => {
+      console.error(err);
+    });
   } catch (err) {
-    reject(err);
+    console.error(err);
   }
 }
 
 // 删除数据库
-localDexie.deleteDB = function () {
-  db.delete()
+localDexie.deleteDB = function() {
+  Dexie.delete(DBName);
 }
 
 // 清空所有数据
-localDexie.clear = function () {
-  if (db.tables.length) {
+localDexie.clear = function() {
+  if (db && db.tables.length) {
     db.transaction('rw', db.tables, () => {
       db.tables.forEach(table => {
-        table.clear();
+        if (table.name === 'sdkInfo') {
+          localDexie.initInfo();
+        } else {
+          table.clear();
+        }
       });
     })
   }
 }
 
+/** sdk信息表操作 */
+// 更新信息表
+localDexie.updateInfo = function(info) {
+  return db.sdkInfo.where({
+    sdkKeys: sdkKey,
+  }).modify(info);
+}
+localDexie.getInfo = function() {
+  if (db) {
+    return db.sdkInfo.get(sdkKey);
+  } else {
+    return Promise.resolve();
+  }
+}
+localDexie.initInfo = function() {
+  db.sdkInfo.put({
+    sdkKeys: sdkKey,
+    loginState: declare.IM_LOGIN_STATE.NotLogin,
+    chatsSync: declare.SYNC_CHAT.NotSyncChat,
+    connState: declare.WS_STATE.Disconnect,
+  });
+}
+
+/**会话表操作 */
 // 写入会话列表
 localDexie.addChatList = (chats) => {
-  db.chatList.bulkPut(chats)
+  if (db) db.chatList.bulkPut(chats)
 }
 
 // 更新会话
-localDexie.updateChat = function (data) {
-  db.chatList.put(data);
+localDexie.updateChat = function(data) {
+  return db.chatList.put(data);
 }
 
 //获取会话列表
-localDexie.getChatList = function () {
-  return db.chatList.toArray()
+localDexie.getChatList = function() {
+  return db.chatList.toCollection().and(item => item.deleted === false).toArray();
 }
 
 //获取会话
-localDexie.getChat = function (uid, callback) {
-  return db.chatList.where({
-    "uid": uid,
-  }).toArray()
+localDexie.getChat = function(conversationID) {
+  return db.chatList.get({
+    "conversationID": conversationID,
+  })
 };
 
+/** 以查看会话表 */
+// 写入查看会话
+localDexie.addChatKey = function(conversationID) {
+  db.chatHistory.put({
+    "conversationID": conversationID,
+  });
+}
+// 是否获取过
+localDexie.getChatKeys = function() {
+  return db.chatHistory.toArray();
+}
+
+/**消息表操作 */
 // 写入消息列表
-localDexie.addMsgList = function (msgs) {
+localDexie.addMsgList = function(msgs) {
   db.msgList.bulkPut(msgs)
 }
 
 //获取消息列表
-localDexie.getMsgList = function (chatId, callback) {
-  return db.msgList.where({
-    "chatId": chatId
-  }).toArray()
+localDexie.getMsgList = function(defaultOption) {
+  if (!defaultOption.msgEnd) {
+    return db.msgList.where({
+      "conversationID": defaultOption.conversationID
+    }).sortBy('msgId');
+  } else {
+    return db.msgList.toCollection().and(msg => msg.conversationID === defaultOption.conversationID && msg.msgId < defaultOption.msgEnd).sortBy('msgId');
+  }
 };
 
 // 写入消息
-localDexie.addMsg = function (msg) {
-  db.msgList.put(msg);
+localDexie.addMsg = function(msg) {
+  return db.msgList.put(msg);
+}
+
+// 获取指定消息
+localDexie.getMsg = function(msg) {
+  return db.msgList.get({
+    conversationID: msg.conversationID,
+    msgId: msg.msgId,
+  })
 }
 
 // 更新消息
-localDexie.updateMsg = function (msg) {
-  db.msgList.put(msg);
+localDexie.updateMsg = function(msg) {
+  if (msg.onlyId) {
+    return db.msgList.put(msg);
+  } else {
+    return db.msgList.where({
+      fromUid: msg.fromUid,
+      toUid: msg.toUid,
+      msgId: msg.msgId,
+    }).modify(msg);
+  }
 }
 
 export default localDexie;

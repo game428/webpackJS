@@ -1,7 +1,11 @@
 import declare from './declare.js'
+import localDexie from './dexieDB.js';
+let storageKeys = [];
+
 let localNotice = {
   clear,
   watchStorage,
+  onMessageNotice,
   logoutNotice,
   getChatListNotice,
   delChatNotice,
@@ -10,125 +14,120 @@ let localNotice = {
   resendMsgNotice,
   readMsgNotice,
   revokeMsgNotice,
-  onlineNotice,
-  offlineNotice,
-  updateChatNotice,
-  receivedMsgNotice,
-  errorNotice,
 }
 
-function clear() {
-  let imWsTab = window.localStorage.getItem('imWsTab')
-  window.localStorage.clear();
-  window.localStorage.setItem('imWsTab', imWsTab);
+// 设置本地缓存
+function setLocal(key, val) {
+  storageKeys.push(key);
+  window.localStorage.setItem(key, JSON.stringify(val));
+}
+
+// 删除本地缓存
+function removeLocal(key) {
+  window.localStorage.removeItem(key);
+  storageKeys = storageKeys.filter(k => k !== key);
+}
+
+function clear(isAll) {
+  if (isAll) {
+    window.localStorage.removeItem('im_windowHeartBeat')
+    window.localStorage.removeItem('im_wsCurId')
+    window.localStorage.removeItem('im_wsTabs')
+  }
+  while (storageKeys.length > 0) {
+    let key = storageKeys.pop();
+    window.localStorage.removeItem(key);
+  }
 }
 
 /**监控localStorage
  * 
  */
-function watchStorage(storage, IMSDK, Global, onConn, onMessage) {
+function watchStorage(storage, msim, Global) {
   if (!storage.key) return;
 
-  // 开始连接
-  if (storage.key === 'wsState' && storage.newValue === declare.WS_STATE.Connecting) {
-    onConn();
+  // 当前tab发生变动
+  if (storage.key === 'im_wsCurId') {
+    if (storage.newValue !== Global.tabId) {
+      Global.clearTimer();
+    } else {
+      Global.globalTimer();
+    }
+    return;
+  }
+
+  // 当tabs发生变动
+  if (storage.key === 'im_wsTabs') {
+    Global.wsTabs = JSON.parse(storage.newValue);
+    return;
   }
 
   // 指定当前tab连接ws
-  if (storage.key === 'wsConnTab' && storage.newValue === Global.tabId) {
-    Global.userId = null;
-    Global.loginState = false;
-    let wsUrl = window.localStorage.getItem('wsUrl')
-    let imToken = window.localStorage.getItem('imToken')
-    let userId = window.localStorage.getItem('userId')
-    IMSDK.login({
-      wsUrl,
-      imToken,
-      testId: userId,
-    });
+  if (storage.key === 'im_wsConnTab' && storage.newValue === Global.tabId) {
+    Global.uid = null;
+    localDexie.getInfo().then(info => {
+      msim.login({
+        wsUrl: info.wsUrl,
+        imToken: info.imToken,
+      });
+    })
+    window.localStorage.removeItem('im_wsConnTab');
     return;
   }
 
-  // 登录通知
-  if (storage.key.indexOf(declare.LOCAL_EVENT.Online) === 0 && storage.newValue) {
+  // 处理onMessage通知
+  if (storage.key.indexOf('onMessage_') === 0 && storage.newValue) {
     let localObj = JSON.parse(storage.newValue);
-    onMessage(localObj);
-    return;
-  }
-
-  // 退出通知
-  if (storage.key.indexOf(declare.LOCAL_EVENT.Offline) === 0 && storage.newValue) {
-    let localObj = JSON.parse(storage.newValue);
-    onMessage(localObj);
+    Global.handleMessage(localObj);
+    removeLocal(storage.key);
     return;
   }
 
   // 接收到退出操作
   if (storage.key.indexOf(declare.LOCAL_EVENT.Logout) === 0 && storage.newValue) {
-    handleLogout(storage, IMSDK, Global);
+    handleLogout(storage, msim, Global);
     return;
   }
 
   // 会话列表
   if (storage.key.indexOf(declare.LOCAL_EVENT.GetChatList) === 0 && storage.newValue) {
-    handleChatList(storage, IMSDK, Global);
+    handleChatList(storage, msim, Global);
     return;
   }
 
   // 删除会话
   if (storage.key.indexOf(declare.LOCAL_EVENT.DelChat) === 0 && storage.newValue) {
-    handleDelChat(storage, IMSDK, Global);
+    handleDelChat(storage, msim, Global);
     return;
   }
 
   // 消息列表
   if (storage.key.indexOf(declare.LOCAL_EVENT.GetMsgList) === 0 && storage.newValue) {
-    handleMsgList(storage, IMSDK, Global);
+    handleMsgList(storage, msim, Global);
     return;
   }
 
   // 设置消息已读
   if (storage.key.indexOf(declare.LOCAL_EVENT.ReadMsg) === 0 && storage.newValue) {
-    handleReadMsg(storage, IMSDK, Global);
+    handleReadMsg(storage, msim, Global);
     return;
   }
 
   // 发送消息
   if (storage.key.indexOf(declare.LOCAL_EVENT.SendMsg) === 0 && storage.newValue) {
-    handleSendMsg(storage, IMSDK, Global);
+    handleSendMsg(storage, msim, Global);
     return;
   }
 
   // 重发消息
   if (storage.key.indexOf(declare.LOCAL_EVENT.ResendMsg) === 0 && storage.newValue) {
-    handleResendMsg(storage, IMSDK, Global);
+    handleResendMsg(storage, msim, Global);
     return;
   }
 
   // 撤回消息
   if (storage.key.indexOf(declare.LOCAL_EVENT.RevokeMsg) === 0 && storage.newValue) {
-    handleRevokeMsg(storage, IMSDK, Global);
-    return;
-  }
-
-  // 接收到新消息
-  if (storage.key === declare.LOCAL_EVENT.ReceivedMsg && storage.newValue && !Global.curTab) {
-    let localObj = JSON.parse(storage.newValue);
-    onMessage(localObj);
-    return;
-  }
-
-  // 接收到会话列表更新
-  if (storage.key === declare.LOCAL_EVENT.UpdateChat && storage.newValue && !Global.curTab) {
-    let localObj = JSON.parse(storage.newValue);
-    onMessage(localObj);
-    return;
-  }
-
-  // 接收到错误
-  if (storage.key === declare.LOCAL_EVENT.ErrorType && storage.newValue && !Global.curTab) {
-    let localObj = JSON.parse(storage.newValue);
-    onMessage(localObj);
+    handleRevokeMsg(storage, msim, Global);
     return;
   }
 }
@@ -174,7 +173,7 @@ function splicingRevokeMsg(tabId, onlyId) {
 }
 
 function noticeCall(key, Global, localObj) {
-  window.localStorage.removeItem(key);
+  removeLocal(key);
   let callEvent = Global.callEvents[localObj.callSign];
   if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
     callEvent && callEvent.callSuc(localObj);
@@ -186,25 +185,25 @@ function noticeCall(key, Global, localObj) {
 function noticeCatch(err, key, localObj) {
   localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
   localObj.err = err;
-  window.localStorage.setItem(key, JSON.stringify(localObj))
+  setLocal(key, localObj)
 }
 
 function noticeSuc(data, key, localObj) {
   localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
   localObj.data = data;
-  window.localStorage.setItem(key, JSON.stringify(localObj))
+  setLocal(key, localObj)
 }
 
 // 处理会话列表
-function handleChatList(storage, IMSDK, Global) {
+function handleChatList(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     localObj.options.tabId = localObj.tabId;
-    IMSDK.getConversationList(localObj.options).then(res => {
+    msim.getConversationList(localObj.options).then(res => {
       localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
       localObj.hasMore = res.data.hasMore;
       localObj.chats = res.data.chats;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      setLocal(storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
     })
@@ -214,10 +213,10 @@ function handleChatList(storage, IMSDK, Global) {
 }
 
 // 删除会话
-function handleDelChat(storage, IMSDK, Global) {
+function handleDelChat(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.deleteConversation(localObj.options).then(res => {
+    msim.deleteConversation(localObj.options).then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -228,15 +227,15 @@ function handleDelChat(storage, IMSDK, Global) {
 }
 
 // 处理消息列表
-function handleMsgList(storage, IMSDK, Global) {
+function handleMsgList(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
     localObj.options.tabId = localObj.tabId;
-    IMSDK.getMessageList(localObj.options).then(res => {
+    msim.getMessageList(localObj.options).then(res => {
       localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
       localObj.hasMore = res.data.hasMore;
       localObj.messages = res.data.messages;
-      window.localStorage.setItem(storage.key, JSON.stringify(localObj))
+      setLocal(storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
     })
@@ -246,10 +245,10 @@ function handleMsgList(storage, IMSDK, Global) {
 }
 
 // 发送消息
-function handleSendMsg(storage, IMSDK, Global) {
+function handleSendMsg(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.sendMessage(localObj.options).then(res => {
+    msim.sendMessage(localObj.options).then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -260,10 +259,10 @@ function handleSendMsg(storage, IMSDK, Global) {
 }
 
 // 重发消息
-function handleResendMsg(storage, IMSDK, Global) {
+function handleResendMsg(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.resendMessage(localObj.options).then(res => {
+    msim.resendMessage(localObj.options).then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -274,10 +273,10 @@ function handleResendMsg(storage, IMSDK, Global) {
 }
 
 // 设置消息已读
-function handleReadMsg(storage, IMSDK, Global) {
+function handleReadMsg(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.setMessageRead(localObj.options).then(res => {
+    msim.setMessageRead(localObj.options).then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -288,10 +287,10 @@ function handleReadMsg(storage, IMSDK, Global) {
 }
 
 // 撤回消息
-function handleRevokeMsg(storage, IMSDK, Global) {
+function handleRevokeMsg(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.revokeMessage(localObj.options).then(res => {
+    msim.revokeMessage(localObj.options).then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -302,10 +301,10 @@ function handleRevokeMsg(storage, IMSDK, Global) {
 }
 
 // 退出操作
-function handleLogout(storage, IMSDK, Global) {
+function handleLogout(storage, msim, Global) {
   let localObj = JSON.parse(storage.newValue);
   if (Global.curTab && localObj.state === declare.LOCAL_OPERATION_STATUS.Pending) {
-    IMSDK.logout().then(res => {
+    msim.logout().then(res => {
       noticeSuc(res.data, storage.key, localObj)
     }).catch(err => {
       noticeCatch(err, storage.key, localObj)
@@ -315,85 +314,67 @@ function handleLogout(storage, IMSDK, Global) {
   }
 }
 
-// 上线
-function onlineNotice(data) {
-  window.localStorage.setItem(declare.LOCAL_EVENT.Online, JSON.stringify(data))
-}
-
-// 下线
-function offlineNotice(data) {
-  window.localStorage.setItem(declare.LOCAL_EVENT.Offline, JSON.stringify(data))
-}
-
 /** 退出通知
  * 
  */
 function logoutNotice(data) {
-  window.localStorage.setItem(splicingLogout(data.tabId), JSON.stringify(data))
+  setLocal(splicingLogout(data.tabId), data)
 }
 
 /** 获取会话列表通知
  * 
  */
 function getChatListNotice(data) {
-  window.localStorage.setItem(splicingGetChats(data.tabId), JSON.stringify(data))
+  setLocal(splicingGetChats(data.tabId), data)
 }
 
 /** 删除会话通知
  * 
  */
 function delChatNotice(data) {
-  window.localStorage.setItem(splicingDelChat(data.tabId, data.options.uid), JSON.stringify(data))
+  setLocal(splicingDelChat(data.tabId, data.options.uid), data)
 }
 
 /** 获取消息列表通知
  * 
  */
 function getMsgNotice(data) {
-  window.localStorage.setItem(splicingGetMsgs(data.tabId, data.options.uid), JSON.stringify(data))
+  setLocal(splicingGetMsgs(data.tabId, data.options.uid), data)
 }
 
 /** 设置消息已读
  * 
  */
 function readMsgNotice(data) {
-  window.localStorage.setItem(splicingReadMsg(data.tabId, data.options.onlyId), JSON.stringify(data))
+  setLocal(splicingReadMsg(data.tabId, data.options.onlyId), data)
 }
 
 /** 发送消息
  * 
  */
 function sendMsgNotice(data) {
-  window.localStorage.setItem(splicingSendMsg(data.tabId, data.options.onlyId), JSON.stringify(data))
+  setLocal(splicingSendMsg(data.tabId, data.options.onlyId), data)
 }
 
 /** 重发消息
  * 
  */
 function resendMsgNotice(data) {
-  window.localStorage.setItem(splicingResendMsg(data.tabId, data.options.onlyId), JSON.stringify(data))
+  setLocal(splicingResendMsg(data.tabId, data.options.onlyId), data)
 }
 
 /** 撤回消息
  * 
  */
 function revokeMsgNotice(data) {
-  window.localStorage.setItem(splicingRevokeMsg(data.tabId, data.options.onlyId), JSON.stringify(data))
+  setLocal(splicingRevokeMsg(data.tabId, data.options.onlyId), data)
 }
 
-// 更新会话列表
-function updateChatNotice(data) {
-  window.localStorage.setItem(declare.LOCAL_EVENT.UpdateChat, JSON.stringify(data))
-}
-
-// 接收到新消息
-function receivedMsgNotice(data) {
-  window.localStorage.setItem(declare.LOCAL_EVENT.ReceivedMsg, JSON.stringify(data))
-}
-
-// 接收到错误
-function errorNotice(data) {
-  window.localStorage.setItem(declare.LOCAL_EVENT.ErrorType, JSON.stringify(data))
+// 内部处理的通知
+function onMessageNotice(wsTabs, type, data) {
+  if (Array.isArray(wsTabs) && wsTabs.length > 1) {
+    setLocal('onMessage_' + type, data)
+  }
 }
 
 export default localNotice;

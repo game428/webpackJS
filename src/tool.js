@@ -6,8 +6,10 @@ const tool = {
   sort,
   uuid,
   isNotString,
+  isNotNumer,
   isNotObject,
   isNotEmpty,
+  isNotSize,
   isNotHttp,
   isNotWs,
   createOnlyId,
@@ -19,8 +21,13 @@ const tool = {
   resultNotice,
   isSo,
   msgBase,
-  splicingSingleId,
+  splicingC2CId,
+  reformatC2CId,
   formatMsg,
+  emptyTip,
+  readProxy,
+  createCallEvent,
+  preJudge,
 };
 
 // 数组去重
@@ -48,11 +55,15 @@ function sort(array, key) {
 }
 
 // 获取分页
-function getPageSize(val, key, arr) {
+function getPageSize(val, key, arr, pageSize) {
   if (!val) return arr;
   if (!arr || arr.length === 0) return [];
   let index = arr.findIndex(item => item[key] === val);
-  return arr.slice(index + 1);
+  if (index !== -1 && index !== arr.length - 1) {
+    return arr.slice(index + 1, index + 1 + pageSize);
+  } else {
+    return [];
+  }
 }
 
 // 生成uuid
@@ -70,8 +81,29 @@ function uuid() {
 }
 
 // 是否为字符串切存在
-function isNotString(str) {
-  return typeof str !== 'string' || str === '';
+function isNotString(str, empty) {
+  if (!empty) {
+    return typeof str !== 'string' || str === '';
+  } else {
+    return typeof str !== 'string';
+  }
+}
+
+// 是否为数字类型
+function isNotNumer(num, empty) {
+  if (!empty) {
+    return typeof num !== 'number';
+  } else {
+    return typeof num !== 'number' || num === 0;
+  }
+}
+
+// 是否字节超长
+function isNotSize(str, maxSize) {
+  let size = new Blob([str], {
+    type: 'application/json'
+  }).size;
+  return size > (maxSize || 3 * 1024);
 }
 
 // 是否为空
@@ -90,17 +122,34 @@ function isNotWs(str) {
 }
 
 // 类型是否为对象，切某个key存在
-function isNotObject(obj, key) {
+function isNotObject(obj, key, type) {
+  if (typeof obj !== 'object') {
+    return true;
+  }
   if (key) {
-    return typeof obj !== 'object' || obj[key] === null || obj[key] === undefined || obj[key] === '';
-  } else {
-    return typeof obj !== 'object';
+    switch (type) {
+      case 'string':
+        return isNotString(obj[key]);
+      case 'number':
+        return isNotNumer(obj[key]);
+      case 'http':
+        return isNotHttp(obj[key]);
+      case 'ws':
+        return isNotWs(obj[key]);
+      default:
+        return isNotEmpty(obj[key])
+    }
   }
 }
 
+// 参数为空提示文本
+function emptyTip(key) {
+  return `${key}参数类型错误或不存在`;
+}
+
 // 生成onlyId
-function createOnlyId(fromUid, sign) {
-  return `${fromUid}_${sign}`;
+function createOnlyId(conversationID, sign) {
+  return `${conversationID}_${sign}`;
 }
 
 // 生成sign
@@ -117,9 +166,9 @@ function createSign(date) {
 // 失败回调参数
 function resultErr(msg, name, code) {
   return {
-    code: code || declare.ERROR_CODE.ERROR,
     name: name,
-    msg: JSON.parse(JSON.stringify(msg)),
+    code: code || declare.ERROR_CODE.ERROR,
+    msg: msg,
   }
 }
 
@@ -133,11 +182,11 @@ function serverErr(data, name) {
 }
 
 // 参数错误
-function parameterErr(msg, name) {
+function parameterErr(options) {
   return {
     code: declare.ERROR_CODE.PARAMETER,
-    name: name,
-    msg: msg,
+    name: options.name,
+    msg: options.msg || emptyTip(options.key),
   }
 }
 
@@ -151,9 +200,10 @@ function resultSuc(name, data) {
 }
 
 // 通知回调参数
-function resultNotice(name, data) {
+function resultNotice(name, data, code) {
   return {
     "name": name,
+    "code": code || declare.ERROR_CODE.SUCCESS,
     "data": JSON.parse(JSON.stringify(data)),
   }
 }
@@ -167,11 +217,11 @@ function isSo(type) {
 function msgBase(toUid, fromUid) {
   let time = new Date().getTime();
   let sign = createSign(time);
-  let chatId = splicingSingleId(toUid);
-  let onlyId = createOnlyId(fromUid, sign);
+  let conversationID = splicingC2CId(toUid);
+  let onlyId = createOnlyId(conversationID, sign);
   return {
     onlyId: onlyId,
-    chatId: chatId,
+    conversationID: conversationID,
     toUid: toUid,
     fromUid: fromUid,
     msgId: 0,
@@ -180,25 +230,26 @@ function msgBase(toUid, fromUid) {
   }
 }
 
-// 拼接单聊chatId
-function splicingSingleId(uid) {
-  return 'single_' + uid;
+// 拼接单聊conversationID
+function splicingC2CId(uid) {
+  return 'C2C_' + uid;
+}
+
+// 反格式化单聊conversationID
+function reformatC2CId(conversationID) {
+  return conversationID.slice(4);
 }
 
 // 把消息转为本地格式
-function formatMsg(msg, uid) {
+function formatMsg(msg, conversationID) {
   let newMsg = msg;
   let msgTime = newMsg.msgTime;
   if (!newMsg.sign) {
     newMsg.sign = msgTime
   }
-  if (uid == msg.fromUid) {
-    msgTime = newMsg.sign;
-  }
-  let chatId = splicingSingleId(uid);
-  let onlyId = createOnlyId(msg.fromUid, newMsg.sign);
+  let onlyId = createOnlyId(conversationID, newMsg.sign);
   newMsg.showMsgTime = parseInt(msgTime / 1000);
-  newMsg.chatId = chatId;
+  newMsg.conversationID = conversationID;
   newMsg.onlyId = onlyId;
   newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
   switch (newMsg.type) {
@@ -212,18 +263,69 @@ function formatMsg(msg, uid) {
     case declare.MSG_TYPE.Audio:
       newMsg.url = newMsg.body;
       newMsg.progress = 100;
+      break;
     case declare.MSG_TYPE.Video:
       newMsg.url = newMsg.body;
       newMsg.progress = 100;
       break;
     case declare.MSG_TYPE.Custom:
-      newMsg.data = newMsg.body;
+      newMsg.content = newMsg.body;
       break;
     default:
-      newMsg.data = newMsg.body;
+      newMsg.content = newMsg.body;
       break;
   }
   return newMsg;
+}
+
+// 创建只读代理对象
+function readProxy(obj, options) {
+  let handler = {
+    get: (obj, prop) => {
+      return obj[prop];
+    },
+    set: (obj, prop, value) => {
+      console.error(`不允许修改${prop}属性`)
+    },
+    deleteProperty: (obj, prop) => {
+      console.error(`不允许删除${prop}属性`)
+      return false;
+    }
+  };
+  if (typeof options === 'object') {
+    Object.assign(handler, options);
+  }
+  return new Proxy(obj, handler)
+}
+
+// 注册回调事件
+function createCallEvent(Global, options) {
+  Global.callEvents[options.callSign] = {
+    "tabId": Global.tabId,
+    "type": options.type,
+    "callSuc": (res) => {
+      delete Global.callEvents[options.callSign];
+      options.callSuc && options.callSuc(res);
+    },
+    "callErr": (err) => {
+      delete Global.callEvents[options.callSign];
+      options.callErr && options.callErr(err)
+    },
+  }
+}
+
+// 公共判断
+function preJudge(Global, reject) {
+  if (Global.curTab && Global.connState !== declare.WS_STATE.Connect) {
+    let errResult = tool.resultErr('未连接', 'wsConnect', declare.ERROR_CODE.DISCONNECT)
+    reject ? reject(errResult) : console.error(errResult);
+    return false;
+  } else if (Global.loginState === declare.IM_LOGIN_STATE.NotLogin) {
+    let errResult = tool.resultErr('IMSDK未登录', declare.OPERATION_TYPE.Login, declare.ERROR_CODE.NOLOGIN)
+    reject ? reject(errResult) : console.error(errResult);
+    return false;
+  }
+  return true;
 }
 
 export default tool;

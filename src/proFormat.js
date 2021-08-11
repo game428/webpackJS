@@ -1,4 +1,16 @@
-import protobuf from './imProtobuf_pb.js'
+import {
+  GetImToken,
+  ImLogin,
+  ImLogout,
+  Ping,
+  GetChatList,
+  GetChat,
+  DelChat,
+  GetHistory,
+  ChatS,
+  Revoke,
+  MsgRead,
+} from './proto.js'
 import declare from './declare.js'
 import pako from 'pako';
 let proFormat = {
@@ -42,11 +54,9 @@ function compress(bytes, pid) {
  * @returns 
  */
 function tokenPro(sign, uid) {
-  let protobufJS = new protobuf.GetImToken(); // 调用Person对象 实例化
-  // 赋值
-  protobufJS.setSign(sign);
-  protobufJS.setPhone(uid);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = GetImToken.encode(
+    GetImToken.create({ sign: sign, phone: uid })
+  ).finish();
   return bytes;
 }
 
@@ -57,10 +67,9 @@ function tokenPro(sign, uid) {
  * @returns 
  */
 function loginPro(sign, imToken) {
-  let protobufJS = new protobuf.ImLogin();
-  protobufJS.setSign(sign);
-  protobufJS.setToken(imToken);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = ImLogin.encode(
+    ImLogin.create({ sign: sign, token: imToken })
+  ).finish();
   return bytes;
 }
 
@@ -70,9 +79,7 @@ function loginPro(sign, imToken) {
  * @returns 
  */
 function logoutPro(sign) {
-  let protobufJS = new protobuf.ImLogout();
-  protobufJS.setSign(sign);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = ImLogout.encode(ImLogout.create({ sign: sign })).finish();
   return bytes;
 }
 
@@ -83,25 +90,20 @@ function logoutPro(sign) {
  * @returns 
  */
 function pingPro() {
-  let protobufJS = new protobuf.Ping();
-  protobufJS.setType(1);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = Ping.encode(Ping.create({ type: 1 })).finish();
   return bytes;
 }
 
 /** 获取会话记录
  * 
  * @param {*} sign 标识
- * @param {*} uid 最后一条会话Id
  * @param {*} updateTime 会话列表更新时间
  * @returns 
  */
-function chatListPro(sign, uid, updateTime) {
-  let protobufJS = new protobuf.GetChatList();
-  protobufJS.setSign(sign);
-  protobufJS.setUid(uid);
-  // protobufJS.setUpdateTime(updateTime);
-  let bytes = protobufJS.serializeBinary();
+function chatListPro(sign, updateTime) {
+  let bytes = GetChatList.encode(
+    GetChatList.create({ sign: sign, updateTime: updateTime })
+  ).finish();
   return bytes;
 }
 
@@ -112,10 +114,7 @@ function chatListPro(sign, uid, updateTime) {
  * @returns 
  */
 function chatPro(sign, uid) {
-  let protobufJS = new protobuf.GetChat();
-  protobufJS.setSign(sign);
-  protobufJS.setUid(uid);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = GetChat.encode(GetChat.create({ sign: sign, uid: uid })).finish();
   return bytes;
 }
 
@@ -126,10 +125,7 @@ function chatPro(sign, uid) {
  * @returns 
  */
 function delChatPro(sign, uid) {
-  let protobufJS = new protobuf.DelChat();
-  protobufJS.setSign(sign);
-  protobufJS.setToUid(uid);
-  let bytes = protobufJS.serializeBinary();
+  let bytes = DelChat.encode(DelChat.create({ sign: sign, uid: uid })).finish();
   return bytes;
 }
 
@@ -137,18 +133,15 @@ function delChatPro(sign, uid) {
  * 
  * @param {*} sign 标识
  * @param {*} uid 会话id
+ * @param {*} msgStart //最多拉到这条（不包括此条）
  * @param {*} msgEnd 从这条消息往后拉（不包括此条）
  * @param {*} pageSize 拉多少条，默认20，最多100
  * @returns 
  */
-function getMsgPro(sign, uid, msgEnd, pageSize) {
-  let protobufJS = new protobuf.GetHistory();
-  protobufJS.setSign(sign);
-  protobufJS.setToUid(uid);
-  protobufJS.setMsgEnd(msgEnd);
-  // protobufJS.setMsgStart(uid); //最多拉到这条（不包括此条）
-  protobufJS.setOffset(pageSize);
-  let bytes = protobufJS.serializeBinary();
+function getMsgPro(options) {
+  options.offset = options.pageSize;
+  options.toUid = options.uid;
+  let bytes = GetHistory.encode(GetHistory.create(options)).finish();
   return bytes;
 }
 
@@ -169,43 +162,30 @@ function getMsgPro(sign, uid, msgEnd, pageSize) {
  * @param int64 zoom = 12;//地图缩放层级
  */
 function sendMsgPro(sign, options = {}) {
-  let protobufJS = new protobuf.ChatS();
-  protobufJS.setSign(sign);
-  protobufJS.setType(options.type);
-  protobufJS.setToUid(options.toUid);
+  options.sign = sign;
   switch (options.type) {
     case declare.MSG_TYPE.Text:
-      protobufJS.setBody(options.text);
+      options.body = options.text;
       break;
     case declare.MSG_TYPE.Img:
-      protobufJS.setBody(options.url);
-      protobufJS.setWidth(options.width);
-      protobufJS.setHeight(options.height);
+      options.body = options.url;
       break;
     case declare.MSG_TYPE.Video:
-      protobufJS.setBody(options.url);
-      protobufJS.setThumb(options.thumb);
-      protobufJS.setWidth(options.width);
-      protobufJS.setHeight(options.height);
-      protobufJS.setDuration(options.duration);
+      options.body = options.url;
       break;
     case declare.MSG_TYPE.Audio:
-      protobufJS.setBody(options.url);
-      protobufJS.setDuration(options.duration);
+      options.body = options.url;
       break;
     case declare.MSG_TYPE.GS:
-      protobufJS.setLat(options.lat);
-      protobufJS.setLng(options.lng);
-      protobufJS.setZoom(options.zoom);
       break;
     case declare.MSG_TYPE.Custom:
-      protobufJS.setBody(options.data);
+      options.body = options.data;
       break;
     default:
-      protobufJS.setBody(options.data);
+      options.body = options.data;
       break;
   }
-  let bytes = protobufJS.serializeBinary();
+  let bytes = ChatS.encode(ChatS.create(options)).finish();
   return bytes;
 }
 
@@ -216,12 +196,10 @@ function sendMsgPro(sign, options = {}) {
  * @param {*} msgId 撤回的消息id
  * @returns 
  */
-function revokeMsgPro(sign, options = {}) {
-  let protobufJS = new protobuf.Revoke();
-  protobufJS.setSign(sign);
-  protobufJS.setToUid(options.uid);
-  protobufJS.setMsgId(options.msgId);
-  let bytes = protobufJS.serializeBinary();
+function revokeMsgPro(sign, uid, msgId) {
+  let bytes = Revoke.encode(
+    Revoke.create({ sign: sign, toUid: uid, msgId: msgId })
+  ).finish();
   return bytes;
 }
 
@@ -231,11 +209,10 @@ function revokeMsgPro(sign, options = {}) {
  * @param {*} uid 会话id
  * @returns 
  */
-function readMsgPro(sign, options = {}) {
-  let protobufJS = new protobuf.MsgRead();
-  protobufJS.setSign(sign);
-  protobufJS.setToUid(options.uid);
-  let bytes = protobufJS.serializeBinary();
+function readMsgPro(sign, uid) {
+  let bytes = MsgRead.encode(
+    MsgRead.create({ sign: sign, toUid: uid })
+  ).finish();
   return bytes;
 }
 
