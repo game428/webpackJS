@@ -2,6 +2,7 @@ import {
   ProfileOnline,
   UsrOffline,
   Result,
+  CosKey,
   ChatList,
   ChatRBatch,
   ChatSR,
@@ -157,6 +158,9 @@ function onMessage(evt) {
     case declare.PID.ChatItem:
       handleGetChat(result)
       break;
+    case declare.PID.CosKey:
+      handleGetCosKey(result)
+      break;
     case declare.PID.ProfileOnline:
       // let resultPro = ProfileOnline.toObject(ProfileOnline.decode(result), {
       //   defaults: true,
@@ -230,6 +234,22 @@ function handleResult(result) {
     default:
       callEvent && callEvent.callErr(resultPro);
       break;
+  }
+}
+
+// 处理获取cosKey
+function handleGetCosKey(result) {
+  let resultPro = CosKey.toObject(CosKey.decode(result), {
+    defaults: true,
+  })
+  var callEvents = localWs.Global.callEvents;
+  var callEvent = null;
+  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+    callEvent = callEvents[resultPro.sign];
+    console.log('coskey', resultPro)
+    callEvent && callEvent.callSuc({
+      data: resultPro,
+    });
   }
 }
 

@@ -16,6 +16,7 @@ import {
   createImageMessage,
   createCustomMessage,
 } from './sdkMessages'
+import { getCosKey } from './sdkUnits'
 
 /**
  *
@@ -51,6 +52,7 @@ var msim = tool.readProxy({
   "createTextMessage": (options) => createTextMessage(Global, options),
   "createImageMessage": (options) => createImageMessage(Global, options),
   "createCustomMessage": (options) => createCustomMessage(Global, options),
+  "getCosKey": () => getCosKey(Global),
   "on": on,
   "off": off,
 }, {
@@ -182,8 +184,9 @@ function onunload() {
       localWs.close();
       localDexie.updateInfo({
         "loginState": declare.IM_LOGIN_STATE.NotLogin,
+      }).then(() => {
+        window.localStorage.setItem('im_wsConnTab', imWsTab[0]);
       })
-      window.localStorage.setItem('im_wsConnTab', imWsTab[0]);
     } else {
       window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
     }

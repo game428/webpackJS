@@ -1,4 +1,5 @@
 import {
+  GetCosKey,
   GetImToken,
   ImLogin,
   ImLogout,
@@ -11,22 +12,7 @@ import {
   Revoke,
   MsgRead,
 } from './proto.js'
-import declare from './declare.js'
 import pako from 'pako';
-let proFormat = {
-  compress,
-  loginPro,
-  logoutPro,
-  tokenPro,
-  chatListPro,
-  delChatPro,
-  pingPro,
-  getMsgPro,
-  sendMsgPro,
-  revokeMsgPro,
-  readMsgPro,
-  chatPro,
-};
 
 /** 压缩处理以及拼接pid
  * 
@@ -56,6 +42,17 @@ function compress(bytes, pid) {
 function tokenPro(sign, uid) {
   let bytes = GetImToken.encode(
     GetImToken.create({ sign: sign, phone: uid })
+  ).finish();
+  return bytes;
+}
+/** 获取cos
+ * 
+ * @param {*} sign 标识
+ * @returns 
+ */
+function cosPro(sign) {
+  let bytes = GetCosKey.encode(
+    GetCosKey.create({ sign: sign })
   ).finish();
   return bytes;
 }
@@ -147,8 +144,8 @@ function getMsgPro(options) {
 
 /** 发送消息
  * 
- * @param {*} sign 
- * @param {*} options  
+ * @param {* } options
+ * @param int64 sign // 唯一标识
  * @param int64 type = 2;// 消息类型 
  * @param int64 to_uid = 3; //发送给谁
  * @param string title = 4; //消息内容
@@ -161,30 +158,7 @@ function getMsgPro(options) {
  * @param double lng = 11;//经度
  * @param int64 zoom = 12;//地图缩放层级
  */
-function sendMsgPro(sign, options = {}) {
-  options.sign = sign;
-  switch (options.type) {
-    case declare.MSG_TYPE.Text:
-      options.body = options.text;
-      break;
-    case declare.MSG_TYPE.Img:
-      options.body = options.url;
-      break;
-    case declare.MSG_TYPE.Video:
-      options.body = options.url;
-      break;
-    case declare.MSG_TYPE.Audio:
-      options.body = options.url;
-      break;
-    case declare.MSG_TYPE.GS:
-      break;
-    case declare.MSG_TYPE.Custom:
-      options.body = options.data;
-      break;
-    default:
-      options.body = options.data;
-      break;
-  }
+function sendMsgPro(options) {
   let bytes = ChatS.encode(ChatS.create(options)).finish();
   return bytes;
 }
@@ -215,5 +189,21 @@ function readMsgPro(sign, uid) {
   ).finish();
   return bytes;
 }
+
+let proFormat = {
+  compress,
+  loginPro,
+  logoutPro,
+  tokenPro,
+  chatListPro,
+  delChatPro,
+  pingPro,
+  getMsgPro,
+  sendMsgPro,
+  revokeMsgPro,
+  readMsgPro,
+  chatPro,
+  cosPro,
+};
 
 export default proFormat;

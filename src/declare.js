@@ -21,6 +21,8 @@ const PID = {
   "Profile": 18,
   "ProfileList": 19,
   "GetChat": 20,
+  "GetCosKey": 21,
+  "CosKey": 22,
   "ProfileOnline": 50, //50  for demo: 通知客户端用户上线事件
   "UsrOffline": 52, //52 for demo：通知客户端用户下线事件
   "Signup": 53, //53 for demo：注册新用户
@@ -32,24 +34,25 @@ const PID = {
 
 // 多tab通讯事件名
 const LOCAL_EVENT = {
-  'Online': 'online',
-  'Offline': 'offline',
-  'Logout': 'logout_',
-  'GetChatList': 'getConversationList_',
-  'DelChat': 'deleteConversation_',
-  'GetMsgList': 'getMessageList_',
-  'SendMsg': 'sendMessage_',
-  'ResendMsg': 'resendMessage_',
-  'RevokeMsg': 'revokeMessage_',
-  'ReadMsg': 'setMessageRead_',
-  'UpdateChat': 'updateChat',
-  'ReceivedMsg': 'receivedMessage',
-  "SendMsgTab": 'sendMsgTab',
-  "RevokeMsgTab": 'revokeMsgTab',
-  "SyncChats": 'syncChats',
-  "SyncChatsChange": 'syncChatsChange',
-  "SyncMsgs": 'syncMsgs',
-  "WsStateChange": 'wsStateChange',
+  "Message": 'im_onMessage_',
+  'Online': 'im_online',
+  'Offline': 'im_offline',
+  'Logout': 'im_logout_',
+  'GetChatList': 'im_getConversationList_',
+  'DelChat': 'im_deleteConversation_',
+  'GetMsgList': 'im_getMessageList_',
+  'SendMsg': 'im_sendMessage_',
+  'ResendMsg': 'im_resendMessage_',
+  'RevokeMsg': 'im_revokeMessage_',
+  'ReadMsg': 'im_setMessageRead_',
+  'UpdateChat': 'im_updateChat',
+  'ReceivedMsg': 'im_receivedMessage',
+  "SendMsgTab": 'im_sendMsgTab',
+  "RevokeMsgTab": 'im_revokeMsgTab',
+  "SyncChats": 'im_syncChats',
+  "SyncChatsChange": 'im_syncChatsChange',
+  "SyncMsgs": 'im_syncMsgs',
+  "WsStateChange": 'im_wsStateChange',
 };
 
 // websocket连接状态
@@ -150,6 +153,7 @@ const OPERATION_TYPE = {
   "ImgMsg": 'createImageMessage',
   "CustomMsg": 'createCustomMessage',
   "GetToken": 'getToken',
+  "GetCosKey": 'getCosKey',
 }
 
 // 业务通知回调类型

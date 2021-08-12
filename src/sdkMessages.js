@@ -185,7 +185,7 @@ export function setMessageRead(Global, options) {
 }
 
 // 消息参数判断
-function isMsgError(Global, msgObj, reject) {
+function isMsgError(Global, msgObj, reject, proOptions) {
   let errResult = null;
   if (!tool.preJudge(Global, reject)) {
     return true;
@@ -199,6 +199,7 @@ function isMsgError(Global, msgObj, reject) {
         } else if (tool.isNotSize(msgObj.text)) {
           errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'msg': 'text长度超过3K' });
         }
+        proOptions.body = msgObj.text
         break;
       case declare.MSG_TYPE.Img:
         if (tool.isNotHttp(msgObj.url)) {
@@ -208,6 +209,7 @@ function isMsgError(Global, msgObj, reject) {
         } else if (tool.isNotEmpty(msgObj.width)) {
           errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'width' });
         }
+        proOptions.body = msgObj.url;
         break;
       case declare.MSG_TYPE.Custom:
         if (tool.isNotString(msgObj.content)) {
@@ -215,6 +217,7 @@ function isMsgError(Global, msgObj, reject) {
         } else if (tool.isNotSize(msgObj.content)) {
           errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'msg': 'content长度超过3K' });
         }
+        proOptions.body = msgObj.data;
         break;
     }
   }
@@ -232,7 +235,8 @@ function isMsgError(Global, msgObj, reject) {
 export function sendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
     try {
-      if (isMsgError(Global, msgObj, reject)) return;
+      let proOptions = {};
+      if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
         "type": declare.OPERATION_TYPE.Send,
@@ -246,7 +250,9 @@ export function sendMessage(Global, msgObj) {
         }
       });
       if (Global.curTab) {
-        let msg = proFormat.sendMsgPro(callSign, msgObj);
+        proOptions.sign = callSign;
+        Object.assign(proOptions, msgObj);
+        let msg = proFormat.sendMsgPro(proOptions);
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
         localNotice.sendMsgNotice({
@@ -290,7 +296,8 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
 export function resendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
     try {
-      if (isMsgError(Global, msgObj, reject)) return;
+      let proOptions = {};
+      if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
         "type": declare.OPERATION_TYPE.Resend,
@@ -304,7 +311,9 @@ export function resendMessage(Global, msgObj) {
         }
       });
       if (Global.curTab) {
-        let msg = proFormat.sendMsgPro(callSign, msgObj);
+        proOptions.sign = callSign;
+        Object.assign(proOptions, msgObj);
+        let msg = proFormat.sendMsgPro(proOptions);
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
         localNotice.resendMsgNotice({

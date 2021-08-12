@@ -44,7 +44,9 @@ function clear(isAll) {
  * 
  */
 function watchStorage(storage, msim, Global) {
-  if (!storage.key) return;
+  // console.log('storage', storage)
+  // 移除localStorage不处理
+  if (!storage.key || !storage.newValue) return;
 
   // 当前tab发生变动
   if (storage.key === 'im_wsCurId') {
@@ -53,12 +55,6 @@ function watchStorage(storage, msim, Global) {
     } else {
       Global.globalTimer();
     }
-    return;
-  }
-
-  // 当tabs发生变动
-  if (storage.key === 'im_wsTabs') {
-    Global.wsTabs = JSON.parse(storage.newValue);
     return;
   }
 
@@ -76,7 +72,7 @@ function watchStorage(storage, msim, Global) {
   }
 
   // 处理onMessage通知
-  if (storage.key.indexOf('onMessage_') === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.Message) === 0) {
     let localObj = JSON.parse(storage.newValue);
     Global.handleMessage(localObj);
     removeLocal(storage.key);
@@ -84,49 +80,49 @@ function watchStorage(storage, msim, Global) {
   }
 
   // 接收到退出操作
-  if (storage.key.indexOf(declare.LOCAL_EVENT.Logout) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.Logout) === 0) {
     handleLogout(storage, msim, Global);
     return;
   }
 
   // 会话列表
-  if (storage.key.indexOf(declare.LOCAL_EVENT.GetChatList) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.GetChatList) === 0) {
     handleChatList(storage, msim, Global);
     return;
   }
 
   // 删除会话
-  if (storage.key.indexOf(declare.LOCAL_EVENT.DelChat) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.DelChat) === 0) {
     handleDelChat(storage, msim, Global);
     return;
   }
 
   // 消息列表
-  if (storage.key.indexOf(declare.LOCAL_EVENT.GetMsgList) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.GetMsgList) === 0) {
     handleMsgList(storage, msim, Global);
     return;
   }
 
   // 设置消息已读
-  if (storage.key.indexOf(declare.LOCAL_EVENT.ReadMsg) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.ReadMsg) === 0) {
     handleReadMsg(storage, msim, Global);
     return;
   }
 
   // 发送消息
-  if (storage.key.indexOf(declare.LOCAL_EVENT.SendMsg) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.SendMsg) === 0) {
     handleSendMsg(storage, msim, Global);
     return;
   }
 
   // 重发消息
-  if (storage.key.indexOf(declare.LOCAL_EVENT.ResendMsg) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.ResendMsg) === 0) {
     handleResendMsg(storage, msim, Global);
     return;
   }
 
   // 撤回消息
-  if (storage.key.indexOf(declare.LOCAL_EVENT.RevokeMsg) === 0 && storage.newValue) {
+  if (storage.key.indexOf(declare.LOCAL_EVENT.RevokeMsg) === 0) {
     handleRevokeMsg(storage, msim, Global);
     return;
   }
@@ -371,9 +367,10 @@ function revokeMsgNotice(data) {
 }
 
 // 内部处理的通知
-function onMessageNotice(wsTabs, type, data) {
-  if (Array.isArray(wsTabs) && wsTabs.length > 1) {
-    setLocal('onMessage_' + type, data)
+function onMessageNotice(type, data) {
+  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
+  if (imWsTabs.length > 1) {
+    setLocal(declare.LOCAL_EVENT.Message + type, data)
   }
 }
 

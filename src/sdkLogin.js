@@ -71,54 +71,31 @@ function connSuc(Global, resolve, reject, isReconect) {
     "type": declare.HANDLE_TYPE.WsStateChange,
     "state": declare.WS_STATE.Connect,
   })
-  if (!Global.imToken || Global.imToken === 'testImToken') {
-    // demo环境
-    getToken(Global).then((res) => {
-      Global.imToken = res.data.msg;
-      localDexie.updateInfo({ imToken: res.data.msg });
-      loginIm(Global).then(res => {
-        if (isReconect !== true) {
-          let result = tool.resultSuc(declare.OPERATION_TYPE.Login, {
-            msg: res.data.msg,
-            updateTime: res.data.nowTime,
-            uid: res.data.uid,
-          });
-          resolve(result)
-          Promise.resolve().then(() => {
-            Global.handleMessage({
-              "type": declare.HANDLE_TYPE.ImLogin,
-              "data": res.data,
-            })
-          })
-        }
-        syncChats(Global);
-      }).catch(err => {
-        reject(err)
-      })
-    }).catch(err => {
-      reject(err)
-    })
-  } else {
-    loginIm(Global).then(res => {
-      if (isReconect !== true) {
-        let result = tool.resultSuc(declare.OPERATION_TYPE.Login, {
-          msg: res.data.msg,
-          updateTime: res.data.nowTime,
-          uid: res.data.uid,
-        });
-        resolve(result)
-        Promise.resolve().then(() => {
-          Global.handleMessage({
-            "type": declare.HANDLE_TYPE.ImLogin,
-            "data": res.data,
-          })
+  loginIm(Global).then(res => {
+    if (isReconect !== true) {
+      let result = tool.resultSuc(declare.OPERATION_TYPE.Login, {
+        msg: res.data.msg,
+        updateTime: res.data.nowTime,
+        uid: res.data.uid,
+      });
+      resolve(result)
+      setTimeout(() => {
+        Global.handleMessage({
+          "type": declare.HANDLE_TYPE.ImLogin,
+          "data": res.data,
         })
-      }
-      syncChats(Global);
-    }).catch(err => {
-      reject(err)
-    })
-  }
+      }, 0)
+      // Promise.resolve().then(() => {
+      //   Global.handleMessage({
+      //     "type": declare.HANDLE_TYPE.ImLogin,
+      //     "data": res.data,
+      //   })
+      // })
+    }
+    syncChats(Global);
+  }).catch(err => {
+    reject(err)
+  })
 }
 
 // webSocket连接失败回调
