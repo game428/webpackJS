@@ -129,7 +129,7 @@ function getSyncMsgs(Global, oldChat, chat) {
           }
         }
 
-        let localMsg = [].concat(revokeList, msgList);
+        let localMsg = revokeList.concat(msgList);
         localDexie.addMsgList(localMsg);
 
         if (chat.deleted !== true) {
@@ -177,7 +177,6 @@ export function getConversationList(Global, options) {
       if (typeof options === 'object') {
         Object.assign(defaultOption, options);
       }
-      console.log('获取会话记录', Global.chatsSync)
       if (Global.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
         // 已同步，直接从内存获取
         resultChats(Global, defaultOption, resolve)

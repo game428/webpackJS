@@ -43,7 +43,7 @@ localWs.connect = function(Global, connSuc, connErr) {
 // 上线重连
 function online(wsUrl, connSuc, connErr) {
   if (localWs.closeState || localWs.ws.readyState === 1) return;
-  localWs.close();
+  localWs.ws.close();
   reconnect(wsUrl, connSuc, connErr);
 }
 

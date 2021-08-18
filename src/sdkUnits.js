@@ -12,7 +12,6 @@ export function getCosKey(Global) {
         "type": declare.OPERATION_TYPE.GetCosKey,
         "callSign": callSign,
         "callSuc": (res) => {
-          console.log(res)
           let result = tool.resultSuc(declare.OPERATION_TYPE.GetCosKey, res.data);
           return resolve(result);
         },
@@ -28,7 +27,6 @@ export function getCosKey(Global) {
         localNotice.delChatNotice({
           "callSign": callSign,
           "tabId": Global.tabId,
-          "options": options,
           "state": declare.LOCAL_OPERATION_STATUS.Pending,
         })
       }

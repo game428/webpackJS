@@ -258,7 +258,7 @@ function handleRevokeMsg(msg, resolve, chatInfo) {
             msgEnd: msg.msgId,
             showMsgId: newMsg.msgId,
             showMsgTime: msg.msgTime,
-            showMsgType: declare.MSG_TYPE.Revoked,
+            showMsgType: declare.MSG_TYPE.Revoke,
           }).finally(() => {
             resolve();
             return;
@@ -387,11 +387,11 @@ function handleNewMsgUpdate(options, chat, conversationID) {
     }
   } else {
     // 如果是撤回消息
-    if (options.showMsgType === declare.MSG_TYPE.Revoked) {
+    if (options.showMsgType === declare.MSG_TYPE.Revoke) {
       if (options.showMsgId === chat.showMsgId) {
         // 撤回的是最后一条消息
         chat.msgEnd = options.msgEnd;
-        chat.showMsgType = options.showMsgType;
+        chat.showMsgType = declare.MSG_TYPE.Revoked;
         chat.showMsg = '';
       } else if (chat.msgEnd < options.msgEnd) {
         // 撤回的不是最后一条消息
@@ -462,7 +462,6 @@ function getChat(conversationID) {
               },
               "callErr": (err) => {
                 let errResult = tool.serverErr(err, 'updateChat')
-                console.error(errResult);
                 reject(err);
               }
             });
@@ -474,7 +473,6 @@ function getChat(conversationID) {
       }
     } catch (err) {
       let errResult = tool.serverErr(err, 'updateChat')
-      console.error(errResult);
       reject(err);
     }
   })

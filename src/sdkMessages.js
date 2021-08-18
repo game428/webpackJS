@@ -146,6 +146,7 @@ export function setMessageRead(Global, options) {
       if (!tool.preJudge(Global, reject)) {
         return
       } else if (tool.isNotObject(options, 'conversationID', 'string')) {
+        console.log(1111, options)
         let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Read, 'key': 'conversationID' });
         return reject(errResult)
       }

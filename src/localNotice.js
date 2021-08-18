@@ -50,10 +50,10 @@ function watchStorage(storage, msim, Global) {
 
   // 当前tab发生变动
   if (storage.key === 'im_wsCurId') {
-    if (storage.newValue !== Global.tabId) {
-      Global.clearTimer();
-    } else {
+    if (storage.newValue === Global.tabId) {
       Global.globalTimer();
+    } else if (Global.curTab) {
+      Global.clearTimer();
     }
     return;
   }

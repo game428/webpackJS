@@ -15,6 +15,9 @@ export function login(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       localDexie.getInfo().then(info => {
+        if (!info) {
+          localDexie.initInfo();
+        }
         if (info && info.loginState === declare.IM_LOGIN_STATE.Logged) {
           if (info.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
             Global.initChats();
@@ -52,10 +55,6 @@ export function login(Global, options) {
             connClose(Global, reject, err)
           });
         }
-      }).catch(err => {
-        Global.loginState = declare.IM_LOGIN_STATE.NotLogin;
-        localDexie.updateInfo({ loginState: declare.IM_LOGIN_STATE.NotLogin });
-        reject(err)
       })
     } catch (err) {
       Global.loginState = declare.IM_LOGIN_STATE.NotLogin;
@@ -109,28 +108,6 @@ function connClose(Global, reject, err) {
   return reject(errResult);
 }
 
-/** DEMO 使用 获取Token
- * 
- */
-function getToken(Global) {
-  return new Promise((resolve, reject) => {
-    let callSign = tool.createSign();
-    tool.createCallEvent(Global, {
-      "type": declare.OPERATION_TYPE.GetToken,
-      "callSign": callSign,
-      "callSuc": (res) => {
-        resolve(res)
-      },
-      "callErr": (err) => {
-        let errResult = tool.serverErr(err, declare.OPERATION_TYPE.GetToken)
-        Global.clearData();
-        reject(errResult)
-      }
-    });
-    let msg = proFormat.tokenPro(callSign, Global.testId);
-    localWs.sendMessage(msg, declare.PID.GetImToken);
-  })
-}
 
 // 登录服务器
 function loginIm(Global) {

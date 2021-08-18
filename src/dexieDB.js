@@ -87,20 +87,6 @@ localDexie.initDB = function(Global) {
     db.open().then(result => {
       //打开成功后
       version = db.verno;
-      localDexie.getInfo().then(info => {
-        if (!info) {
-          localDexie.initInfo();
-        } else {
-          if (info.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
-            Global.initChats();
-          } else {
-            Global.chatsSync = info.chatsSync;
-          }
-          Global.connState = info.connState;
-          Global.loginState = info.loginState;
-          Global.uid = info.uid;
-        }
-      });
     }).catch(err => {
       console.error(err);
     });

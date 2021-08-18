@@ -92,6 +92,7 @@ function initGlobal() {
     handleMsgState: false, // 队列处理状态
     updateTime: null, // 会话更新标记
     clearTimer: () => {
+      Global.curTab = false;
       if (Global && Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
     },
     onConn: () => {
@@ -144,12 +145,7 @@ function create() {
     // 启动全局定时器
     globalTimer();
   }
-  let imWsTabs = window.localStorage.getItem("im_wsTabs") || "";
-  if (imWsTabs) {
-    imWsTabs = JSON.parse(imWsTabs);
-  } else {
-    imWsTabs = []
-  }
+  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
   imWsTabs.push(tabId);
   window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
   Global.tabId = tabId;
@@ -167,16 +163,11 @@ function create() {
  * 
  */
 function onunload() {
-  let imWsTabs = window.localStorage.getItem("im_wsTabs") || "";
-  if (imWsTabs) {
-    imWsTabs = JSON.parse(imWsTabs);
-  } else {
-    imWsTabs = []
-  }
+  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
   imWsTabs = imWsTabs.filter(tab => tab != Global.tabId);
   window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
+  localNotice.clear(imWsTabs.length === 0);
   if (imWsTabs.length === 0) {
-    localNotice.clear(true);
     localWs.close();
     localDexie.deleteDB();
   } else if (Global.curTab) {
@@ -203,7 +194,7 @@ function globalTimer() {
     let time = new Date().getTime();
     window.localStorage.setItem('im_windowHeartBeat', time);
     count += 1;
-    if (count % 5 === 0) {
+    if (count % 20 === 0) {
       localWs.heartBeatCall();
     }
     if (Global.callEvents && Object.keys(Global.callEvents).length > 0) {
@@ -219,7 +210,7 @@ function globalTimer() {
         }
       }
     }
-  }, 1000);
+  }, 50);
 }
 
 // 初始化会话列表
