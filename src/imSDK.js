@@ -172,12 +172,8 @@ function onunload() {
     localDexie.deleteDB();
   } else if (Global.curTab) {
     if (Global.loginState === declare.IM_LOGIN_STATE.Logged) {
+      window.localStorage.setItem('im_wsConnTab', imWsTabs[0]);
       localWs.close();
-      localDexie.updateInfo({
-        "loginState": declare.IM_LOGIN_STATE.NotLogin,
-      }).then(() => {
-        window.localStorage.setItem('im_wsConnTab', imWsTab[0]);
-      })
     } else {
       window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
     }

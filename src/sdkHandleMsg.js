@@ -42,7 +42,7 @@ function handleMessage(GlobalObj, msimObj, options) {
 // 处理同步消息成功
 function handleSyncMsgs(options) {
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.SyncMsgs, options);
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.SyncMsgs, options);
   }
   if (options.msgList.length > 0 && msim[declare.EVENT.MESSAGE_RECEIVED]) {
     let result = tool.resultNotice(declare.EVENT.MESSAGE_RECEIVED, options.msgList)
@@ -57,7 +57,7 @@ function handleSyncMsgs(options) {
 // 处理同步会话状态变更
 function handleChatChange(options) {
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.SyncChatsChange, options);
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.SyncChatsChange, options);
   } else if (options.state === declare.SYNC_CHAT.SyncChatSuccess) {
     options.chats.forEach(chat => {
       if (Object.prototype.hasOwnProperty.call(Global.chatKeys, chat.conversationID)) {
@@ -105,7 +105,7 @@ function handleWsChange(state) {
   Global.connState = state;
   if (Global.curTab) {
     localDexie.updateInfo({ connState: state });
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.WsStateChange, {
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.WsStateChange, {
       type: declare.HANDLE_TYPE.WsStateChange,
       state: state,
     });
@@ -123,7 +123,7 @@ function handleLogin(options) {
   Global.loginState = declare.IM_LOGIN_STATE.Logged;
   if (Global.curTab) {
     localDexie.updateInfo({ loginState: declare.IM_LOGIN_STATE.Logged, uid: options.data.uid });
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.Online, options);
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.Online, options);
   }
   Global.uid = options.data.uid;
   if (msim[declare.EVENT.LOGIN]) {
@@ -141,7 +141,7 @@ function handleLogin(options) {
 function handleLogout(options) {
   Global.loginState = declare.IM_LOGIN_STATE.NotLogin;
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.Offline, options);
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.Offline, options);
   }
   Global.clearData();
   if (msim[declare.EVENT.LOGOUT]) {
@@ -156,7 +156,7 @@ function handleLogout(options) {
 // 处理被动错误
 function handleError(options) {
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.ErrorType, options);
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.ErrorType, options);
   }
   switch (options.data.code) {
     case declare.ERROR_CODE.KICKED_OUT:
@@ -248,7 +248,7 @@ function handleRevokeMsg(msg, resolve, chatInfo) {
           msim[declare.EVENT.MESSAGE_REVOKED](result);
         }
         if (Global.curTab) {
-          localNotice.onMessageNotice(declare.LOCAL_EVENT.ReceivedMsg, {
+          localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.ReceivedMsg, {
             type: declare.HANDLE_TYPE.ChatR,
             data: newMsg,
           });
@@ -278,7 +278,7 @@ function handleRevokeMsg(msg, resolve, chatInfo) {
 // 处理其他指令消息
 function handleOtherDirectivesMsg(msg, resolve, chatInfo) {
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.ReceivedMsg, {
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.ReceivedMsg, {
       type: declare.HANDLE_TYPE.ChatR,
       data: msg,
     });
@@ -298,7 +298,7 @@ function handleShowMsg(msg, resolve) {
     msim[declare.EVENT.MESSAGE_RECEIVED](result);
   }
   if (Global.curTab) {
-    localNotice.onMessageNotice(declare.LOCAL_EVENT.ReceivedMsg, {
+    localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.ReceivedMsg, {
       type: declare.HANDLE_TYPE.ChatR,
       data: newMsg,
     });
@@ -441,6 +441,7 @@ function getChat(conversationID) {
         localDexie.getChat(conversationID).then((res) => {
           if (res) {
             let newChat = res;
+            console.log(2222, res)
             resolve(newChat);
           } else {
             let callSign = tool.createSign();
@@ -457,6 +458,7 @@ function getChat(conversationID) {
                     Global.chatKeys[conversationID] = newChat;
                     Global.chatList.unshift(newChat);
                   }
+                  console.log(1111, res)
                   resolve(newChat);
                 }
               },
@@ -486,7 +488,7 @@ function updateChatNotice(newChat, resolve) {
   }
   if (Global.curTab) {
     localDexie.updateChat(newChat).then(() => {
-      localNotice.onMessageNotice(declare.LOCAL_EVENT.UpdateChat, {
+      localNotice.onMessageNotice(declare.LOCAL_MESSAGE_TYPE.UpdateChat, {
         type: declare.HANDLE_TYPE.ChatItemUpdate,
         data: newChat
       });

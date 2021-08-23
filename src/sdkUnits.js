@@ -24,7 +24,7 @@ export function getCosKey(Global) {
         let msg = proFormat.cosPro(callSign);
         localWs.sendMessage(msg, declare.PID.GetCosKey);
       } else {
-        localNotice.delChatNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetCosKey, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "state": declare.LOCAL_OPERATION_STATUS.Pending,

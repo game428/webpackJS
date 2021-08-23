@@ -33,18 +33,6 @@ function compress(bytes, pid) {
   return nBytes;
 }
 
-/** 获取token demo用
- * 
- * @param {*} sign 标识
- * @param {*} uid 用户id
- * @returns 
- */
-function tokenPro(sign, uid) {
-  let bytes = GetImToken.encode(
-    GetImToken.create({ sign: sign, phone: uid })
-  ).finish();
-  return bytes;
-}
 /** 获取cos
  * 
  * @param {*} sign 标识
@@ -122,7 +110,7 @@ function chatPro(sign, uid) {
  * @returns 
  */
 function delChatPro(sign, uid) {
-  let bytes = DelChat.encode(DelChat.create({ sign: sign, uid: uid })).finish();
+  let bytes = DelChat.encode(DelChat.create({ sign: sign, toUid: uid })).finish();
   return bytes;
 }
 
@@ -194,7 +182,6 @@ let proFormat = {
   compress,
   loginPro,
   logoutPro,
-  tokenPro,
   chatListPro,
   delChatPro,
   pingPro,

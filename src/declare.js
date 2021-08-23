@@ -32,28 +32,41 @@ const PID = {
   "GetImToken": 57,
 };
 
-// 多tab通讯事件名
-const LOCAL_EVENT = {
-  "Message": 'im_onMessage_',
-  'Online': 'im_online',
-  'Offline': 'im_offline',
-  'Logout': 'im_logout_',
-  'GetChatList': 'im_getConversationList_',
-  'DelChat': 'im_deleteConversation_',
-  'GetMsgList': 'im_getMessageList_',
-  'SendMsg': 'im_sendMessage_',
-  'ResendMsg': 'im_resendMessage_',
-  'RevokeMsg': 'im_revokeMessage_',
-  'ReadMsg': 'im_setMessageRead_',
-  'UpdateChat': 'im_updateChat',
-  'ReceivedMsg': 'im_receivedMessage',
-  "SendMsgTab": 'im_sendMsgTab',
-  "RevokeMsgTab": 'im_revokeMsgTab',
-  "SyncChats": 'im_syncChats',
-  "SyncChatsChange": 'im_syncChatsChange',
-  "SyncMsgs": 'im_syncMsgs',
-  "WsStateChange": 'im_wsStateChange',
-};
+// 多tab通知通讯类型
+const LOCAL_MESSAGE_TYPE = {
+  "Online": "online",
+  "Offline": "offline",
+  "UpdateChat": "updateChat",
+  "ReceivedMsg": "receivedMessage",
+  "ErrorType": "errorType",
+  "SyncChatsChange": "syncChatsChange",
+  "SyncMsgs": "syncMsgs",
+  "WsStateChange": "wsStateChange",
+}
+
+// 多tab操作通讯类型
+const LOCAL_OPERATION_TYPE = {
+  "Message": "im_onMessage_",
+  "WS": "im_onWebsocket_",
+}
+
+
+// 业务操作类型
+const OPERATION_TYPE = {
+  "Login": "login",
+  "Logout": "logout",
+  "GetChats": "getConversationList",
+  "DelChat": "deleteConversation",
+  "GetMsgs": "getMessageList",
+  "Read": "setMessageRead",
+  "Send": "sendMessage",
+  "Resend": "resendMessage",
+  "Revoke": "revokeMessage",
+  "GetCosKey": "getCosKey",
+  "TextMsg": "createTextMessage",
+  "ImgMsg": "createImageMessage",
+  "CustomMsg": "createCustomMessage",
+}
 
 // websocket连接状态
 const WS_STATE = {
@@ -119,15 +132,15 @@ const ERROR_CODE = {
 
 // 消息类型
 const MSG_TYPE = {
-  'Text': 0, // 文本
-  'Img': 1, // 图片
-  'Audio': 2, // 音频
-  'Video': 3, // 视频
-  'GS': 4, // 地理位置
-  'Card': 5, // 用户名片
-  'Revoked': 31, // 已撤回的消息
-  'Revoke': 64, // 撤回操作
-  'Custom': 100, // 自定义消息
+  "Text": 0, // 文本
+  "Img": 1, // 图片
+  "Audio": 2, // 音频
+  "Video": 3, // 视频
+  "GS": 4, // 地理位置
+  "Card": 5, // 用户名片
+  "Revoked": 31, // 已撤回的消息
+  "Revoke": 64, // 撤回操作
+  "Custom": 100, // 自定义消息
 }
 
 // 服务器下发的更新会话的类型
@@ -138,52 +151,35 @@ const CHAT_UPDATE_EVENT = {
   "Deleted": 3,
 }
 
-// 业务操作类型
-const OPERATION_TYPE = {
-  "Login": 'login',
-  "Logout": 'logout',
-  "GetChats": 'getConversationList',
-  "DelChat": 'deleteConversation',
-  "GetMsgs": 'getMessageList',
-  "Read": 'setMessageRead',
-  "Send": 'sendMessage',
-  "Resend": 'resendMessage',
-  "Revoke": 'revokeMessage',
-  "TextMsg": 'createTextMessage',
-  "ImgMsg": 'createImageMessage',
-  "CustomMsg": 'createCustomMessage',
-  "GetToken": 'getToken',
-  "GetCosKey": 'getCosKey',
-}
-
 // 业务通知回调类型
 const EVENT = {
-  "CONNECT_CHANGE": 'onConnectChange', // 连接状态通知
-  "LOGIN": 'onLogin', // 登录成功
-  "LOGOUT": 'onLogout', // 退出成功
-  "SYNC_CHATS_CHANGE": 'onSyncChatsChange', // 同步会话状态通知
-  "MESSAGE_RECEIVED": 'onMessageReceived', // 接收消息监听
-  "MESSAGE_REVOKED": 'onMessageRevoked', // 撤回消息
-  "CONVERSATION_LIST_UPDATED": 'onConversationListUpdated', // 会话列表更新
-  "KICKED_OUT": 'onKickedOut', // 被踢下线
-  "TOKEN_NOT_FOUND": 'onTokenNotFound' // token未找到或过期
+  "CONNECT_CHANGE": "onConnectChange", // 连接状态通知
+  "LOGIN": "onLogin", // 登录成功
+  "LOGOUT": "onLogout", // 退出成功
+  "SYNC_CHATS_CHANGE": "onSyncChatsChange", // 同步会话状态通知
+  "MESSAGE_RECEIVED": "onMessageReceived", // 接收消息监听
+  "MESSAGE_REVOKED": "onMessageRevoked", // 撤回消息
+  "CONVERSATION_LIST_UPDATED": "onConversationListUpdated", // 会话列表更新
+  "KICKED_OUT": "onKickedOut", // 被踢下线
+  "TOKEN_NOT_FOUND": "onTokenNotFound" // token未找到或过期
 };
 
 // 处理消息的枚举类型
 const HANDLE_TYPE = {
-  WsStateChange: 'WsStateChange', // ws状态变化
-  SyncChatsChange: 'SyncChatsChange', // 同步会话状态变化
-  SyncMsgs: 'SyncMsgs', // 同步消息处理
-  ImLogin: 'ImLogin', // 登录
-  ImLogout: 'ImLogout', // 退出
-  ChatItemUpdate: 'ChatItemUpdate', // 更新会话
-  ResultError: 'ResultError', // 接收到特殊错误code
-  ChatR: 'ChatR', // 新消息处理
+  "WsStateChange": "WsStateChange", // ws状态变化
+  "SyncChatsChange": "SyncChatsChange", // 同步会话状态变化
+  "SyncMsgs": "SyncMsgs", // 同步消息处理
+  "ImLogin": "ImLogin", // 登录
+  "ImLogout": "ImLogout", // 退出
+  "ChatItemUpdate": "ChatItemUpdate", // 更新会话
+  "ResultError": "ResultError", // 接收到特殊错误code
+  "ChatR": "ChatR", // 新消息处理
 }
 
 export default {
   PID,
-  LOCAL_EVENT,
+  LOCAL_MESSAGE_TYPE,
+  LOCAL_OPERATION_TYPE,
   WS_STATE,
   IM_LOGIN_STATE,
   MSG_TYPE,

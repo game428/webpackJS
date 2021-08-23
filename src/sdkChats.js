@@ -195,8 +195,6 @@ export function getConversationList(Global, options) {
           },
         }
       }
-      //   getWsChats(defaultOption, resolve, reject)
-      // } else {
     } catch (err) {
       reject(err);
     }
@@ -250,10 +248,11 @@ export function deleteConversation(Global, options) {
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
-        let msg = proFormat.delChatPro(callSign, uid);
+        console.log(uid, 11, options.conversationID)
+        let msg = proFormat.delChatPro(callSign, parseInt(uid));
         localWs.sendMessage(msg, declare.PID.DelChat);
       } else {
-        localNotice.delChatNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.DelChat, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "options": options,

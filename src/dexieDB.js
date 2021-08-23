@@ -118,16 +118,10 @@ localDexie.clear = function() {
 /** sdk信息表操作 */
 // 更新信息表
 localDexie.updateInfo = function(info) {
-  return db.sdkInfo.where({
-    sdkKeys: sdkKey,
-  }).modify(info);
+  return db.sdkInfo.update(sdkKey, info);
 }
 localDexie.getInfo = function() {
-  if (db) {
-    return db.sdkInfo.get(sdkKey);
-  } else {
-    return Promise.resolve();
-  }
+  return db.sdkInfo.get(sdkKey);
 }
 localDexie.initInfo = function() {
   db.sdkInfo.put({

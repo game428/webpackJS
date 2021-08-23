@@ -15,6 +15,7 @@ export function login(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       localDexie.getInfo().then(info => {
+        console.log(1441, info)
         if (!info) {
           localDexie.initInfo();
         }
@@ -166,7 +167,7 @@ export function logout(Global) {
             reject(errResult)
           },
         });
-        localNotice.logoutNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Logout, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "state": declare.LOCAL_OPERATION_STATUS.Pending,

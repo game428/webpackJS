@@ -89,7 +89,7 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
     });
     localWs.sendMessage(msg, declare.PID.GetHistory);
   } else {
-    localNotice.getMsgNotice({
+    localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetMsgs, {
       "tabId": Global.tabId,
       "callSign": callSign,
       "options": defaultOption,
@@ -172,7 +172,7 @@ export function setMessageRead(Global, options) {
         let msg = proFormat.readMsgPro(callSign, uid);
         localWs.sendMessage(msg, declare.PID.MsgRead);
       } else {
-        localNotice.readMsgNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Read, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "options": options,
@@ -256,7 +256,7 @@ export function sendMessage(Global, msgObj) {
         let msg = proFormat.sendMsgPro(proOptions);
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
-        localNotice.sendMsgNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Send, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "options": msgObj,
@@ -317,7 +317,7 @@ export function resendMessage(Global, msgObj) {
         let msg = proFormat.sendMsgPro(proOptions);
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
-        localNotice.resendMsgNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Resend, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "options": msgObj,
@@ -384,7 +384,7 @@ export function revokeMessage(Global, options) {
         let msg = proFormat.revokeMsgPro(callSign, uid, options.msgId);
         localWs.sendMessage(msg, declare.PID.Revoke);
       } else {
-        localNotice.revokeMsgNotice({
+        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Revoke, {
           "callSign": callSign,
           "tabId": Global.tabId,
           "options": options,
