@@ -1,6 +1,5 @@
 import {
   GetCosKey,
-  GetImToken,
   ImLogin,
   ImLogout,
   Ping,
@@ -11,11 +10,11 @@ import {
   ChatS,
   Revoke,
   MsgRead,
-} from './proto.js'
-import pako from 'pako';
+} from "./proto.js";
+import pako from "pako";
 
 /** 压缩处理以及拼接pid
- * 
+ *
  * @param {*} bytes 处理好的消息体
  * @param {*} pid 消息体对应的pid
  */
@@ -26,7 +25,7 @@ function compress(bytes, pid) {
     isCompress = 1;
     compressBytes = pako.deflate(bytes, {
       level: 5,
-      to: 'Uint8Array'
+      to: "Uint8Array",
     });
   }
   let nBytes = new Uint8Array([pid, isCompress, ...compressBytes]);
@@ -34,22 +33,20 @@ function compress(bytes, pid) {
 }
 
 /** 获取cos
- * 
+ *
  * @param {*} sign 标识
- * @returns 
+ * @returns
  */
 function cosPro(sign) {
-  let bytes = GetCosKey.encode(
-    GetCosKey.create({ sign: sign })
-  ).finish();
+  let bytes = GetCosKey.encode(GetCosKey.create({ sign: sign })).finish();
   return bytes;
 }
 
 /** 登录
- * 
+ *
  * @param {*} sign 标识
  * @param {*} imToken token
- * @returns 
+ * @returns
  */
 function loginPro(sign, imToken) {
   let bytes = ImLogin.encode(
@@ -59,9 +56,9 @@ function loginPro(sign, imToken) {
 }
 
 /** 退出
- * 
+ *
  * @param {*} sign 标识
- * @returns 
+ * @returns
  */
 function logoutPro(sign) {
   let bytes = ImLogout.encode(ImLogout.create({ sign: sign })).finish();
@@ -69,10 +66,10 @@ function logoutPro(sign) {
 }
 
 /** 心跳
- * 
+ *
  * @param {*} sign 标识
  * @param {*} imToken token
- * @returns 
+ * @returns
  */
 function pingPro() {
   let bytes = Ping.encode(Ping.create({ type: 1 })).finish();
@@ -80,10 +77,10 @@ function pingPro() {
 }
 
 /** 获取会话记录
- * 
+ *
  * @param {*} sign 标识
  * @param {*} updateTime 会话列表更新时间
- * @returns 
+ * @returns
  */
 function chatListPro(sign, updateTime) {
   let bytes = GetChatList.encode(
@@ -93,10 +90,10 @@ function chatListPro(sign, updateTime) {
 }
 
 /** 获取会话信息
- * 
+ *
  * @param {*} sign 标识
  * @param {*} uid 要获取的会话Id
- * @returns 
+ * @returns
  */
 function chatPro(sign, uid) {
   let bytes = GetChat.encode(GetChat.create({ sign: sign, uid: uid })).finish();
@@ -104,24 +101,26 @@ function chatPro(sign, uid) {
 }
 
 /** 删除会话
- * 
+ *
  * @param {*} sign 标识
  * @param {*} uid 会话id
- * @returns 
+ * @returns
  */
 function delChatPro(sign, uid) {
-  let bytes = DelChat.encode(DelChat.create({ sign: sign, toUid: uid })).finish();
+  let bytes = DelChat.encode(
+    DelChat.create({ sign: sign, toUid: uid })
+  ).finish();
   return bytes;
 }
 
 /** 获取历史消息记录
- * 
+ *
  * @param {*} sign 标识
  * @param {*} uid 会话id
  * @param {*} msgStart //最多拉到这条（不包括此条）
  * @param {*} msgEnd 从这条消息往后拉（不包括此条）
  * @param {*} pageSize 拉多少条，默认20，最多100
- * @returns 
+ * @returns
  */
 function getMsgPro(options) {
   options.offset = options.pageSize;
@@ -131,10 +130,10 @@ function getMsgPro(options) {
 }
 
 /** 发送消息
- * 
+ *
  * @param {* } options
  * @param int64 sign // 唯一标识
- * @param int64 type = 2;// 消息类型 
+ * @param int64 type = 2;// 消息类型
  * @param int64 to_uid = 3; //发送给谁
  * @param string title = 4; //消息内容
  * @param string body = 5; //消息内容
@@ -152,11 +151,11 @@ function sendMsgPro(options) {
 }
 
 /** 撤回消息
- * 
- * @param {*} sign 
+ *
+ * @param {*} sign
  * @param {*} uid 会话id
  * @param {*} msgId 撤回的消息id
- * @returns 
+ * @returns
  */
 function revokeMsgPro(sign, uid, msgId) {
   let bytes = Revoke.encode(
@@ -166,10 +165,10 @@ function revokeMsgPro(sign, uid, msgId) {
 }
 
 /** 设置已读
- * 
- * @param {*} sign 
+ *
+ * @param {*} sign
  * @param {*} uid 会话id
- * @returns 
+ * @returns
  */
 function readMsgPro(sign, uid) {
   let bytes = MsgRead.encode(

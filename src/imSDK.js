@@ -1,11 +1,11 @@
-import declare from './declare.js'
-import localWs from './ws.js';
-import localNotice from './localNotice.js';
-import tool from './tool.js';
-import localDexie from './dexieDB.js';
-import handleMessage from './sdkHandleMsg';
-import { login, logout } from './sdkLogin'
-import { getConversationList, deleteConversation } from './sdkChats'
+import declare from "./declare.js";
+import localWs from "./ws.js";
+import localNotice from "./localNotice.js";
+import tool from "./tool.js";
+import localDexie from "./dexieDB.js";
+import handleMessage from "./sdkHandleMsg";
+import { login, logout } from "./sdkLogin";
+import { getConversationList, deleteConversation } from "./sdkChats";
 import {
   getMessageList,
   setMessageRead,
@@ -15,8 +15,8 @@ import {
   createTextMessage,
   createImageMessage,
   createCustomMessage,
-} from './sdkMessages'
-import { getCosKey } from './sdkUnits'
+} from "./sdkMessages";
+import { getCosKey } from "./sdkUnits";
 
 /**
  *
@@ -28,44 +28,46 @@ const TYPES = tool.readProxy({
   ERROR_CODE: tool.readProxy(declare.ERROR_CODE),
   MSG_TYPE: tool.readProxy(declare.MSG_TYPE),
   IM_LOGIN_STATE: tool.readProxy(declare.IM_LOGIN_STATE),
-})
+});
 // 导出对象
 const IM = tool.readProxy({
   timeOut: 20000,
   TYPES: TYPES,
   EVENT: tool.readProxy(declare.EVENT),
   create,
-})
-
-// SDK实例对象
-var msim = tool.readProxy({
-  "login": (options) => login(Global, options),
-  "logout": () => logout(Global),
-  "sendMessage": (options) => sendMessage(Global, options),
-  "resendMessage": (options) => resendMessage(Global, options),
-  "revokeMessage": (options) => revokeMessage(Global, options),
-  "getMessageList": (options) => getMessageList(Global, options),
-  "setMessageRead": (options) => setMessageRead(Global, options),
-  "getConversationList": (options) => getConversationList(Global, options),
-  // "getConversationProfile": getConversationProfile,
-  "deleteConversation": (options) => deleteConversation(Global, options),
-  "createTextMessage": (options) => createTextMessage(Global, options),
-  "createImageMessage": (options) => createImageMessage(Global, options),
-  "createCustomMessage": (options) => createCustomMessage(Global, options),
-  "getCosKey": () => getCosKey(Global),
-  "on": on,
-  "off": off,
-}, {
-  set: (obj, prop, value) => {
-    if (Object.values(IM.EVENT).indexOf(prop) !== -1) {
-      obj[prop] = value;
-      return true;
-    } else {
-      console.error(`不允许修改${prop}属性`)
-    }
-  }
 });
 
+// SDK实例对象
+var msim = tool.readProxy(
+  {
+    login: (options) => login(Global, options),
+    logout: () => logout(Global),
+    sendMessage: (options) => sendMessage(Global, options),
+    resendMessage: (options) => resendMessage(Global, options),
+    revokeMessage: (options) => revokeMessage(Global, options),
+    getMessageList: (options) => getMessageList(Global, options),
+    setMessageRead: (options) => setMessageRead(Global, options),
+    getConversationList: (options) => getConversationList(Global, options),
+    // "getConversationProfile": getConversationProfile,
+    deleteConversation: (options) => deleteConversation(Global, options),
+    createTextMessage: (options) => createTextMessage(Global, options),
+    createImageMessage: (options) => createImageMessage(Global, options),
+    createCustomMessage: (options) => createCustomMessage(Global, options),
+    getCosKey: () => getCosKey(Global),
+    on: on,
+    off: off,
+  },
+  {
+    set: (obj, prop, value) => {
+      if (Object.values(IM.EVENT).indexOf(prop) !== -1) {
+        obj[prop] = value;
+        return true;
+      } else {
+        console.error(`不允许修改${prop}属性`);
+      }
+    },
+  }
+);
 
 let Global = null;
 
@@ -93,21 +95,21 @@ function initGlobal() {
     updateTime: null, // 会话更新标记
     clearTimer: () => {
       Global.curTab = false;
-      if (Global && Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
+      if (Global?.heartBeatTimer) clearInterval(Global.heartBeatTimer);
     },
     onConn: () => {
       Global.handleMessage({
-        "type": declare.HANDLE_TYPE.WsStateChange,
-        "state": declare.WS_STATE.Connecting,
-      })
+        type: declare.HANDLE_TYPE.WsStateChange,
+        state: declare.WS_STATE.Connecting,
+      });
     },
     handleMessage: (options) => {
-      handleMessage(Global, msim, options)
+      handleMessage(Global, msim, options);
     },
     globalTimer: globalTimer,
     clearData: clearData,
     initChats: initChats,
-  }
+  };
 }
 
 // 退出时清理所有
@@ -133,11 +135,15 @@ function create() {
   let tabId = tool.uuid();
   let windowHeartBeat = window.localStorage.getItem("im_windowHeartBeat");
   let time = new Date().getTime();
+  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
+  imWsTabs.push(tabId);
+  window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
+  Global.tabId = tabId;
   if (!windowHeartBeat) {
     window.localStorage.setItem("im_wsCurId", tabId);
     // 启动全局定时器
     globalTimer();
-  } else if (windowHeartBeat < (time - 3000)) {
+  } else if (windowHeartBeat < time - 3000) {
     localNotice.clear();
     localWs.close();
     localDexie.deleteDB();
@@ -145,41 +151,36 @@ function create() {
     // 启动全局定时器
     globalTimer();
   }
-  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
-  imWsTabs.push(tabId);
-  window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
-  Global.tabId = tabId;
   window.onunload = () => {
-    onunload()
+    onunload();
   };
-  window.addEventListener("storage", storage => {
+  window.addEventListener("storage", (storage) => {
     localNotice.watchStorage(storage, msim, Global);
   });
-  localDexie.initDB(Global)
-  return msim
+  localDexie.initDB(Global);
+  return msim;
 }
 
 /** 浏览器Tab关闭
- * 
+ *
  */
 function onunload() {
   let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
-  imWsTabs = imWsTabs.filter(tab => tab != Global.tabId);
+  imWsTabs = imWsTabs.filter((tab) => tab != Global.tabId);
   window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
   localNotice.clear(imWsTabs.length === 0);
+  localWs.close();
   if (imWsTabs.length === 0) {
-    localWs.close();
     localDexie.deleteDB();
   } else if (Global.curTab) {
+    Global.clearTimer();
     if (Global.loginState === declare.IM_LOGIN_STATE.Logged) {
-      window.localStorage.setItem('im_wsConnTab', imWsTabs[0]);
-      localWs.close();
+      window.localStorage.setItem("im_wsConnTab", imWsTabs[0]);
     } else {
       window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
     }
   }
 }
-
 
 // 启动定时器
 function globalTimer() {
@@ -188,22 +189,25 @@ function globalTimer() {
   if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
   Global.heartBeatTimer = setInterval(() => {
     let time = new Date().getTime();
-    window.localStorage.setItem('im_windowHeartBeat', time);
+    window.localStorage.setItem("im_windowHeartBeat", time);
     count += 1;
     if (count % 20 === 0) {
       localWs.heartBeatCall();
     }
-    if (Global.callEvents && Object.keys(Global.callEvents).length > 0) {
-      let signTime = tool.createSign(time - IM.timeOut);
-      for (let key in Global.callEvents) {
-        if (key <= signTime) {
-          let callEvent = Global.callEvents[key];
-          delete Global.callEvents[key];
-          callEvent.callErr(new Error(JSON.stringify({
-            "code": declare.ERROR_CODE.TIMEOUT,
-            "msg": callEvent.type + ': connection timed out'
-          })))
-        }
+    if (!Global.callEvents || !Object.keys(Global.callEvents).length) return;
+    let signTime = tool.createSign(time - IM.timeOut);
+    for (let key in Global.callEvents) {
+      if (key <= signTime) {
+        let callEvent = Global.callEvents[key];
+        delete Global.callEvents[key];
+        callEvent.callErr(
+          new Error(
+            JSON.stringify({
+              code: declare.ERROR_CODE.TIMEOUT,
+              msg: callEvent.type + ": connection timed out",
+            })
+          )
+        );
       }
     }
   }, 50);
@@ -212,24 +216,29 @@ function globalTimer() {
 // 初始化会话列表
 function initChats() {
   return new Promise((resolve, reject) => {
-    localDexie.getChatList().then(chats => {
-      chats.forEach(chat => {
+    localDexie.getChatList().then((chats) => {
+      chats.forEach((chat) => {
         // 如果内存已有该chat，则通过对象合并更新
-        if (Object.prototype.hasOwnProperty.call(Global.chatKeys, chat.conversationID)) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            Global.chatKeys,
+            chat.conversationID
+          )
+        ) {
           let oldChat = Global.chatKeys[chat.conversationID];
           Object.assign(oldChat, chat);
         } else {
           Global.chatKeys[chat.conversationID] = chat;
           Global.chatList.push(chat);
         }
-      })
+      });
       Global.chatsSync = declare.SYNC_CHAT.SyncChatSuccess;
       for (let key in Global.chatCallEvents) {
         Global.chatCallEvents[key].callSuc();
       }
       resolve();
-    })
-  })
+    });
+  });
 }
 
 /** 添加事件监听

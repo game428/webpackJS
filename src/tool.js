@@ -1,7 +1,6 @@
-import declare from './declare.js'
+import declare from "./declare.js";
 
 const tool = {
-  uniq,
   getPageSize,
   sort,
   uuid,
@@ -30,35 +29,19 @@ const tool = {
   preJudge,
 };
 
-// 数组去重
-function uniq(array, key) {
-  let newArr = [];
-  let repeatArr = [];
-  let set = new Set();
-  array.forEach(item => {
-    if (set.has(item[key])) return;
-    set.add(item[key]);
-    newArr.push(item);
-  });
-  return {
-    newArr,
-    repeatArr,
-  };
-}
-
 // 按时间排序
 function sort(array, key) {
   let newArr = array.sort((pre, next) => {
     return next[key] - pre[key];
-  })
+  });
   return newArr;
 }
 
 // 获取分页
 function getPageSize(val, key, arr, pageSize) {
   if (!val) return arr;
-  if (!arr || arr.length === 0) return [];
-  let index = arr.findIndex(item => item[key] === val);
+  if (!arr?.length) return [];
+  let index = arr.findIndex((item) => item[key] === val);
   if (index !== -1 && index !== arr.length - 1) {
     return arr.slice(index + 1, index + 1 + pageSize);
   } else {
@@ -83,25 +66,25 @@ function uuid() {
 // 是否为字符串切存在
 function isNotString(str, empty) {
   if (!empty) {
-    return typeof str !== 'string' || str === '';
+    return typeof str !== "string" || str === "";
   } else {
-    return typeof str !== 'string';
+    return typeof str !== "string";
   }
 }
 
 // 是否为数字类型
 function isNotNumer(num, empty) {
   if (!empty) {
-    return typeof num !== 'number';
+    return typeof num !== "number";
   } else {
-    return typeof num !== 'number' || num === 0;
+    return typeof num !== "number" || num === 0;
   }
 }
 
 // 是否字节超长
 function isNotSize(str, maxSize) {
   let size = new Blob([str], {
-    type: 'application/json'
+    type: "application/json",
   }).size;
   return size > (maxSize || 3 * 1024);
 }
@@ -113,31 +96,37 @@ function isNotEmpty(str) {
 
 // 是否为网络地址
 function isNotHttp(str) {
-  return typeof str !== 'string' || (str.indexOf('http://') !== 0 && str.indexOf('https://') !== 0);
+  return (
+    typeof str !== "string" ||
+    (str.indexOf("http://") !== 0 && str.indexOf("https://") !== 0)
+  );
 }
 
 // 是否为ws连接
 function isNotWs(str) {
-  return typeof str !== 'string' || (str.indexOf('ws://') !== 0 && str.indexOf('wss://') !== 0);
+  return (
+    typeof str !== "string" ||
+    (str.indexOf("ws://") !== 0 && str.indexOf("wss://") !== 0)
+  );
 }
 
 // 类型是否为对象，切某个key存在
 function isNotObject(obj, key, type) {
-  if (typeof obj !== 'object') {
+  if (typeof obj !== "object") {
     return true;
   }
   if (key) {
     switch (type) {
-      case 'string':
+      case "string":
         return isNotString(obj[key]);
-      case 'number':
+      case "number":
         return isNotNumer(obj[key]);
-      case 'http':
+      case "http":
         return isNotHttp(obj[key]);
-      case 'ws':
+      case "ws":
         return isNotWs(obj[key]);
       default:
-        return isNotEmpty(obj[key])
+        return isNotEmpty(obj[key]);
     }
   }
 }
@@ -156,9 +145,9 @@ function createOnlyId(conversationID, sign) {
 function createSign(date) {
   let callSign;
   if (date) {
-    callSign = (date * 1000);
+    callSign = date * 1000;
   } else {
-    callSign = (new Date().getTime() * 1000);
+    callSign = new Date().getTime() * 1000;
   }
   return callSign;
 }
@@ -169,7 +158,7 @@ function resultErr(msg, name, code) {
     name: name,
     code: code || declare.ERROR_CODE.ERROR,
     msg: msg,
-  }
+  };
 }
 
 // 失败回调参数
@@ -178,7 +167,7 @@ function serverErr(data, name) {
     name: name,
     code: data.code || declare.ERROR_CODE.ERROR,
     msg: data.msg,
-  }
+  };
 }
 
 // 参数错误
@@ -187,7 +176,7 @@ function parameterErr(options) {
     code: declare.ERROR_CODE.PARAMETER,
     name: options.name,
     msg: options.msg || emptyTip(options.key),
-  }
+  };
 }
 
 // 成功回调参数
@@ -196,16 +185,16 @@ function resultSuc(name, data) {
     code: declare.ERROR_CODE.SUCCESS,
     name: name,
     data: JSON.parse(JSON.stringify(data)),
-  }
+  };
 }
 
 // 通知回调参数
 function resultNotice(name, data, code) {
   return {
-    "name": name,
-    "code": code || declare.ERROR_CODE.SUCCESS,
-    "data": JSON.parse(JSON.stringify(data)),
-  }
+    name: name,
+    code: code || declare.ERROR_CODE.SUCCESS,
+    data: JSON.parse(JSON.stringify(data)),
+  };
 }
 
 // 是否为可见消息
@@ -227,12 +216,12 @@ function msgBase(toUid, fromUid) {
     msgId: 0,
     showMsgTime: time,
     sendStatus: declare.SEND_STATE.BFIM_MSG_STATUS_SENDING,
-  }
+  };
 }
 
 // 拼接单聊conversationID
 function splicingC2CId(uid) {
-  return 'C2C_' + uid;
+  return "C2C_" + uid;
 }
 
 // 反格式化单聊conversationID
@@ -245,7 +234,7 @@ function formatMsg(msg, conversationID) {
   let newMsg = msg;
   let msgTime = newMsg.msgTime;
   if (!newMsg.sign) {
-    newMsg.sign = msgTime
+    newMsg.sign = msgTime;
   }
   let onlyId = createOnlyId(conversationID, newMsg.sign);
   newMsg.showMsgTime = parseInt(msgTime / 1000);
@@ -285,43 +274,51 @@ function readProxy(obj, options) {
       return obj[prop];
     },
     set: (obj, prop, value) => {
-      console.error(`不允许修改${prop}属性`)
+      console.error(`不允许修改${prop}属性`);
     },
     deleteProperty: (obj, prop) => {
-      console.error(`不允许删除${prop}属性`)
+      console.error(`不允许删除${prop}属性`);
       return false;
-    }
+    },
   };
-  if (typeof options === 'object') {
+  if (typeof options === "object") {
     Object.assign(handler, options);
   }
-  return new Proxy(obj, handler)
+  return new Proxy(obj, handler);
 }
 
 // 注册回调事件
 function createCallEvent(Global, options) {
   Global.callEvents[options.callSign] = {
-    "tabId": Global.tabId,
-    "type": options.type,
-    "callSuc": (res) => {
+    tabId: Global.tabId,
+    type: options.type,
+    callSuc: (res) => {
       delete Global.callEvents[options.callSign];
       options.callSuc && options.callSuc(res);
     },
-    "callErr": (err) => {
+    callErr: (err) => {
       delete Global.callEvents[options.callSign];
-      options.callErr && options.callErr(err)
+      options.callErr && options.callErr(err);
     },
-  }
+  };
 }
 
 // 公共判断
 function preJudge(Global, reject) {
   if (Global.curTab && Global.connState !== declare.WS_STATE.Connect) {
-    let errResult = tool.resultErr('未连接', 'wsConnect', declare.ERROR_CODE.DISCONNECT)
+    let errResult = tool.resultErr(
+      "未连接",
+      "wsConnect",
+      declare.ERROR_CODE.DISCONNECT
+    );
     reject ? reject(errResult) : console.error(errResult);
     return false;
   } else if (Global.loginState === declare.IM_LOGIN_STATE.NotLogin) {
-    let errResult = tool.resultErr('IMSDK未登录', declare.OPERATION_TYPE.Login, declare.ERROR_CODE.NOLOGIN)
+    let errResult = tool.resultErr(
+      "IMSDK未登录",
+      declare.OPERATION_TYPE.Login,
+      declare.ERROR_CODE.NOLOGIN
+    );
     reject ? reject(errResult) : console.error(errResult);
     return false;
   }

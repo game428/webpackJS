@@ -9,10 +9,10 @@ import {
   ChatR,
   ChatItem,
   ChatItemUpdate,
-} from './proto';
-import proFormat from './proFormat.js';
-import declare from './declare.js';
-import pako from 'pako';
+} from "./proto";
+import proFormat from "./proFormat.js";
+import declare from "./declare.js";
+import pako from "pako";
 let localWs = {
   ws: null,
   Global: null,
@@ -24,7 +24,7 @@ let localWs = {
   wsStatus: false, // 当前连接状态
   chatListEvent: null, // 获取会话sign
   chatFormatList: [], // 会话列表
-}
+};
 
 // 连接ws
 localWs.connect = function(Global, connSuc, connErr) {
@@ -33,12 +33,12 @@ localWs.connect = function(Global, connSuc, connErr) {
   localWs.Global = Global;
   let wsUrl = localWs.Global.wsUrl;
   createWs(wsUrl, connSuc, connErr);
-  window.removeEventListener('online', online(wsUrl, connSuc, connErr));
-  window.addEventListener('online', online(wsUrl, connSuc, connErr));
-  window.addEventListener('offline', () => {
+  window.removeEventListener("online", online(wsUrl, connSuc, connErr));
+  window.addEventListener("online", online(wsUrl, connSuc, connErr));
+  window.addEventListener("offline", () => {
     localWs.ws.close();
   });
-}
+};
 
 // 上线重连
 function online(wsUrl, connSuc, connErr) {
@@ -54,7 +54,7 @@ localWs.sendMessage = function(msg, pid) {
     let sendMsg = proFormat.compress(msg, pid);
     localWs.ws.send(sendMsg);
   }
-}
+};
 
 // 关闭连接
 localWs.close = function() {
@@ -63,7 +63,7 @@ localWs.close = function() {
     localWs.ws.close();
   }
   reset();
-}
+};
 
 function reset() {
   if (localWs.reconnectTimer) clearTimeout(localWs.reconnectTimer);
@@ -79,36 +79,36 @@ function reset() {
 
 // 初始化ws
 function createWs(wsUrl, connSuc, connErr, isReconect) {
-  localWs.Global.onConn()
+  localWs.Global.onConn();
   localWs.ws = new WebSocket(wsUrl);
-  localWs.ws.binaryType = 'arraybuffer';
+  localWs.ws.binaryType = "arraybuffer";
   localWs.ws.onopen = (evt) => {
     localWs.reconnectNum = 0;
     localWs.closeState = false;
     localWs.heartBeatTime = new Date().getTime();
-    if (typeof connSuc === 'function') connSuc(isReconect);
+    if (typeof connSuc === "function") connSuc(isReconect);
   };
   localWs.ws.onmessage = onMessage;
   localWs.ws.onclose = (err) => {
     console.log("Connection closed.", err);
     reconnect(wsUrl, connSuc, connErr);
-    if (typeof connErr === 'function') connErr(err);
+    if (typeof connErr === "function") connErr(err);
   };
   localWs.ws.onerror = (err) => {
-    console.log('连接错误');
+    console.log("连接错误");
     reconnect(wsUrl, connSuc, connErr);
   };
 }
 
 localWs.heartBeatCall = function() {
-  if (!localWs.ws || localWs.ws.readyState !== 1) return;
+  if (localWs?.ws?.readyState !== 1) return;
   let date = new Date().getTime();
   if (localWs.heartBeatTime + localWs.heartRate <= date) {
     var msg = proFormat.compress(proFormat.pingPro(), declare.PID.Ping);
     localWs.ws.send(msg);
   }
-  localWs.heartBeatTime = date
-}
+  localWs.heartBeatTime = date;
+};
 
 // 重连
 function reconnect(wsUrl, connSuc, connErr) {
@@ -116,7 +116,7 @@ function reconnect(wsUrl, connSuc, connErr) {
   localWs.wsStatus = true;
   localWs.reconnectTimer = setTimeout(function() {
     if (localWs.reconnectNum === 0) {
-      localWs.reconnectNum = 250
+      localWs.reconnectNum = 250;
     } else {
       localWs.reconnectNum *= 2;
     }
@@ -131,35 +131,35 @@ function onMessage(evt) {
   var result = evt.data.slice(2);
   if (new Uint8Array(evt.data.slice(1, 2))[0] === 1) {
     result = pako.inflate(result, {
-      to: 'Uint8Array'
+      to: "Uint8Array",
     });
   }
   result = new Uint8Array(result);
-  console.log('接收到消息', pid);
+  console.log("接收到消息", pid);
   switch (pid) {
     case declare.PID.Result:
       handleResult(result);
       break;
     case declare.PID.ChatList:
-      handleChatList(result)
+      handleChatList(result);
       break;
     case declare.PID.ChatRBatch:
-      handleMsgList(result)
+      handleMsgList(result);
       break;
     case declare.PID.ChatR:
-      handleMsg(result)
+      handleMsg(result);
       break;
     case declare.PID.ChatSR:
-      handleSend(result)
+      handleSend(result);
       break;
     case declare.PID.ChatItemUpdate:
-      handleUpdateChat(result)
+      handleUpdateChat(result);
       break;
     case declare.PID.ChatItem:
-      handleGetChat(result)
+      handleGetChat(result);
       break;
     case declare.PID.CosKey:
-      handleGetCosKey(result)
+      handleGetCosKey(result);
       break;
     case declare.PID.ProfileOnline:
       // let resultPro = ProfileOnline.toObject(ProfileOnline.decode(result), {
@@ -180,11 +180,11 @@ function onMessage(evt) {
 function handleResult(result) {
   let resultPro = Result.toObject(Result.decode(result), {
     defaults: true,
-  })
+  });
   const code = resultPro.code;
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
   }
   switch (code) {
@@ -211,16 +211,12 @@ function handleResult(result) {
       });
       callEvent && callEvent.callErr(resultPro);
       break;
-    case 9: // 用户不存在 或服务器满载暂不接受新请求
-      localWs.closeState = true;
-      localWs.ws.close();
-      callEvent && callEvent.callErr(resultPro);
-      break;
     case 12: // 用户的会话列表为空
-      callEvent && callEvent.callSuc({
-        chats: [],
-        hasMore: false,
-      });
+      callEvent &&
+        callEvent.callSuc({
+          chats: [],
+          hasMore: false,
+        });
       break;
     case 2008: // 被踢下线
       localWs.closeState = true;
@@ -241,15 +237,15 @@ function handleResult(result) {
 function handleGetCosKey(result) {
   let resultPro = CosKey.toObject(CosKey.decode(result), {
     defaults: true,
-  })
+  });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
-    console.log('coskey', resultPro)
-    callEvent && callEvent.callSuc({
-      data: resultPro,
-    });
+    callEvent &&
+      callEvent.callSuc({
+        data: resultPro,
+      });
   }
 }
 
@@ -257,8 +253,8 @@ function handleGetCosKey(result) {
 function handleChatList(result) {
   let resultPro = ChatList.toObject(ChatList.decode(result), {
     defaults: true,
-  })
-  localWs.chatFormatList.push(...resultPro.chatItems)
+  });
+  localWs.chatFormatList.push(...resultPro.chatItems);
   if (resultPro.updateTime && localWs.chatListEvent) {
     localWs.chatListEvent.callSuc({
       chats: localWs.chatFormatList,
@@ -273,15 +269,16 @@ function handleChatList(result) {
 function handleMsgList(result) {
   let resultPro = ChatRBatch.toObject(ChatRBatch.decode(result), {
     defaults: true,
-  })
+  });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
     // 如果没有回调事件则不处理
-    callEvent && callEvent.callSuc({
-      messages: resultPro.msgs,
-    });
+    callEvent &&
+      callEvent.callSuc({
+        messages: resultPro.msgs,
+      });
   }
 }
 
@@ -289,15 +286,16 @@ function handleMsgList(result) {
 function handleSend(result) {
   let resultPro = ChatSR.toObject(ChatSR.decode(result), {
     defaults: true,
-  })
+  });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
     // 如果没有回调事件则不处理
-    callEvent && callEvent.callSuc({
-      data: resultPro,
-    });
+    callEvent &&
+      callEvent.callSuc({
+        data: resultPro,
+      });
   }
 }
 
@@ -305,10 +303,10 @@ function handleSend(result) {
 function handleMsg(result) {
   let resultPro = ChatR.toObject(ChatR.decode(result), {
     defaults: true,
-  })
+  });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
     // 如果没有回调事件则不处理
     if (callEvent) {
@@ -328,15 +326,16 @@ function handleMsg(result) {
 function handleGetChat(result) {
   let resultPro = ChatItem.toObject(ChatItem.decode(result), {
     defaults: true,
-  })
+  });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
     // 如果没有回调事件则不处理
-    callEvent && callEvent.callSuc({
-      data: resultPro,
-    });
+    callEvent &&
+      callEvent.callSuc({
+        data: resultPro,
+      });
   }
 }
 
@@ -344,21 +343,21 @@ function handleGetChat(result) {
 function handleUpdateChat(result) {
   let resultPro = ChatItemUpdate.toObject(ChatItemUpdate.decode(result), {
     defaults: true,
-  })
+  });
   localWs.Global.handleMessage({
     type: declare.HANDLE_TYPE.ChatItemUpdate,
     data: resultPro,
   });
   var callEvents = localWs.Global.callEvents;
   var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, 'sign')) {
+  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
     // 如果没有回调事件则不处理
-    callEvent && callEvent.callSuc({
-      data: resultPro,
-    });
+    callEvent &&
+      callEvent.callSuc({
+        data: resultPro,
+      });
   }
 }
-
 
 export default localWs;

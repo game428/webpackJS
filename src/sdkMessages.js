@@ -1,9 +1,9 @@
-import tool from './tool';
-import declare from './declare'
-import proFormat from './proFormat';
-import localWs from './ws';
-import localNotice from './localNotice';
-import localDexie from './dexieDB';
+import tool from "./tool";
+import declare from "./declare";
+import proFormat from "./proFormat";
+import localWs from "./ws";
+import localNotice from "./localNotice";
+import localDexie from "./dexieDB";
 
 /** 获取消息列表
  * 本tab内存 》 本地DB 》 服务器
@@ -11,114 +11,123 @@ import localDexie from './dexieDB';
  * @param {*} conversationID 获取用户的id
  * @param {*} msgEnd 消息id，从哪一条开始往后取
  * @param {number} pageSize 分页条数，默认20
- * @returns 
+ * @returns
  */
 export function getMessageList(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
-        return
-      } else if (tool.isNotObject(options, 'conversationID', 'string')) {
-        let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.GetMsgs, 'key': 'conversationID' });
-        return reject(errResult)
+        return;
+      } else if (tool.isNotObject(options, "conversationID", "string")) {
+        let errResult = tool.parameterErr({
+          name: declare.OPERATION_TYPE.GetMsgs,
+          key: "conversationID",
+        });
+        return reject(errResult);
       } else if (options.pageSize && options.pageSize > Global.maxMsgPageSize) {
-        let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.GetMsgs, 'msg': `最大条数不能超过${Global.maxMsgPageSize}条` });
-        return reject(errResult)
+        let errResult = tool.parameterErr({
+          name: declare.OPERATION_TYPE.GetMsgs,
+          msg: `最大条数不能超过${Global.maxMsgPageSize}条`,
+        });
+        return reject(errResult);
       }
       if (options.msgEnd === 1) {
         let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
           conversationID: options.conversationID,
           messages: [],
-          hasMore: false
+          hasMore: false,
         });
         return resolve(result);
       }
       let defaultOption = {
         tabId: Global.tabId,
         pageSize: Global.msgPageSize,
-      }
-      Object.assign(defaultOption, options)
+      };
+      Object.assign(defaultOption, options);
       if (defaultOption.tabId !== Global.tabId) {
         getWsMsgs(Global, defaultOption, resolve, reject);
       } else {
         localDexie.addChatKey(defaultOption.conversationID);
         localDexie.getMsgList(defaultOption).then((data) => {
-          if (data.length < 1 || (data[0].msgId > 1 && data.length < defaultOption.pageSize)) {
+          if (
+            data.length < 1 ||
+            (data[0].msgId > 1 && data.length < defaultOption.pageSize)
+          ) {
             // 如果本地没有msgId等于1的消息,且本地消息不足一页则去服务器获取
             getWsMsgs(Global, defaultOption, resolve, reject, data);
           } else {
             resultMsgs(defaultOption, resolve, data);
           }
-        })
+        });
       }
     } catch (err) {
       reject(err);
     }
-  })
+  });
 }
 
 // 从服务器获取消息列表
 function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
-    "type": declare.OPERATION_TYPE.GetMsgs,
-    "callSign": callSign,
-    "callSuc": (res) => {
-      if (res.messages && res.messages.length > 0) {
-        getMsgsSuc(Global, defaultOption, res, resolve, msgs)
+    type: declare.OPERATION_TYPE.GetMsgs,
+    callSign: callSign,
+    callSuc: (res) => {
+      if (res?.messages?.length) {
+        getMsgsSuc(Global, defaultOption, res, resolve, msgs);
       } else {
         let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
           conversationID: defaultOption.conversationID,
           messages: [],
-          hasMore: false
+          hasMore: false,
         });
         resolve(result);
       }
     },
-    "callErr": (err) => {
-      let errResult = tool.serverErr(err, declare.OPERATION_TYPE.GetMsgs)
-      reject(errResult)
-    }
+    callErr: (err) => {
+      let errResult = tool.serverErr(err, declare.OPERATION_TYPE.GetMsgs);
+      reject(errResult);
+    },
   });
   if (Global.curTab) {
     let uid = tool.reformatC2CId(defaultOption.conversationID);
     let msg = proFormat.getMsgPro({
       sign: callSign,
       uid: uid,
-      msgEnd: defaultOption.msgEnd
+      msgEnd: defaultOption.msgEnd,
     });
     localWs.sendMessage(msg, declare.PID.GetHistory);
   } else {
     localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetMsgs, {
-      "tabId": Global.tabId,
-      "callSign": callSign,
-      "options": defaultOption,
-      "state": declare.LOCAL_OPERATION_STATUS.Pending,
-    })
+      tabId: Global.tabId,
+      callSign: callSign,
+      options: defaultOption,
+      state: declare.LOCAL_OPERATION_STATUS.Pending,
+    });
   }
 }
 
-// TODO 
+// TODO
 // 获取消息列表成功回调
 function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
   if (Global.curTab) {
     let newMsgs = [];
-    res.messages.forEach(msg => {
+    res.messages.forEach((msg) => {
       // TODO 非增量更新，不处理指令消息
       if (tool.isSo(msg.type)) {
-        let newMsg = tool.formatMsg(msg, defaultOption.conversationID)
+        let newMsg = tool.formatMsg(msg, defaultOption.conversationID);
         newMsgs.push(newMsg);
       }
     });
     if (newMsgs.length > 0) {
-      localDexie.addMsgList(newMsgs)
+      localDexie.addMsgList(newMsgs);
     }
-    if (msgs && msgs.length > 0) {
+    if (msgs?.length) {
       newMsgs.push(...msgs);
     }
-    resultMsgs(defaultOption, resolve, newMsgs.reverse())
+    resultMsgs(defaultOption, resolve, newMsgs.reverse());
   } else {
-    resultMsgs(defaultOption, resolve, res.messages)
+    resultMsgs(defaultOption, resolve, res.messages);
   }
 }
 
@@ -127,12 +136,12 @@ function resultMsgs(defaultOption, resolve, msgs) {
   let resultData = msgs.slice(0 - defaultOption.pageSize);
   let hasMore = false;
   if (resultData.length > 0) {
-    hasMore = resultData[resultData.length - 1].msgId !== 1;
+    hasMore = resultData[0].msgId !== 1;
   }
   let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
     conversationID: defaultOption.conversationID,
     messages: resultData,
-    hasMore: hasMore
+    hasMore: hasMore,
   });
   resolve(result);
 }
@@ -144,17 +153,19 @@ export function setMessageRead(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
-        return
-      } else if (tool.isNotObject(options, 'conversationID', 'string')) {
-        console.log(1111, options)
-        let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Read, 'key': 'conversationID' });
-        return reject(errResult)
+        return;
+      } else if (tool.isNotObject(options, "conversationID", "string")) {
+        let errResult = tool.parameterErr({
+          name: declare.OPERATION_TYPE.Read,
+          key: "conversationID",
+        });
+        return reject(errResult);
       }
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        "type": declare.OPERATION_TYPE.Read,
-        "callSign": callSign,
-        "callSuc": (res) => {
+        type: declare.OPERATION_TYPE.Read,
+        callSign: callSign,
+        callSuc: (res) => {
           let result = tool.resultSuc(declare.OPERATION_TYPE.Read, {
             conversationID: res.conversationID,
             msgId: options.msgId,
@@ -162,10 +173,10 @@ export function setMessageRead(Global, options) {
           });
           resolve(result);
         },
-        "callErr": (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Read)
-          reject(errResult)
-        }
+        callErr: (err) => {
+          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Read);
+          reject(errResult);
+        },
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
@@ -173,16 +184,16 @@ export function setMessageRead(Global, options) {
         localWs.sendMessage(msg, declare.PID.MsgRead);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Read, {
-          "callSign": callSign,
-          "tabId": Global.tabId,
-          "options": options,
-          "state": declare.LOCAL_OPERATION_STATUS.Pending,
-        })
+          callSign: callSign,
+          tabId: Global.tabId,
+          options: options,
+          state: declare.LOCAL_OPERATION_STATUS.Pending,
+        });
       }
     } catch (err) {
       reject(err);
     }
-  })
+  });
 }
 
 // 消息参数判断
@@ -190,40 +201,64 @@ function isMsgError(Global, msgObj, reject, proOptions) {
   let errResult = null;
   if (!tool.preJudge(Global, reject)) {
     return true;
-  } else if (tool.isNotObject(msgObj, 'type', 'number')) {
-    errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'type' });
+  } else if (tool.isNotObject(msgObj, "type", "number")) {
+    errResult = tool.parameterErr({
+      name: declare.OPERATION_TYPE.Send,
+      key: "type",
+    });
   } else {
     switch (msgObj.type) {
       case declare.MSG_TYPE.Text:
         if (tool.isNotString(msgObj.text)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'text' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            key: "text",
+          });
         } else if (tool.isNotSize(msgObj.text)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'msg': 'text长度超过3K' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            msg: "text长度超过3K",
+          });
         }
-        proOptions.body = msgObj.text
+        proOptions.body = msgObj.text;
         break;
       case declare.MSG_TYPE.Img:
         if (tool.isNotHttp(msgObj.url)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'url' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            key: "url",
+          });
         } else if (tool.isNotEmpty(msgObj.height)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'height' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            key: "height",
+          });
         } else if (tool.isNotEmpty(msgObj.width)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'width' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            key: "width",
+          });
         }
         proOptions.body = msgObj.url;
         break;
       case declare.MSG_TYPE.Custom:
         if (tool.isNotString(msgObj.content)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'key': 'content' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            key: "content",
+          });
         } else if (tool.isNotSize(msgObj.content)) {
-          errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Send, 'msg': 'content长度超过3K' });
+          errResult = tool.parameterErr({
+            name: declare.OPERATION_TYPE.Send,
+            msg: "content长度超过3K",
+          });
         }
         proOptions.body = msgObj.data;
         break;
     }
   }
   if (errResult) {
-    reject(errResult)
+    reject(errResult);
     return true;
   } else {
     return false;
@@ -240,15 +275,15 @@ export function sendMessage(Global, msgObj) {
       if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
-        "type": declare.OPERATION_TYPE.Send,
-        "callSign": callSign,
-        "callSuc": (res) => {
-          sendMsgSuc(Global, msgObj, res, resolve)
+        type: declare.OPERATION_TYPE.Send,
+        callSign: callSign,
+        callSuc: (res) => {
+          sendMsgSuc(Global, msgObj, res, resolve);
         },
-        "callErr": (err) => {
+        callErr: (err) => {
           let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Send);
           reject(errResult);
-        }
+        },
       });
       if (Global.curTab) {
         proOptions.sign = callSign;
@@ -257,18 +292,17 @@ export function sendMessage(Global, msgObj) {
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Send, {
-          "callSign": callSign,
-          "tabId": Global.tabId,
-          "options": msgObj,
-          "state": declare.LOCAL_OPERATION_STATUS.Pending,
-        })
+          callSign: callSign,
+          tabId: Global.tabId,
+          options: msgObj,
+          state: declare.LOCAL_OPERATION_STATUS.Pending,
+        });
       }
     } catch (err) {
       reject(err);
     }
-  })
+  });
 }
-
 
 // 发送消息成功回调
 function sendMsgSuc(Global, msgObj, res, resolve) {
@@ -278,10 +312,10 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
     newMsg.msgTime = res.data.msgTime;
     newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
     Global.handleMessage({
-      "type": declare.HANDLE_TYPE.ChatR,
-      "shift": true,
-      "data": newMsg,
-    })
+      type: declare.HANDLE_TYPE.ChatR,
+      shift: true,
+      data: newMsg,
+    });
   }
   let result = tool.resultSuc(declare.OPERATION_TYPE.Send, {
     conversationID: msgObj.conversationID,
@@ -301,15 +335,15 @@ export function resendMessage(Global, msgObj) {
       if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
-        "type": declare.OPERATION_TYPE.Resend,
-        "callSign": callSign,
-        "callSuc": (res) => {
-          resendMsgSuc(Global, msgObj, res, resolve)
+        type: declare.OPERATION_TYPE.Resend,
+        callSign: callSign,
+        callSuc: (res) => {
+          resendMsgSuc(Global, msgObj, res, resolve);
         },
-        "callErr": (err) => {
+        callErr: (err) => {
           let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Resend);
           reject(errResult);
-        }
+        },
       });
       if (Global.curTab) {
         proOptions.sign = callSign;
@@ -318,16 +352,16 @@ export function resendMessage(Global, msgObj) {
         localWs.sendMessage(msg, declare.PID.ChatS);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Resend, {
-          "callSign": callSign,
-          "tabId": Global.tabId,
-          "options": msgObj,
-          "state": declare.LOCAL_OPERATION_STATUS.Pending,
-        })
+          callSign: callSign,
+          tabId: Global.tabId,
+          options: msgObj,
+          state: declare.LOCAL_OPERATION_STATUS.Pending,
+        });
       }
     } catch (err) {
       reject(err);
     }
-  })
+  });
 }
 
 // 重发消息成功回调
@@ -338,10 +372,10 @@ function resendMsgSuc(Global, msgObj, res, resolve) {
     newMsg.msgTime = res.data.msgTime;
     newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
     Global.handleMessage({
-      "type": declare.HANDLE_TYPE.ChatR,
-      "shift": true,
-      "data": newMsg,
-    })
+      type: declare.HANDLE_TYPE.ChatR,
+      shift: true,
+      data: newMsg,
+    });
   }
   let result = tool.resultSuc(declare.OPERATION_TYPE.Resend, {
     conversationID: msgObj.conversationID,
@@ -359,25 +393,31 @@ export function revokeMessage(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
-        return
-      } else if (tool.isNotObject(options, 'conversationID', 'string')) {
-        let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Revoke, 'key': 'conversationID' });
-        return reject(errResult)
+        return;
+      } else if (tool.isNotObject(options, "conversationID", "string")) {
+        let errResult = tool.parameterErr({
+          name: declare.OPERATION_TYPE.Revoke,
+          key: "conversationID",
+        });
+        return reject(errResult);
       } else if (tool.isNotNumer(options.msgId, true)) {
-        let errResult = tool.parameterErr({ 'name': declare.OPERATION_TYPE.Revoke, 'key': 'msgId' });
-        return reject(errResult)
+        let errResult = tool.parameterErr({
+          name: declare.OPERATION_TYPE.Revoke,
+          key: "msgId",
+        });
+        return reject(errResult);
       }
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        "type": declare.OPERATION_TYPE.Revoke,
-        "callSign": callSign,
-        "callSuc": (res) => {
-          revokeMsgSuc(Global, options, res, resolve)
+        type: declare.OPERATION_TYPE.Revoke,
+        callSign: callSign,
+        callSuc: (res) => {
+          revokeMsgSuc(Global, options, res, resolve);
         },
-        "callErr": (err) => {
+        callErr: (err) => {
           let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Revoke);
           reject(errResult);
-        }
+        },
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
@@ -385,26 +425,26 @@ export function revokeMessage(Global, options) {
         localWs.sendMessage(msg, declare.PID.Revoke);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Revoke, {
-          "callSign": callSign,
-          "tabId": Global.tabId,
-          "options": options,
-          "state": declare.LOCAL_OPERATION_STATUS.Pending,
-        })
+          callSign: callSign,
+          tabId: Global.tabId,
+          options: options,
+          state: declare.LOCAL_OPERATION_STATUS.Pending,
+        });
       }
     } catch (err) {
       reject(err);
     }
-  })
+  });
 }
 
 // 测回消息成功回调
 function revokeMsgSuc(Global, options, res, resolve) {
   if (Global.curTab) {
     Global.handleMessage({
-      "type": declare.HANDLE_TYPE.ChatR,
-      "shift": true,
-      "data": res.data,
-    })
+      type: declare.HANDLE_TYPE.ChatR,
+      shift: true,
+      data: res.data,
+    });
   }
   let result = tool.resultSuc(declare.OPERATION_TYPE.Revoke, {
     conversationID: options.conversationID,
@@ -423,10 +463,10 @@ export function createTextMessage(Global, options) {
     Object.assign(newMsg, {
       type: declare.MSG_TYPE.Text,
       text: payload.text,
-    })
+    });
     return newMsg;
   } catch (err) {
-    console.error(err)
+    console.error(err);
   }
 }
 
@@ -443,14 +483,14 @@ export function createImageMessage(Global, options) {
       file: payload.file,
       width: payload.width, //图片的宽度
       height: payload.height, //图片的高度
-    })
+    });
     return newMsg;
   } catch (err) {
-    console.error(err)
+    console.error(err);
   }
 }
 
-// TODO 
+// TODO
 /** 创建自定义消息
  */
 export function createCustomMessage(Global, options) {
@@ -460,9 +500,9 @@ export function createCustomMessage(Global, options) {
     Object.assign(newMsg, {
       type: declare.MSG_TYPE.Custom,
       content: payload.content,
-    })
+    });
     return newMsg;
   } catch (err) {
-    console.error(err)
+    console.error(err);
   }
 }
