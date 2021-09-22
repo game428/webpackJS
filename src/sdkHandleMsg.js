@@ -1,7 +1,7 @@
 import tool from "./tool";
 import declare from "./declare";
 import proFormat from "./proFormat";
-import localWs from "./ws";
+import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
 
@@ -519,7 +519,7 @@ function getChat(conversationID) {
             });
             let uid = tool.reformatC2CId(conversationID);
             let msg = proFormat.chatPro(callSign, uid);
-            localWs.sendMessage(msg, declare.PID.GetChat);
+            sendWsMsg(msg, declare.PID.GetChat);
           }
         });
       }

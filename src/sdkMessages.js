@@ -1,19 +1,20 @@
 import tool from "./tool";
 import declare from "./declare";
 import proFormat from "./proFormat";
-import localWs from "./ws";
+import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
 
-/** 获取消息列表
- * 本tab内存 》 本地DB 》 服务器
- * 如果不是本Tab从服务器获取数据，则不存内存
- * @param {*} conversationID 获取用户的id
- * @param {*} msgEnd 消息id，从哪一条开始往后取
- * @param {number} pageSize 分页条数，默认20
- * @returns
+/**
+ * 获取消息列表
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话用户id
+ * @param {number} [options.msgEnd] - 消息id，从哪一条开始往后取
+ * @param {number} [options.pageSize=20] - 分页条数，默认20
+ * @returns {Promise}
  */
-export function getMessageList(Global, options) {
+function getMessageList(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
@@ -93,10 +94,10 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
     let uid = tool.reformatC2CId(defaultOption.conversationID);
     let msg = proFormat.getMsgPro({
       sign: callSign,
-      uid: uid,
+      toUid: uid,
       msgEnd: defaultOption.msgEnd,
     });
-    localWs.sendMessage(msg, declare.PID.GetHistory);
+    sendWsMsg(msg, declare.PID.GetHistory);
   } else {
     localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetMsgs, {
       tabId: Global.tabId,
@@ -107,13 +108,11 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
   }
 }
 
-// TODO
 // 获取消息列表成功回调
 function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
   if (Global.curTab) {
     let newMsgs = [];
     res.messages.forEach((msg) => {
-      // TODO 非增量更新，不处理指令消息
       if (tool.isSo(msg.type)) {
         let newMsg = tool.formatMsg(msg, defaultOption.conversationID);
         newMsgs.push(newMsg);
@@ -146,10 +145,14 @@ function resultMsgs(defaultOption, resolve, msgs) {
   resolve(result);
 }
 
-/** 设置已读
- * @param {*} conversationID 会话用户id
+/**
+ * 设置已读
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话用户id
+ * @returns {Promise}
  */
-export function setMessageRead(Global, options) {
+function setMessageRead(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
@@ -181,7 +184,7 @@ export function setMessageRead(Global, options) {
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.readMsgPro(callSign, uid);
-        localWs.sendMessage(msg, declare.PID.MsgRead);
+        sendWsMsg(msg, declare.PID.MsgRead);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Read, {
           callSign: callSign,
@@ -265,10 +268,13 @@ function isMsgError(Global, msgObj, reject, proOptions) {
   }
 }
 
-/** 发送消息
- * @param {object} msgObj 消息对象
+/**
+ * 发送消息
+ * @memberof SDK
+ * @param {Msg} msgObj - 消息对象
+ * @returns {Promise}
  */
-export function sendMessage(Global, msgObj) {
+function sendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
     try {
       let proOptions = {};
@@ -289,7 +295,7 @@ export function sendMessage(Global, msgObj) {
         proOptions.sign = callSign;
         Object.assign(proOptions, msgObj);
         let msg = proFormat.sendMsgPro(proOptions);
-        localWs.sendMessage(msg, declare.PID.ChatS);
+        sendWsMsg(msg, declare.PID.ChatS);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Send, {
           callSign: callSign,
@@ -325,10 +331,13 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
   resolve(result);
 }
 
-/** 重发消息
- * @param {object} msgObj 消息对象
+/**
+ * 重发消息
+ * @memberof SDK
+ * @param {Msg} msgObj - 消息对象
+ * @returns {Promise}
  */
-export function resendMessage(Global, msgObj) {
+function resendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
     try {
       let proOptions = {};
@@ -349,7 +358,7 @@ export function resendMessage(Global, msgObj) {
         proOptions.sign = callSign;
         Object.assign(proOptions, msgObj);
         let msg = proFormat.sendMsgPro(proOptions);
-        localWs.sendMessage(msg, declare.PID.ChatS);
+        sendWsMsg(msg, declare.PID.ChatS);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Resend, {
           callSign: callSign,
@@ -385,11 +394,15 @@ function resendMsgSuc(Global, msgObj, res, resolve) {
   resolve(result);
 }
 
-/** 撤回消息
- * @param {*} conversationID 会话用户id
- * @param {*} msgId 消息id
+/**
+ * 撤回消息
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话用户id
+ * @param {number} options.msgId - 消息id
+ * @returns {Promise}
  */
-export function revokeMessage(Global, options) {
+function revokeMessage(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
@@ -422,7 +435,7 @@ export function revokeMessage(Global, options) {
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.revokeMsgPro(callSign, uid, options.msgId);
-        localWs.sendMessage(msg, declare.PID.Revoke);
+        sendWsMsg(msg, declare.PID.Revoke);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Revoke, {
           callSign: callSign,
@@ -454,55 +467,98 @@ function revokeMsgSuc(Global, options, res, resolve) {
   resolve(result);
 }
 
-/* 创建文本消息
+/**
+ * 创建文本消息
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {number} options.to - 接收方用户id
+ * @param {Object} options.payload - 消息内容的容器
+ * @param {string} options.payload.text - 消息文本内容
+ * @returns {Message}
  */
-export function createTextMessage(Global, options) {
-  try {
-    let newMsg = tool.msgBase(options && options.to, Global.uid);
-    let payload = (options && options.payload) || {};
-    Object.assign(newMsg, {
-      type: declare.MSG_TYPE.Text,
-      text: payload.text,
-    });
-    return newMsg;
-  } catch (err) {
-    console.error(err);
-  }
+function createTextMessage(Global, options) {
+  if (!options?.to || !options?.payload?.text) return null;
+  let newMsg = tool.msgBase(options.to, Global.uid);
+  Object.assign(newMsg, {
+    type: declare.MSG_TYPE.Text,
+    text: options.payload.text,
+  });
+  return newMsg;
 }
 
-/* 创建图片消息
+/**
+ * 创建图片消息
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {number} options.to - 接收方用户id
+ * @param {Object} options.payload - 消息内容的容器
+ * @param {string} options.payload.url - 图片网络地址
+ * @param {string} options.payload.width - 图片宽度
+ * @param {string} options.payload.height - 图片高度
+ * @returns {Message}
  */
-export function createImageMessage(Global, options) {
-  try {
-    let newMsg = tool.msgBase(options && options.to, Global.uid);
-    let payload = (options && options.payload) || {};
-    Object.assign(newMsg, {
-      type: declare.MSG_TYPE.Img,
-      url: payload.url,
-      path: payload.path,
-      file: payload.file,
-      width: payload.width, //图片的宽度
-      height: payload.height, //图片的高度
-    });
-    return newMsg;
-  } catch (err) {
-    console.error(err);
-  }
+function createImageMessage(Global, options) {
+  if (!options?.to || !options?.payload?.url) return null;
+  let newMsg = tool.msgBase(options.to, Global.uid);
+  Object.assign(newMsg, {
+    type: declare.MSG_TYPE.Img,
+    url: options.payload.url,
+    width: options.payload.width, //图片的宽度
+    height: options.payload.height, //图片的高度
+  });
+  return newMsg;
 }
 
 // TODO
-/** 创建自定义消息
+/***
+ * 创建自定义消息
  */
-export function createCustomMessage(Global, options) {
-  try {
-    let newMsg = tool.msgBase(options && options.to, Global.uid);
-    let payload = (options && options.payload) || {};
-    Object.assign(newMsg, {
-      type: declare.MSG_TYPE.Custom,
-      content: payload.content,
-    });
-    return newMsg;
-  } catch (err) {
-    console.error(err);
-  }
+function createCustomMessage(Global, options) {
+  if (!options?.to || !options?.payload?.content) return null;
+  let newMsg = tool.msgBase(options.to, Global.uid);
+  Object.assign(newMsg, {
+    type: declare.MSG_TYPE.Custom,
+    content: options.payload.content,
+  });
+  return newMsg;
 }
+
+/**
+ * 消息对象
+ * @typedef {Object} Message 消息对象
+ * @property {number} [Message.sign]
+ * @property {string} Message.onlyId - 消息唯一id
+ * @property {string} Message.conversationID - 所属会话id
+ * @property {number} Message.fromUid - 发送方用户ID
+ * @property {number} Message.toUid - 接收方用户ID
+ * @property {number} Message.msgId - 消息id
+ * @property {number} Message.msgTime - 消息时间（以服务器为准 精确到百万分之一秒的时间戳）
+ * @property {number} Message.showMsgTime - 消息时间（以服务器为准 精确到毫秒的时间戳）
+ * @property {number} Message.sendStatus - 消息发送状态
+ * @property {string} [Message.text] - 文本消息，消息内容
+ * @property {string} [Message.url] -  图片消息，图片路径
+ * @property {number} [Message.type] - 消息类型
+ * @property {string} [Message.title] - 推送的消息标题
+ * @property {number} [Message.thumb] - 封面图
+ * @property {number} [Message.width] - 封面图的宽度
+ * @property {number} [Message.height] - 封面图的高度
+ * @property {number} [Message.duration] - 时长
+ * @property {number} [Message.lat] - 维度
+ * @property {number} [Message.lng] - 经度
+ * @property {number} [Message.zoom] - 地图缩放层级
+ * @property {string} [Message.content] - 未定义type，传输的body
+ * @property {string} [Message.body] - 消息内容
+ * @property {number} [Message.sput] - sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
+ * @property {boolean} [Message.newMsg] - 是否显示 new message
+ */
+
+export {
+  getMessageList,
+  setMessageRead,
+  sendMessage,
+  resendMessage,
+  revokeMessage,
+  createTextMessage,
+  createImageMessage,
+  createCustomMessage,
+};

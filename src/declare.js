@@ -32,6 +32,20 @@ const PID = {
   GetImToken: 57,
 };
 
+/**
+ * @module TYPES
+ */
+/**
+ * @memberof TYPES#
+ * @typedef TYPES
+ * @property {WS_STATE} WS_STATE - websocket连接状态
+ * @property {SYNC_CHAT} SYNC_CHAT - 同步会话状态{@link SYNC_CHAT}
+ * @property {SYNC_CHAT} SEND_STATE - 消息发送状态{@link SEND_STATE}
+ * @property {ERROR_CODE} ERROR_CODE - 错误Code码{@link ERROR_CODE}
+ * @property {MSG_TYPE} MSG_TYPE - 消息类型{@link MSG_TYPE}
+ * @property {IM_LOGIN_STATE} IM_LOGIN_STATE - im登录状态{@link IM_LOGIN_STATE}
+ */
+
 // 多tab通知通讯类型
 const LOCAL_MESSAGE_TYPE = {
   Online: "online",
@@ -67,21 +81,40 @@ const OPERATION_TYPE = {
   CustomMsg: "createCustomMessage",
 };
 
-// websocket连接状态
+/**
+ * websocket连接状态
+ * @typedef {Object} WS_STATE
+ * @property {string} Disconnect - websocket未连接状态,连接失败也会进入未连接状态
+ * @property {string} Connecting - websocket连接中
+ * @property {string} Connect - websocket连接成功
+ */
 const WS_STATE = {
   Disconnect: "disconnect",
   Connecting: "connecting",
   Connect: "connect",
 };
 
-// im登录状态
+/**
+ * im登录状态
+ * @typedef {Object} IM_LOGIN_STATE
+ * @property {string} NotLogin - im未登录状态,连接失败也会进入未登录状态
+ * @property {string} Logging - im登陆中
+ * @property {string} Logged - im登录成功
+ */
 const IM_LOGIN_STATE = {
   NotLogin: "notLogin",
   Logging: "logging",
   Logged: "logged",
 };
 
-// 会话同步状态
+/**
+ * 会话同步状态
+ * @typedef {Object} SYNC_CHAT
+ * @property {string} NotSyncChat - 未开始同步会话
+ * @property {string} SyncChatStart - im登陆成功后，开始同步会话
+ * @property {string} SyncChatSuccess - 会话同步成功
+ * @property {string} SyncChatFailed - 会话同步失败
+ */
 const SYNC_CHAT = {
   NotSyncChat: "NotSyncChat",
   SyncChatStart: "syncChatStart",
@@ -89,16 +122,27 @@ const SYNC_CHAT = {
   SyncChatFailed: "syncChatFailed",
 };
 
-// 发送状态
+/**
+ * 消息发送状态
+ * @typedef {Object} SYNC_CHAT
+ * @property {number} BFIM_MSG_STATUS_SENDING - 消息发送中
+ * @property {number} BFIM_MSG_STATUS_SEND_SUCC - 消息发送成功
+ * @property {number} BFIM_MSG_STATUS_SEND_FAIL - 消息发送失败
+ */
 const SEND_STATE = {
   BFIM_MSG_STATUS_SENDING: 0,
   BFIM_MSG_STATUS_SEND_SUCC: 1,
   BFIM_MSG_STATUS_SEND_FAIL: 2,
 };
 
-// 已读状态
+/***
+ * 已读状态
+ * @typedef {Object} SYNC_CHAT
+ * @property {number} BFIM_MSG_STATUS_UNREAD - 消息未读
+ * @property {number} BFIM_MSG_STATUS_READ - 消息已读
+ */
 const READ_STATE = {
-  BFIM_MSG_STATUS_UNREAD: 1,
+  BFIM_MSG_STATUS_UNREAD: 0,
   BFIM_MSG_STATUS_READ: 1,
 };
 
@@ -109,37 +153,68 @@ const LOCAL_OPERATION_STATUS = {
   Rejected: 2,
 };
 
-// 返回业务的code码
+/***
+ * 错误类型code码
+ * @typedef {Object} ERROR_CODE
+ * @property {number} SUCCESS - 成功
+ * @property {number} ERROR - 失败
+ * @property {number} TOKEN_NOT_FOUND - token不存在
+ * @property {number} NO_REGISTER - 用户未注册
+ * @property {number} SIGNED - 用户已经登录
+ * @property {number} KICKED_OUT - 被踢
+ * @property {number} TOKEN_OUT - token失效
+ * @property {number} TIMEOUT - 操作超时
+ * @property {number} DISCONNECT - websocket未连接
+ * @property {number} CONNECTERR - websocket连接建立失败
+ * @property {number} CONNECTING - websocket连接中
+ * @property {number} EXITING - 正在退出
+ * @property {number} LOGGING - 正在登录
+ * @property {number} DBERR - 初始化DB失败
+ * @property {number} NOLOGIN - IM SDK未登录
+ * @property {number} PARAMETER - 参数错误
+ */
 const ERROR_CODE = {
-  SUCCESS: 0, // 成功
-  ERROR: 1, // 失败
-  TOKEN_NOT_FOUND: 4, // token不存在
-  NO_REGISTER: 9, // 用户未注册
-  SIGNED: 11, // 用户已经登录
-  KICKED_OUT: 2008, // 被踢
-  TOKEN_OUT: 2009, // token失效
-  TIMEOUT: 3000, // 操作超时
-  DISCONNECT: 3001, // 未连接
-  CONNECTERR: 3002, // 长连接建立失败
-  CONNECTING: 3003, // 连接中
-  EXITING: 3333, // 正在退出
-  LOGGING: 3334, // 正在登录
-  DBERR: 6005, // 初始化DB失败
-  NOLOGIN: 6014, // IM SDK未登录
-  PARAMETER: 9001, // 参数错误
+  SUCCESS: 0,
+  ERROR: 1,
+  TOKEN_NOT_FOUND: 4,
+  NO_REGISTER: 9,
+  SIGNED: 11,
+  KICKED_OUT: 2008,
+  TOKEN_OUT: 2009,
+  TIMEOUT: 3000,
+  DISCONNECT: 3001,
+  CONNECTERR: 3002,
+  CONNECTING: 3003,
+  EXITING: 3333,
+  LOGGING: 3334,
+  DBERR: 6005,
+  NOLOGIN: 6014,
+  PARAMETER: 9001,
 };
 
-// 消息类型
+/***
+ * 消息类型
+ * @typedef {Object} MSG_TYPE
+ * @property {number} Text - 文本
+ * @property {number} Img - 图片
+ * @property {number} Audio - 音频
+ * @property {number} Video - 视频
+ * @property {number} GS - 地理位置
+ * @property {number} Card - 用户名片
+ * @property {number} Revoked - 已撤回的消息
+ * @property {number} Revoke - 撤回操作
+ * @property {number} Custom - 自定义消息
+ */
 const MSG_TYPE = {
-  Text: 0, // 文本
-  Img: 1, // 图片
-  Audio: 2, // 音频
-  Video: 3, // 视频
-  GS: 4, // 地理位置
-  Card: 5, // 用户名片
-  Revoked: 31, // 已撤回的消息
-  Revoke: 64, // 撤回操作
-  Custom: 100, // 自定义消息
+  Text: 0,
+  Img: 1,
+  Audio: 2,
+  Video: 3,
+  GS: 4,
+  Card: 5,
+  Revoked: 31,
+  Revoke: 64,
+  Custom: 100,
 };
 
 // 服务器下发的更新会话的类型
@@ -151,6 +226,22 @@ const CHAT_UPDATE_EVENT = {
 };
 
 // 业务通知回调类型
+/**
+ * @module EVENT
+ */
+/**
+ * 监听事件名称
+ * @typedef {Object} EVENT
+ * @property {string} CONNECT_CHANGE - 连接状态通知
+ * @property {string} LOGIN - 登录成功
+ * @property {string} LOGOUT - 退出成功
+ * @property {string} SYNC_CHATS_CHANGE - 同步会话状态通知
+ * @property {string} MESSAGE_RECEIVED - 接收消息监听
+ * @property {string} MESSAGE_REVOKED - 撤回消息
+ * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
+ * @property {string} KICKED_OUT - 被踢下线
+ * @property {string} TOKEN_NOT_FOUND - token未找到或过期
+ */
 const EVENT = {
   CONNECT_CHANGE: "onConnectChange", // 连接状态通知
   LOGIN: "onLogin", // 登录成功

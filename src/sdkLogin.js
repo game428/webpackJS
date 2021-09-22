@@ -1,17 +1,20 @@
 import tool from "./tool";
 import declare from "./declare";
 import proFormat from "./proFormat";
-import localWs from "./ws";
+import { connectWs, closeWs, sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
 import { syncChats } from "./sdkChats";
 
-/** 登录
- *
- * @param {string} wsUrl ws服务器地址
- * @param {string} imToken 用户在ws服务器的token
+/**
+ * 登录
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.wsUrl ws服务器地址
+ * @param {string} options.imToken 用户在ws服务器的token
+ * @return {Promise}
  */
-export function login(Global, options) {
+function login(Global, options) {
   return new Promise((resolve, reject) => {
     localDexie
       .getInfo()
@@ -45,7 +48,7 @@ export function login(Global, options) {
           });
           Global.wsUrl = options.wsUrl;
           Global.imToken = options.imToken;
-          localWs.connect(
+          connectWs(
             Global,
             (isReconect) => {
               connSuc(Global, resolve, reject, isReconect);
@@ -143,20 +146,22 @@ function loginIm(Global) {
       },
       callErr: (err) => {
         // 可能出现code 9 11
-        localWs.close();
+        closeWs();
         let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Login);
         reject(errResult);
       },
     });
     let msg = proFormat.loginPro(callSign, Global.imToken);
-    localWs.sendMessage(msg, declare.PID.ImLogin);
+    sendWsMsg(msg, declare.PID.ImLogin);
   });
 }
 
-/** 退出登录
- *
+/**
+ * 退出登录
+ * @memberof SDK
+ * @return {Promise}
  */
-export function logout(Global) {
+function logout(Global) {
   return new Promise((resolve, reject) => {
     try {
       let callSign = tool.createSign();
@@ -167,7 +172,7 @@ export function logout(Global) {
       if (Global.curTab) {
         if (Global.loginState === declare.IM_LOGIN_STATE.Logged) {
           let msg = proFormat.logoutPro(callSign);
-          localWs.sendMessage(msg, declare.PID.ImLogout);
+          sendWsMsg(msg, declare.PID.ImLogout);
         }
         Global.handleMessage({
           type: declare.HANDLE_TYPE.ImLogout,
@@ -200,3 +205,5 @@ export function logout(Global) {
     }
   });
 }
+
+export { login, logout };

@@ -1,10 +1,15 @@
 import tool from "./tool";
 import declare from "./declare";
 import proFormat from "./proFormat";
-import localWs from "./ws";
+import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 
-export function getCosKey(Global) {
+/**
+ * 获取cos配置
+ * @memberof SDK
+ * @return {Promise}
+ */
+function getCosKey(Global) {
   return new Promise((resolve, reject) => {
     try {
       let callSign = tool.createSign();
@@ -25,7 +30,7 @@ export function getCosKey(Global) {
       });
       if (Global.curTab) {
         let msg = proFormat.cosPro(callSign);
-        localWs.sendMessage(msg, declare.PID.GetCosKey);
+        sendWsMsg(msg, declare.PID.GetCosKey);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetCosKey, {
           callSign: callSign,
@@ -38,3 +43,23 @@ export function getCosKey(Global) {
     }
   });
 }
+
+/**
+ * 添加事件监听
+ * @memberof SDK
+ * @param {string} eventName - 添加监听的事件名称
+ * @callback callback - 添加监听的回调事件
+ */
+function on(eventName, callback) {
+  this[eventName] = callback;
+}
+/**
+ * 注销事件监听
+ * @memberof SDK
+ * @param {string} eventName - 取消监听的事件名称
+ */
+function off(eventName) {
+  this[eventName] = null;
+}
+
+export { on, off, getCosKey };

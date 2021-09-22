@@ -1,14 +1,39 @@
 import tool from "./tool";
 import declare from "./declare";
 import proFormat from "./proFormat";
-import localWs from "./ws";
+import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
+
+/**
+ * 会话对象
+ * @typedef {Object} Chat 消息对象
+ * @property {number} [Chat.sign]
+ * @property {string} Chat.conversationID - 会话id
+ * @property {number} Chat.uid - 用户Id
+ * @property {number} Chat.msgEnd - 最后一条消息id
+ * @property {number} Chat.msgLastRead - 最后一条标记为已读的消息id
+ * @property {number} Chat.showMsgId - 最后一条显示的消息id
+ * @property {number} Chat.showMsgType - 最后一条消息类型
+ * @property {string} Chat.showMsg - 最后一条消息内容
+ * @property {number} Chat.showMsgTime - 最后一条消息服务器时间
+ * @property {number} Chat.showTime - 最后一条消息客户端显示时间
+ * @property {number} Chat.unread - 未读消息数
+ * @property {boolean} Chat.matched - 是否是matched
+ * @property {boolean} Chat.newMsg - 是否以newmessage显示
+ * @property {boolean} Chat.myMove - 是否显示my move
+ * @property {boolean} Chat.iceBreak - 是否要显示破冰文案
+ * @property {boolean} Chat.tipFree - 是否要显示 xx can reply you for free/ you can reply xx for free
+ * @property {boolean} Chat.topAlbum - 是否要显示顶部tool bar 相册
+ * @property {boolean} Chat.iBlockU - 我是否把你block了
+ * @property {boolean} Chat.connected - 双方互发过消息 （业务方的 realchat）
+ * @property {boolean} Chat.deleted - 该会话已删除
+ */
 
 // 重连获取最新会话，同步以获取过的用户的最新消息
 // 增量同步，会话及消息组装好后，一次通知
 // 同步更新
-export function syncChats(Global) {
+function syncChats(Global) {
   Global.handleMessage({
     type: declare.HANDLE_TYPE.SyncChatsChange,
     state: declare.SYNC_CHAT.SyncChatStart,
@@ -44,7 +69,7 @@ export function syncChats(Global) {
     },
   });
   let msg = proFormat.chatListPro(callSign, Global.updateTime);
-  localWs.sendMessage(msg, declare.PID.GetChatList);
+  sendWsMsg(msg, declare.PID.GetChatList);
 }
 
 // 初始化同步
@@ -151,20 +176,22 @@ function getSyncMsgs(Global, oldChat, chat) {
   });
   let msg = proFormat.getMsgPro({
     sign: callSign,
-    uid: oldChat.uid,
+    toUid: oldChat.uid,
     // msgEnd: chat.msgEnd,
     msgStart: oldChat.msgEnd,
   });
-  localWs.sendMessage(msg, declare.PID.GetHistory);
+  sendWsMsg(msg, declare.PID.GetHistory);
 }
 
-/** 获取会话列表
- * 本tab内存 》 本地DB 》 服务器
- * 如果不是本Tab从服务器获取数据，则不存内存
- * @param {*} conversationID 会话id，从哪一条开始往后取
- * @param {number} pageSize 分页条数，默认20
+/**
+ * 获取会话列表
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {?string} options.conversationID - 会话id，从哪一条开始往后取, 为空则获取最新的
+ * @param {number} [options.pageSize = 20] - 分页条数，默认20
+ * @return {Promise}
  */
-export function getConversationList(Global, options) {
+function getConversationList(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
@@ -233,11 +260,14 @@ function resultChats(Global, defaultOption, resolve) {
  */
 // function getConversationProfile() {}
 
-/** 删除会话
- *
- * @param {*} conversationID 会话用户id
+/**
+ * 删除会话
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID 会话用户id
+ * @return {Promise}
  */
-export function deleteConversation(Global, options) {
+function deleteConversation(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject)) {
@@ -269,7 +299,7 @@ export function deleteConversation(Global, options) {
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.delChatPro(callSign, parseInt(uid));
-        localWs.sendMessage(msg, declare.PID.DelChat);
+        sendWsMsg(msg, declare.PID.DelChat);
       } else {
         localNotice.onWebSocketNotice(declare.OPERATION_TYPE.DelChat, {
           callSign: callSign,
@@ -283,3 +313,5 @@ export function deleteConversation(Global, options) {
     }
   });
 }
+
+export { syncChats, getConversationList, deleteConversation };

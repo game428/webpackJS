@@ -38,7 +38,6 @@ function clear(isAll) {
  *
  */
 function watchStorage(storage, msim, Global) {
-  // console.log('storage', storage)
   // 移除localStorage不处理
   if (!storage.key || !storage.newValue) return;
 

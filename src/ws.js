@@ -13,10 +13,10 @@ import {
 import proFormat from "./proFormat.js";
 import declare from "./declare.js";
 import pako from "pako";
-let localWs = {
+let wsConfig = {
   ws: null,
   Global: null,
-  heartRate: 3000, // 心跳检查时间
+  heartRate: 30000, // 心跳检查时间
   heartBeatTime: null, // 上次发送消息时间
   reconnectNum: 0, // 重连间隔时间
   closeState: false, // 关闭重连
@@ -27,102 +27,104 @@ let localWs = {
 };
 
 // 连接ws
-localWs.connect = function(Global, connSuc, connErr) {
+function connectWs(Global, connSuc, connErr) {
   reset();
-  localWs.closeState = true;
-  localWs.Global = Global;
-  let wsUrl = localWs.Global.wsUrl;
+  wsConfig.closeState = true;
+  wsConfig.Global = Global;
+  let wsUrl = wsConfig.Global.wsUrl;
   createWs(wsUrl, connSuc, connErr);
   window.removeEventListener("online", online(wsUrl, connSuc, connErr));
   window.addEventListener("online", online(wsUrl, connSuc, connErr));
   window.addEventListener("offline", () => {
-    localWs.ws.close();
+    wsConfig.ws.close();
   });
-};
+}
 
 // 上线重连
 function online(wsUrl, connSuc, connErr) {
-  if (localWs.closeState || localWs.ws.readyState === 1) return;
-  localWs.ws.close();
+  if (wsConfig.closeState || wsConfig.ws.readyState === 1) return;
+  wsConfig.ws.close();
   reconnect(wsUrl, connSuc, connErr);
 }
 
 // 发送消息
-localWs.sendMessage = function(msg, pid) {
-  if (localWs.ws) {
-    localWs.heartBeatTime = new Date().getTime();
+function sendWsMsg(msg, pid) {
+  if (wsConfig.ws) {
+    wsConfig.heartBeatTime = new Date().getTime();
     let sendMsg = proFormat.compress(msg, pid);
-    localWs.ws.send(sendMsg);
+    wsConfig.ws.send(sendMsg);
   }
-};
+}
 
 // 关闭连接
-localWs.close = function() {
-  if (localWs.ws) {
-    localWs.closeState = true;
-    localWs.ws.close();
+function closeWs() {
+  if (wsConfig.ws) {
+    wsConfig.closeState = true;
+    wsConfig.ws.close();
   }
   reset();
-};
+}
 
 function reset() {
-  if (localWs.reconnectTimer) clearTimeout(localWs.reconnectTimer);
-  localWs.reconnectTimer = null;
-  localWs.ws = null;
-  localWs.Global = null;
-  localWs.heartBeatTime = null;
-  localWs.chatListEvent = null;
-  localWs.wsStatus = false;
-  localWs.chatFormatList = [];
-  localWs.reconnectNum = 0;
+  if (wsConfig.reconnectTimer) clearTimeout(wsConfig.reconnectTimer);
+  wsConfig.reconnectTimer = null;
+  wsConfig.ws = null;
+  wsConfig.Global = null;
+  wsConfig.heartBeatTime = null;
+  wsConfig.chatListEvent = null;
+  wsConfig.wsStatus = false;
+  wsConfig.chatFormatList = [];
+  wsConfig.reconnectNum = 0;
 }
 
 // 初始化ws
 function createWs(wsUrl, connSuc, connErr, isReconect) {
-  localWs.Global.onConn();
-  localWs.ws = new WebSocket(wsUrl);
-  localWs.ws.binaryType = "arraybuffer";
-  localWs.ws.onopen = (evt) => {
-    localWs.reconnectNum = 0;
-    localWs.closeState = false;
-    localWs.heartBeatTime = new Date().getTime();
+  wsConfig.Global.onConn();
+  let ws = new WebSocket(wsUrl);
+  ws.binaryType = "arraybuffer";
+  ws.onopen = (evt) => {
+    wsConfig.reconnectNum = 0;
+    wsConfig.closeState = false;
+    wsConfig.heartBeatTime = new Date().getTime();
     if (typeof connSuc === "function") connSuc(isReconect);
   };
-  localWs.ws.onmessage = onMessage;
-  localWs.ws.onclose = (err) => {
+  ws.onmessage = onMessage;
+  ws.onclose = (err) => {
     console.log("Connection closed.", err);
     reconnect(wsUrl, connSuc, connErr);
     if (typeof connErr === "function") connErr(err);
   };
-  localWs.ws.onerror = (err) => {
+  ws.onerror = (err) => {
     console.log("连接错误");
     reconnect(wsUrl, connSuc, connErr);
   };
+  wsConfig.ws = ws;
 }
 
-localWs.heartBeatCall = function() {
-  if (localWs?.ws?.readyState !== 1) return;
+// 发送心跳消息
+function sendPing() {
+  if (wsConfig?.ws?.readyState !== 1) return;
   let date = new Date().getTime();
-  if (localWs.heartBeatTime + localWs.heartRate <= date) {
+  if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
     var msg = proFormat.compress(proFormat.pingPro(), declare.PID.Ping);
-    localWs.ws.send(msg);
+    wsConfig.ws.send(msg);
+    wsConfig.heartBeatTime = date;
   }
-  localWs.heartBeatTime = date;
-};
+}
 
 // 重连
 function reconnect(wsUrl, connSuc, connErr) {
-  if (localWs.wsStatus || localWs.closeState) return;
-  localWs.wsStatus = true;
-  localWs.reconnectTimer = setTimeout(function() {
-    if (localWs.reconnectNum === 0) {
-      localWs.reconnectNum = 250;
+  if (wsConfig.wsStatus || wsConfig.closeState) return;
+  wsConfig.wsStatus = true;
+  wsConfig.reconnectTimer = setTimeout(function() {
+    if (wsConfig.reconnectNum === 0) {
+      wsConfig.reconnectNum = 250;
     } else {
-      localWs.reconnectNum *= 2;
+      wsConfig.reconnectNum *= 2;
     }
     createWs(wsUrl, connSuc, connErr, true);
-    localWs.wsStatus = false;
-  }, localWs.reconnectNum);
+    wsConfig.wsStatus = false;
+  }, wsConfig.reconnectNum);
 }
 
 // 收到消息
@@ -182,7 +184,7 @@ function handleResult(result) {
     defaults: true,
   });
   const code = resultPro.code;
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -191,8 +193,8 @@ function handleResult(result) {
     case 0: // 请求成功
       if (!callEvent) return;
       if (callEvent.type === declare.OPERATION_TYPE.GetChats) {
-        localWs.chatListEvent = callEvent;
-        localWs.chatFormatList = [];
+        wsConfig.chatListEvent = callEvent;
+        wsConfig.chatFormatList = [];
       } else {
         callEvent.callSuc({
           data: resultPro,
@@ -203,9 +205,9 @@ function handleResult(result) {
       callEvent && callEvent.callErr(resultPro);
       break;
     case 4: // im token 未找到（不存在或失效）
-      localWs.closeState = true;
-      localWs.ws.close();
-      localWs.Global.handleMessage({
+      wsConfig.closeState = true;
+      wsConfig.ws.close();
+      wsConfig.Global.handleMessage({
         type: declare.HANDLE_TYPE.ResultError,
         data: resultPro,
       });
@@ -219,9 +221,9 @@ function handleResult(result) {
         });
       break;
     case 2008: // 被踢下线
-      localWs.closeState = true;
-      localWs.ws.close();
-      localWs.Global.handleMessage({
+      wsConfig.closeState = true;
+      wsConfig.ws.close();
+      wsConfig.Global.handleMessage({
         type: declare.HANDLE_TYPE.ResultError,
         data: resultPro,
       });
@@ -238,7 +240,7 @@ function handleGetCosKey(result) {
   let resultPro = CosKey.toObject(CosKey.decode(result), {
     defaults: true,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -254,14 +256,14 @@ function handleChatList(result) {
   let resultPro = ChatList.toObject(ChatList.decode(result), {
     defaults: true,
   });
-  localWs.chatFormatList.push(...resultPro.chatItems);
-  if (resultPro.updateTime && localWs.chatListEvent) {
-    localWs.chatListEvent.callSuc({
-      chats: localWs.chatFormatList,
+  wsConfig.chatFormatList.push(...resultPro.chatItems);
+  if (resultPro.updateTime && wsConfig.chatListEvent) {
+    wsConfig.chatListEvent.callSuc({
+      chats: wsConfig.chatFormatList,
       updateTime: resultPro.updateTime,
     });
-    localWs.chatListEvent = null;
-    localWs.chatFormatList = [];
+    wsConfig.chatListEvent = null;
+    wsConfig.chatFormatList = [];
   }
 }
 
@@ -270,7 +272,7 @@ function handleMsgList(result) {
   let resultPro = ChatRBatch.toObject(ChatRBatch.decode(result), {
     defaults: true,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -287,7 +289,7 @@ function handleSend(result) {
   let resultPro = ChatSR.toObject(ChatSR.decode(result), {
     defaults: true,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -304,7 +306,7 @@ function handleMsg(result) {
   let resultPro = ChatR.toObject(ChatR.decode(result), {
     defaults: true,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -314,7 +316,7 @@ function handleMsg(result) {
         data: resultPro,
       });
     } else {
-      localWs.Global.handleMessage({
+      wsConfig.Global.handleMessage({
         type: declare.HANDLE_TYPE.ChatR,
         data: resultPro,
       });
@@ -327,7 +329,7 @@ function handleGetChat(result) {
   let resultPro = ChatItem.toObject(ChatItem.decode(result), {
     defaults: true,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -344,11 +346,11 @@ function handleUpdateChat(result) {
   let resultPro = ChatItemUpdate.toObject(ChatItemUpdate.decode(result), {
     defaults: true,
   });
-  localWs.Global.handleMessage({
+  wsConfig.Global.handleMessage({
     type: declare.HANDLE_TYPE.ChatItemUpdate,
     data: resultPro,
   });
-  var callEvents = localWs.Global.callEvents;
+  var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
@@ -360,4 +362,4 @@ function handleUpdateChat(result) {
   }
 }
 
-export default localWs;
+export { connectWs, closeWs, sendPing, sendWsMsg };

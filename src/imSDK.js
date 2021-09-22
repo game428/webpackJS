@@ -1,5 +1,8 @@
+/**
+ * @class SDK
+ */
 import declare from "./declare.js";
-import localWs from "./ws.js";
+import { closeWs, sendPing } from "./ws.js";
 import localNotice from "./localNotice.js";
 import tool from "./tool.js";
 import localDexie from "./dexieDB.js";
@@ -16,30 +19,41 @@ import {
   createImageMessage,
   createCustomMessage,
 } from "./sdkMessages";
-import { getCosKey } from "./sdkUnits";
+import { on, off, getCosKey } from "./sdkUnits";
+
+const TYPES = {
+  WS_STATE: declare.WS_STATE,
+  SYNC_CHAT: declare.SYNC_CHAT,
+  SEND_STATE: declare.SEND_STATE,
+  ERROR_CODE: declare.ERROR_CODE,
+  MSG_TYPE: declare.MSG_TYPE,
+  IM_LOGIN_STATE: declare.IM_LOGIN_STATE,
+};
+
+const EVENT = declare.EVENT;
+
+// 导出对象
+/**
+ * MSIM 是 IM Web SDK 的命名空间，提供了创建 SDK 实例的静态方法 create() ，以及事件常量 EVENT，类型常量 TYPES
+ * @namespace MSIM
+ * @borrows create as create
+ */
+const IM = {
+  TYPES: TYPES,
+  EVENT: EVENT,
+  create,
+};
 
 /**
  *
+ * @typedef  Promise
+ * @property {function} then - 正常回调，参数为： IMResponse
+ * @property {function} catch - 异常回调，参数为： IMError
  */
-const TYPES = tool.readProxy({
-  WS_STATE: tool.readProxy(declare.WS_STATE),
-  SYNC_CHAT: tool.readProxy(declare.SYNC_CHAT),
-  SEND_STATE: tool.readProxy(declare.SEND_STATE),
-  ERROR_CODE: tool.readProxy(declare.ERROR_CODE),
-  MSG_TYPE: tool.readProxy(declare.MSG_TYPE),
-  IM_LOGIN_STATE: tool.readProxy(declare.IM_LOGIN_STATE),
-});
-// 导出对象
-const IM = tool.readProxy({
-  timeOut: 20000,
-  TYPES: TYPES,
-  EVENT: tool.readProxy(declare.EVENT),
-  create,
-});
 
 // SDK实例对象
-var msim = tool.readProxy(
-  {
+function initSDK() {
+  return {
     login: (options) => login(Global, options),
     logout: () => logout(Global),
     sendMessage: (options) => sendMessage(Global, options),
@@ -56,23 +70,17 @@ var msim = tool.readProxy(
     getCosKey: () => getCosKey(Global),
     on: on,
     off: off,
-  },
-  {
-    set: (obj, prop, value) => {
-      if (Object.values(IM.EVENT).indexOf(prop) !== -1) {
-        obj[prop] = value;
-        return true;
-      } else {
-        console.error(`不允许修改${prop}属性`);
-      }
-    },
-  }
-);
+  };
+}
+
+var msim = null;
 
 let Global = null;
 
+// 初始化Global
 function initGlobal() {
   Global = {
+    timeOut: 20000,
     tabId: Global && Global.tabId,
     curTab: false, // 是否是当前连接的tab
     uid: null,
@@ -115,20 +123,22 @@ function initGlobal() {
 // 退出时清理所有
 function clearData() {
   if (Global.curTab) {
-    localWs.close();
+    closeWs();
     localDexie.clear();
     localNotice.clear();
   }
   initGlobal();
 }
 
-/** im初始化
+/**
+ * im初始化
+ * @memberof MSIM
  * @param {String} wsUrl websocket地址
  * @param {String} imToken im服务器token
+ * @returns {Object}
  */
-// TODO 初始化为同步操作
 function create() {
-  if (Global !== null) {
+  if (msim !== null) {
     return msim;
   }
   initGlobal();
@@ -143,9 +153,9 @@ function create() {
     window.localStorage.setItem("im_wsCurId", tabId);
     // 启动全局定时器
     globalTimer();
-  } else if (windowHeartBeat < time - 3000) {
+  } else if (windowHeartBeat < time - 1000) {
     localNotice.clear();
-    localWs.close();
+    closeWs();
     localDexie.deleteDB();
     window.localStorage.setItem("im_wsCurId", tabId);
     // 启动全局定时器
@@ -158,18 +168,19 @@ function create() {
     localNotice.watchStorage(storage, msim, Global);
   });
   localDexie.initDB(Global);
+  msim = new initSDK();
   return msim;
 }
 
-/** 浏览器Tab关闭
- *
+/***
+ * 浏览器Tab关闭
  */
 function onunload() {
   let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
   imWsTabs = imWsTabs.filter((tab) => tab != Global.tabId);
   window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
   localNotice.clear(imWsTabs.length === 0);
-  localWs.close();
+  closeWs();
   if (imWsTabs.length === 0) {
     localDexie.deleteDB();
   } else if (Global.curTab) {
@@ -192,10 +203,10 @@ function globalTimer() {
     window.localStorage.setItem("im_windowHeartBeat", time);
     count += 1;
     if (count % 20 === 0) {
-      localWs.heartBeatCall();
+      sendPing();
     }
     if (!Global.callEvents || !Object.keys(Global.callEvents).length) return;
-    let signTime = tool.createSign(time - IM.timeOut);
+    let signTime = tool.createSign(time - Global.timeOut);
     for (let key in Global.callEvents) {
       if (key <= signTime) {
         let callEvent = Global.callEvents[key];
@@ -239,17 +250,6 @@ function initChats() {
       resolve();
     });
   });
-}
-
-/** 添加事件监听
- */
-function on(eventName, callback) {
-  this[eventName] = callback;
-}
-/** 注销事件监听
- */
-function off(eventName) {
-  this[eventName] = null;
 }
 
 export default IM;
