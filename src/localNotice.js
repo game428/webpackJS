@@ -1,5 +1,10 @@
-import declare from "./declare.js";
-import localDexie from "./dexieDB.js";
+import {
+  OPERATION_TYPE,
+  IM_LOGIN_STATE,
+  LOCAL_OPERATION_TYPE,
+  LOCAL_OPERATION_STATUS,
+} from "./sdkTypes";
+import localDexie from "./dexieDB";
 let storageKeys = [];
 
 let localNotice = {
@@ -63,7 +68,7 @@ function watchStorage(storage, msim, Global) {
   // 指定当前tab连接ws
   if (storage.key === "im_wsConnTab" && storage.newValue === Global.tabId) {
     Global.uid = null;
-    localDexie.updateInfo({ loginState: declare.IM_LOGIN_STATE.NotLogin });
+    localDexie.updateInfo({ loginState: IM_LOGIN_STATE.NOT_LOGIN });
     localDexie.getInfo().then((info) => {
       msim.login({
         wsUrl: info.wsUrl,
@@ -75,14 +80,14 @@ function watchStorage(storage, msim, Global) {
   }
 
   // 处理onMessage通知
-  if (storage.key.indexOf(declare.LOCAL_OPERATION_TYPE.Message) === 0) {
+  if (storage.key.indexOf(LOCAL_OPERATION_TYPE.Message) === 0) {
     let localObj = JSON.parse(storage.newValue);
     Global.handleMessage(localObj);
     return;
   }
 
   // 接收到ws操作通知
-  if (storage.key.indexOf(declare.LOCAL_OPERATION_TYPE.WS) === 0) {
+  if (storage.key.indexOf(LOCAL_OPERATION_TYPE.WS) === 0) {
     handleWSNotice(storage, msim, Global);
     return;
   }
@@ -92,23 +97,23 @@ function watchStorage(storage, msim, Global) {
 function noticeCall(key, Global, localObj) {
   removeLocal(key);
   let callEvent = Global.callEvents[localObj.callSign];
-  if (localObj.state === declare.LOCAL_OPERATION_STATUS.Fulfilled) {
+  if (localObj.state === LOCAL_OPERATION_STATUS.Fulfilled) {
     callEvent && callEvent.callSuc(localObj);
-  } else if (localObj.state === declare.LOCAL_OPERATION_STATUS.Rejected) {
+  } else if (localObj.state === LOCAL_OPERATION_STATUS.Rejected) {
     callEvent && callEvent.callErr(localObj.err);
   }
 }
 
 // 操作失败
 function noticeCatch(err, key, localObj) {
-  localObj.state = declare.LOCAL_OPERATION_STATUS.Rejected;
+  localObj.state = LOCAL_OPERATION_STATUS.Rejected;
   localObj.err = err;
   setLocal(key, localObj);
 }
 
 // 操作成功
 function noticeSuc(data, key, localObj) {
-  localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
+  localObj.state = LOCAL_OPERATION_STATUS.Fulfilled;
   localObj.data = data;
   setLocal(key, localObj);
 }
@@ -131,23 +136,27 @@ function isJSON(str) {
 // 根据操作类型返回对应的方法
 function createPromise(type, msim, localObj) {
   switch (type) {
-    case declare.OPERATION_TYPE.Logout:
+    case OPERATION_TYPE.Logout:
       return msim.logout();
-    case declare.OPERATION_TYPE.DelChat:
+    case OPERATION_TYPE.GetChat:
+      return msim.getConversationProvider(localObj.options);
+    case OPERATION_TYPE.DelChat:
       return msim.deleteConversation(localObj.options);
-    case declare.OPERATION_TYPE.GetMsgs:
+    case OPERATION_TYPE.GetMsgs:
       localObj.options.tabId = localObj.tabId;
       return msim.getMessageList(localObj.options);
-    case declare.OPERATION_TYPE.GetCosKey:
-      return msim.getCosKey();
-    case declare.OPERATION_TYPE.Read:
+    case OPERATION_TYPE.Read:
       return msim.setMessageRead(localObj.options);
-    case declare.OPERATION_TYPE.Send:
+    case OPERATION_TYPE.Send:
       return msim.sendMessage(localObj.options);
-    case declare.OPERATION_TYPE.Resend:
+    case OPERATION_TYPE.Resend:
       return msim.resendMessage(localObj.options);
-    case declare.OPERATION_TYPE.Revoke:
+    case OPERATION_TYPE.Revoke:
       return msim.revokeMessage(localObj.options);
+    case OPERATION_TYPE.GetCosKey:
+      return msim.getCosKey();
+    case OPERATION_TYPE.GetAllUnread:
+      return msim.getAllUnreadCount();
     default:
       return false;
   }
@@ -159,17 +168,14 @@ function handleWSNotice(storage, msim, Global) {
   if (localObj === false) {
     return;
   }
-  if (
-    Global.curTab &&
-    localObj.state === declare.LOCAL_OPERATION_STATUS.Pending
-  ) {
+  if (Global.curTab && localObj.state === LOCAL_OPERATION_STATUS.Pending) {
     let type = storage.key.split("_")[2];
     let promise = createPromise(type, msim, localObj);
     if (!promise) return;
     promise
       .then((res) => {
-        if (type === declare.OPERATION_TYPE.GetMsgs) {
-          localObj.state = declare.LOCAL_OPERATION_STATUS.Fulfilled;
+        if (type === OPERATION_TYPE.GetMsgs) {
+          localObj.state = LOCAL_OPERATION_STATUS.Fulfilled;
           localObj.hasMore = res.data.hasMore;
           localObj.messages = res.data.messages;
           setLocal(storage.key, localObj);
@@ -187,15 +193,13 @@ function handleWSNotice(storage, msim, Global) {
 
 // 主动操作的通知，通知当前tab发送websocket请求
 function onWebSocketNotice(type, data) {
-  let key = `${declare.LOCAL_OPERATION_TYPE.WS + type}_${data.tabId}_${
-    data.callSign
-  };`;
+  let key = `${LOCAL_OPERATION_TYPE.WS + type}_${data.tabId}_${data.callSign};`;
   setLocal(key, data);
 }
 
 // 内部处理的通知
 function onMessageNotice(type, data) {
-  let key = declare.LOCAL_OPERATION_TYPE.Message + type;
+  let key = LOCAL_OPERATION_TYPE.Message + type;
   setLocal(key, data);
   removeLocal(key);
 }

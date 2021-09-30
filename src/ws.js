@@ -1,6 +1,4 @@
 import {
-  ProfileOnline,
-  UsrOffline,
   Result,
   CosKey,
   ChatList,
@@ -10,8 +8,8 @@ import {
   ChatItem,
   ChatItemUpdate,
 } from "./proto";
-import proFormat from "./proFormat.js";
-import declare from "./declare.js";
+import { PID, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
+import proFormat from "./proFormat";
 import pako from "pako";
 let wsConfig = {
   ws: null,
@@ -106,7 +104,8 @@ function sendPing() {
   if (wsConfig?.ws?.readyState !== 1) return;
   let date = new Date().getTime();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
-    var msg = proFormat.compress(proFormat.pingPro(), declare.PID.Ping);
+    console.log("发送ping");
+    var msg = proFormat.compress(proFormat.pingPro(), PID.Ping);
     wsConfig.ws.send(msg);
     wsConfig.heartBeatTime = date;
   }
@@ -139,36 +138,36 @@ function onMessage(evt) {
   result = new Uint8Array(result);
   console.log("接收到消息", pid);
   switch (pid) {
-    case declare.PID.Result:
+    case PID.Result:
       handleResult(result);
       break;
-    case declare.PID.ChatList:
+    case PID.ChatList:
       handleChatList(result);
       break;
-    case declare.PID.ChatRBatch:
+    case PID.ChatRBatch:
       handleMsgList(result);
       break;
-    case declare.PID.ChatR:
+    case PID.ChatR:
       handleMsg(result);
       break;
-    case declare.PID.ChatSR:
+    case PID.ChatSR:
       handleSend(result);
       break;
-    case declare.PID.ChatItemUpdate:
+    case PID.ChatItemUpdate:
       handleUpdateChat(result);
       break;
-    case declare.PID.ChatItem:
+    case PID.ChatItem:
       handleGetChat(result);
       break;
-    case declare.PID.CosKey:
+    case PID.CosKey:
       handleGetCosKey(result);
       break;
-    case declare.PID.ProfileOnline:
+    case PID.ProfileOnline:
       // let resultPro = ProfileOnline.toObject(ProfileOnline.decode(result), {
       //   defaults: true,
       // })
       break;
-    case declare.PID.UsrOffline:
+    case PID.UsrOffline:
       // let resultPro = UsrOffline.toObject(UsrOffline.decode(result), {
       //   defaults: true,
       // })
@@ -192,7 +191,7 @@ function handleResult(result) {
   switch (code) {
     case 0: // 请求成功
       if (!callEvent) return;
-      if (callEvent.type === declare.OPERATION_TYPE.GetChats) {
+      if (callEvent.type === OPERATION_TYPE.GetChats) {
         wsConfig.chatListEvent = callEvent;
         wsConfig.chatFormatList = [];
       } else {
@@ -208,7 +207,7 @@ function handleResult(result) {
       wsConfig.closeState = true;
       wsConfig.ws.close();
       wsConfig.Global.handleMessage({
-        type: declare.HANDLE_TYPE.ResultError,
+        type: HANDLE_TYPE.ResultError,
         data: resultPro,
       });
       callEvent && callEvent.callErr(resultPro);
@@ -224,7 +223,7 @@ function handleResult(result) {
       wsConfig.closeState = true;
       wsConfig.ws.close();
       wsConfig.Global.handleMessage({
-        type: declare.HANDLE_TYPE.ResultError,
+        type: HANDLE_TYPE.ResultError,
         data: resultPro,
       });
       callEvent && callEvent.callErr(resultPro);
@@ -317,7 +316,7 @@ function handleMsg(result) {
       });
     } else {
       wsConfig.Global.handleMessage({
-        type: declare.HANDLE_TYPE.ChatR,
+        type: HANDLE_TYPE.ChatR,
         data: resultPro,
       });
     }
@@ -329,6 +328,7 @@ function handleGetChat(result) {
   let resultPro = ChatItem.toObject(ChatItem.decode(result), {
     defaults: true,
   });
+  console.log(11, resultPro);
   var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
@@ -347,7 +347,7 @@ function handleUpdateChat(result) {
     defaults: true,
   });
   wsConfig.Global.handleMessage({
-    type: declare.HANDLE_TYPE.ChatItemUpdate,
+    type: HANDLE_TYPE.ChatItemUpdate,
     data: resultPro,
   });
   var callEvents = wsConfig.Global.callEvents;

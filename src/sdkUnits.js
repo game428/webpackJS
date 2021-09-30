@@ -1,5 +1,5 @@
 import tool from "./tool";
-import declare from "./declare";
+import { PID, OPERATION_TYPE, LOCAL_OPERATION_STATUS } from "./sdkTypes";
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
@@ -14,28 +14,25 @@ function getCosKey(Global) {
     try {
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.GetCosKey,
+        type: OPERATION_TYPE.GetCosKey,
         callSign: callSign,
         callSuc: (res) => {
-          let result = tool.resultSuc(
-            declare.OPERATION_TYPE.GetCosKey,
-            res.data
-          );
+          let result = tool.resultSuc(OPERATION_TYPE.GetCosKey, res.data);
           return resolve(result);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.GetCosKey);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.GetCosKey);
           reject(errResult);
         },
       });
       if (Global.curTab) {
         let msg = proFormat.cosPro(callSign);
-        sendWsMsg(msg, declare.PID.GetCosKey);
+        sendWsMsg(msg, PID.GetCosKey);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetCosKey, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.GetCosKey, {
           callSign: callSign,
           tabId: Global.tabId,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -62,4 +59,4 @@ function off(eventName) {
   this[eventName] = null;
 }
 
-export { on, off, getCosKey };
+export { getCosKey, on, off };

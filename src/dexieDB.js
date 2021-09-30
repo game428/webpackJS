@@ -1,5 +1,5 @@
 import Dexie from "dexie";
-import declare from "./declare.js";
+import { WS_STATE, SYNC_CHAT, IM_LOGIN_STATE } from "./sdkTypes";
 
 const DBName = "imWsDB";
 var db = null;
@@ -24,7 +24,8 @@ let chatKeys = [
   "tipFree", // 是否要显示 xx can reply you for free/ you can reply xx for free
   "topAlbum", // 是否要显示顶部tool bar 相册
   "iBlockU", // 我是否把你block了
-  "connected", // 双方互发过消息 （业务方的 realchat）
+  "iChatU", // 我给你发过消息了
+  "uChatI", // 你给我发过消息了
   "deleted", // 该会话已删除
 ];
 let msgKeys = [
@@ -131,9 +132,9 @@ localDexie.getInfo = function() {
 localDexie.initInfo = function() {
   db.sdkInfo.put({
     sdkKeys: sdkKey,
-    loginState: declare.IM_LOGIN_STATE.NotLogin,
-    chatsSync: declare.SYNC_CHAT.NotSyncChat,
-    connState: declare.WS_STATE.Disconnect,
+    loginState: IM_LOGIN_STATE.NOT_LOGIN,
+    chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
+    connState: WS_STATE.NET_STATE_DISCONNECTED,
   });
 };
 

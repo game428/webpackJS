@@ -1021,6 +1021,9 @@ $root.ChatS = (function() {
      * @property {number|null} [lat] ChatS lat
      * @property {number|null} [lng] ChatS lng
      * @property {number|Long|null} [zoom] ChatS zoom
+     * @property {string|null} [pushTitle] ChatS pushTitle
+     * @property {string|null} [pushBody] ChatS pushBody
+     * @property {string|null} [pushSound] ChatS pushSound
      */
 
     /**
@@ -1135,6 +1138,30 @@ $root.ChatS = (function() {
     ChatS.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * ChatS pushTitle.
+     * @member {string} pushTitle
+     * @memberof ChatS
+     * @instance
+     */
+    ChatS.prototype.pushTitle = "";
+
+    /**
+     * ChatS pushBody.
+     * @member {string} pushBody
+     * @memberof ChatS
+     * @instance
+     */
+    ChatS.prototype.pushBody = "";
+
+    /**
+     * ChatS pushSound.
+     * @member {string} pushSound
+     * @memberof ChatS
+     * @instance
+     */
+    ChatS.prototype.pushSound = "";
+
+    /**
      * Creates a new ChatS instance using the specified properties.
      * @function create
      * @memberof ChatS
@@ -1182,6 +1209,12 @@ $root.ChatS = (function() {
             writer.uint32(/* id 11, wireType 1 =*/89).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
             writer.uint32(/* id 12, wireType 0 =*/96).int64(message.zoom);
+        if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
+            writer.uint32(/* id 13, wireType 2 =*/106).string(message.pushTitle);
+        if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
+            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushBody);
+        if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
+            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushSound);
         return writer;
     };
 
@@ -1251,6 +1284,15 @@ $root.ChatS = (function() {
                 break;
             case 12:
                 message.zoom = reader.int64();
+                break;
+            case 13:
+                message.pushTitle = reader.string();
+                break;
+            case 14:
+                message.pushBody = reader.string();
+                break;
+            case 15:
+                message.pushSound = reader.string();
                 break;
             default:
                 reader.skipType(tag & 7);
@@ -1323,6 +1365,15 @@ $root.ChatS = (function() {
         if (message.zoom != null && message.hasOwnProperty("zoom"))
             if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
                 return "zoom: integer|Long expected";
+        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
+            if (!$util.isString(message.pushTitle))
+                return "pushTitle: string expected";
+        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
+            if (!$util.isString(message.pushBody))
+                return "pushBody: string expected";
+        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
+            if (!$util.isString(message.pushSound))
+                return "pushSound: string expected";
         return null;
     };
 
@@ -1411,6 +1462,12 @@ $root.ChatS = (function() {
                 message.zoom = object.zoom;
             else if (typeof object.zoom === "object")
                 message.zoom = new $util.LongBits(object.zoom.low >>> 0, object.zoom.high >>> 0).toNumber();
+        if (object.pushTitle != null)
+            message.pushTitle = String(object.pushTitle);
+        if (object.pushBody != null)
+            message.pushBody = String(object.pushBody);
+        if (object.pushSound != null)
+            message.pushSound = String(object.pushSound);
         return message;
     };
 
@@ -1468,6 +1525,9 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.zoom = options.longs === String ? "0" : 0;
+            object.pushTitle = "";
+            object.pushBody = "";
+            object.pushSound = "";
         }
         if (message.sign != null && message.hasOwnProperty("sign"))
             if (typeof message.sign === "number")
@@ -1514,6 +1574,12 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? String(message.zoom) : message.zoom;
             else
                 object.zoom = options.longs === String ? $util.Long.prototype.toString.call(message.zoom) : options.longs === Number ? new $util.LongBits(message.zoom.low >>> 0, message.zoom.high >>> 0).toNumber() : message.zoom;
+        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
+            object.pushTitle = message.pushTitle;
+        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
+            object.pushBody = message.pushBody;
+        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
+            object.pushSound = message.pushSound;
         return object;
     };
 
@@ -1828,7 +1894,9 @@ $root.ChatR = (function() {
      * @property {number|null} [lat] ChatR lat
      * @property {number|null} [lng] ChatR lng
      * @property {number|Long|null} [zoom] ChatR zoom
-     * @property {string|null} [pushTxt] ChatR pushTxt
+     * @property {string|null} [pushTitle] ChatR pushTitle
+     * @property {string|null} [pushBody] ChatR pushBody
+     * @property {string|null} [pushSound] ChatR pushSound
      */
 
     /**
@@ -1983,12 +2051,28 @@ $root.ChatR = (function() {
     ChatR.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
-     * ChatR pushTxt.
-     * @member {string} pushTxt
+     * ChatR pushTitle.
+     * @member {string} pushTitle
      * @memberof ChatR
      * @instance
      */
-    ChatR.prototype.pushTxt = "";
+    ChatR.prototype.pushTitle = "";
+
+    /**
+     * ChatR pushBody.
+     * @member {string} pushBody
+     * @memberof ChatR
+     * @instance
+     */
+    ChatR.prototype.pushBody = "";
+
+    /**
+     * ChatR pushSound.
+     * @member {string} pushSound
+     * @memberof ChatR
+     * @instance
+     */
+    ChatR.prototype.pushSound = "";
 
     /**
      * Creates a new ChatR instance using the specified properties.
@@ -2048,8 +2132,12 @@ $root.ChatR = (function() {
             writer.uint32(/* id 16, wireType 1 =*/129).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
             writer.uint32(/* id 17, wireType 0 =*/136).int64(message.zoom);
-        if (message.pushTxt != null && Object.hasOwnProperty.call(message, "pushTxt"))
-            writer.uint32(/* id 18, wireType 2 =*/146).string(message.pushTxt);
+        if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
+            writer.uint32(/* id 18, wireType 2 =*/146).string(message.pushTitle);
+        if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
+            writer.uint32(/* id 19, wireType 2 =*/154).string(message.pushBody);
+        if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
+            writer.uint32(/* id 20, wireType 2 =*/162).string(message.pushSound);
         return writer;
     };
 
@@ -2136,7 +2224,13 @@ $root.ChatR = (function() {
                 message.zoom = reader.int64();
                 break;
             case 18:
-                message.pushTxt = reader.string();
+                message.pushTitle = reader.string();
+                break;
+            case 19:
+                message.pushBody = reader.string();
+                break;
+            case 20:
+                message.pushSound = reader.string();
                 break;
             default:
                 reader.skipType(tag & 7);
@@ -2224,9 +2318,15 @@ $root.ChatR = (function() {
         if (message.zoom != null && message.hasOwnProperty("zoom"))
             if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
                 return "zoom: integer|Long expected";
-        if (message.pushTxt != null && message.hasOwnProperty("pushTxt"))
-            if (!$util.isString(message.pushTxt))
-                return "pushTxt: string expected";
+        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
+            if (!$util.isString(message.pushTitle))
+                return "pushTitle: string expected";
+        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
+            if (!$util.isString(message.pushBody))
+                return "pushBody: string expected";
+        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
+            if (!$util.isString(message.pushSound))
+                return "pushSound: string expected";
         return null;
     };
 
@@ -2353,8 +2453,12 @@ $root.ChatR = (function() {
                 message.zoom = object.zoom;
             else if (typeof object.zoom === "object")
                 message.zoom = new $util.LongBits(object.zoom.low >>> 0, object.zoom.high >>> 0).toNumber();
-        if (object.pushTxt != null)
-            message.pushTxt = String(object.pushTxt);
+        if (object.pushTitle != null)
+            message.pushTitle = String(object.pushTitle);
+        if (object.pushBody != null)
+            message.pushBody = String(object.pushBody);
+        if (object.pushSound != null)
+            message.pushSound = String(object.pushSound);
         return message;
     };
 
@@ -2433,7 +2537,9 @@ $root.ChatR = (function() {
                 object.zoom = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.zoom = options.longs === String ? "0" : 0;
-            object.pushTxt = "";
+            object.pushTitle = "";
+            object.pushBody = "";
+            object.pushSound = "";
         }
         if (message.sign != null && message.hasOwnProperty("sign"))
             if (typeof message.sign === "number")
@@ -2502,8 +2608,12 @@ $root.ChatR = (function() {
                 object.zoom = options.longs === String ? String(message.zoom) : message.zoom;
             else
                 object.zoom = options.longs === String ? $util.Long.prototype.toString.call(message.zoom) : options.longs === Number ? new $util.LongBits(message.zoom.low >>> 0, message.zoom.high >>> 0).toNumber() : message.zoom;
-        if (message.pushTxt != null && message.hasOwnProperty("pushTxt"))
-            object.pushTxt = message.pushTxt;
+        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
+            object.pushTitle = message.pushTitle;
+        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
+            object.pushBody = message.pushBody;
+        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
+            object.pushSound = message.pushSound;
         return object;
     };
 
@@ -4194,7 +4304,8 @@ $root.ChatItem = (function() {
      * @property {boolean|null} [tipFree] ChatItem tipFree
      * @property {boolean|null} [topAlbum] ChatItem topAlbum
      * @property {boolean|null} [iBlockU] ChatItem iBlockU
-     * @property {boolean|null} [connected] ChatItem connected
+     * @property {boolean|null} [iChatU] ChatItem iChatU
+     * @property {boolean|null} [uChatI] ChatItem uChatI
      * @property {boolean|null} [deleted] ChatItem deleted
      */
 
@@ -4342,12 +4453,20 @@ $root.ChatItem = (function() {
     ChatItem.prototype.iBlockU = false;
 
     /**
-     * ChatItem connected.
-     * @member {boolean} connected
+     * ChatItem iChatU.
+     * @member {boolean} iChatU
      * @memberof ChatItem
      * @instance
      */
-    ChatItem.prototype.connected = false;
+    ChatItem.prototype.iChatU = false;
+
+    /**
+     * ChatItem uChatI.
+     * @member {boolean} uChatI
+     * @memberof ChatItem
+     * @instance
+     */
+    ChatItem.prototype.uChatI = false;
 
     /**
      * ChatItem deleted.
@@ -4413,10 +4532,12 @@ $root.ChatItem = (function() {
             writer.uint32(/* id 15, wireType 0 =*/120).bool(message.topAlbum);
         if (message.iBlockU != null && Object.hasOwnProperty.call(message, "iBlockU"))
             writer.uint32(/* id 16, wireType 0 =*/128).bool(message.iBlockU);
-        if (message.connected != null && Object.hasOwnProperty.call(message, "connected"))
-            writer.uint32(/* id 17, wireType 0 =*/136).bool(message.connected);
+        if (message.iChatU != null && Object.hasOwnProperty.call(message, "iChatU"))
+            writer.uint32(/* id 17, wireType 0 =*/136).bool(message.iChatU);
+        if (message.uChatI != null && Object.hasOwnProperty.call(message, "uChatI"))
+            writer.uint32(/* id 18, wireType 0 =*/144).bool(message.uChatI);
         if (message.deleted != null && Object.hasOwnProperty.call(message, "deleted"))
-            writer.uint32(/* id 18, wireType 0 =*/144).bool(message.deleted);
+            writer.uint32(/* id 19, wireType 0 =*/152).bool(message.deleted);
         return writer;
     };
 
@@ -4500,9 +4621,12 @@ $root.ChatItem = (function() {
                 message.iBlockU = reader.bool();
                 break;
             case 17:
-                message.connected = reader.bool();
+                message.iChatU = reader.bool();
                 break;
             case 18:
+                message.uChatI = reader.bool();
+                break;
+            case 19:
                 message.deleted = reader.bool();
                 break;
             default:
@@ -4588,9 +4712,12 @@ $root.ChatItem = (function() {
         if (message.iBlockU != null && message.hasOwnProperty("iBlockU"))
             if (typeof message.iBlockU !== "boolean")
                 return "iBlockU: boolean expected";
-        if (message.connected != null && message.hasOwnProperty("connected"))
-            if (typeof message.connected !== "boolean")
-                return "connected: boolean expected";
+        if (message.iChatU != null && message.hasOwnProperty("iChatU"))
+            if (typeof message.iChatU !== "boolean")
+                return "iChatU: boolean expected";
+        if (message.uChatI != null && message.hasOwnProperty("uChatI"))
+            if (typeof message.uChatI !== "boolean")
+                return "uChatI: boolean expected";
         if (message.deleted != null && message.hasOwnProperty("deleted"))
             if (typeof message.deleted !== "boolean")
                 return "deleted: boolean expected";
@@ -4697,8 +4824,10 @@ $root.ChatItem = (function() {
             message.topAlbum = Boolean(object.topAlbum);
         if (object.iBlockU != null)
             message.iBlockU = Boolean(object.iBlockU);
-        if (object.connected != null)
-            message.connected = Boolean(object.connected);
+        if (object.iChatU != null)
+            message.iChatU = Boolean(object.iChatU);
+        if (object.uChatI != null)
+            message.uChatI = Boolean(object.uChatI);
         if (object.deleted != null)
             message.deleted = Boolean(object.deleted);
         return message;
@@ -4766,7 +4895,8 @@ $root.ChatItem = (function() {
             object.tipFree = false;
             object.topAlbum = false;
             object.iBlockU = false;
-            object.connected = false;
+            object.iChatU = false;
+            object.uChatI = false;
             object.deleted = false;
         }
         if (message.sign != null && message.hasOwnProperty("sign"))
@@ -4825,8 +4955,10 @@ $root.ChatItem = (function() {
             object.topAlbum = message.topAlbum;
         if (message.iBlockU != null && message.hasOwnProperty("iBlockU"))
             object.iBlockU = message.iBlockU;
-        if (message.connected != null && message.hasOwnProperty("connected"))
-            object.connected = message.connected;
+        if (message.iChatU != null && message.hasOwnProperty("iChatU"))
+            object.iChatU = message.iChatU;
+        if (message.uChatI != null && message.hasOwnProperty("uChatI"))
+            object.uChatI = message.uChatI;
         if (message.deleted != null && message.hasOwnProperty("deleted"))
             object.deleted = message.deleted;
         return object;
@@ -6106,6 +6238,7 @@ $root.Profile = (function() {
      * @property {number|Long|null} [updateTime] Profile updateTime
      * @property {string|null} [nickName] Profile nickName
      * @property {string|null} [avatar] Profile avatar
+     * @property {number|Long|null} [gender] Profile gender
      * @property {boolean|null} [gold] Profile gold
      * @property {boolean|null} [verified] Profile verified
      */
@@ -6166,6 +6299,14 @@ $root.Profile = (function() {
     Profile.prototype.avatar = "";
 
     /**
+     * Profile gender.
+     * @member {number|Long} gender
+     * @memberof Profile
+     * @instance
+     */
+    Profile.prototype.gender = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
      * Profile gold.
      * @member {boolean} gold
      * @memberof Profile
@@ -6215,10 +6356,12 @@ $root.Profile = (function() {
             writer.uint32(/* id 4, wireType 2 =*/34).string(message.nickName);
         if (message.avatar != null && Object.hasOwnProperty.call(message, "avatar"))
             writer.uint32(/* id 5, wireType 2 =*/42).string(message.avatar);
+        if (message.gender != null && Object.hasOwnProperty.call(message, "gender"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int64(message.gender);
         if (message.gold != null && Object.hasOwnProperty.call(message, "gold"))
-            writer.uint32(/* id 6, wireType 0 =*/48).bool(message.gold);
+            writer.uint32(/* id 7, wireType 0 =*/56).bool(message.gold);
         if (message.verified != null && Object.hasOwnProperty.call(message, "verified"))
-            writer.uint32(/* id 7, wireType 0 =*/56).bool(message.verified);
+            writer.uint32(/* id 8, wireType 0 =*/64).bool(message.verified);
         return writer;
     };
 
@@ -6269,9 +6412,12 @@ $root.Profile = (function() {
                 message.avatar = reader.string();
                 break;
             case 6:
-                message.gold = reader.bool();
+                message.gender = reader.int64();
                 break;
             case 7:
+                message.gold = reader.bool();
+                break;
+            case 8:
                 message.verified = reader.bool();
                 break;
             default:
@@ -6324,6 +6470,9 @@ $root.Profile = (function() {
         if (message.avatar != null && message.hasOwnProperty("avatar"))
             if (!$util.isString(message.avatar))
                 return "avatar: string expected";
+        if (message.gender != null && message.hasOwnProperty("gender"))
+            if (!$util.isInteger(message.gender) && !(message.gender && $util.isInteger(message.gender.low) && $util.isInteger(message.gender.high)))
+                return "gender: integer|Long expected";
         if (message.gold != null && message.hasOwnProperty("gold"))
             if (typeof message.gold !== "boolean")
                 return "gold: boolean expected";
@@ -6376,6 +6525,15 @@ $root.Profile = (function() {
             message.nickName = String(object.nickName);
         if (object.avatar != null)
             message.avatar = String(object.avatar);
+        if (object.gender != null)
+            if ($util.Long)
+                (message.gender = $util.Long.fromValue(object.gender)).unsigned = false;
+            else if (typeof object.gender === "string")
+                message.gender = parseInt(object.gender, 10);
+            else if (typeof object.gender === "number")
+                message.gender = object.gender;
+            else if (typeof object.gender === "object")
+                message.gender = new $util.LongBits(object.gender.low >>> 0, object.gender.high >>> 0).toNumber();
         if (object.gold != null)
             message.gold = Boolean(object.gold);
         if (object.verified != null)
@@ -6414,6 +6572,11 @@ $root.Profile = (function() {
                 object.updateTime = options.longs === String ? "0" : 0;
             object.nickName = "";
             object.avatar = "";
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.gender = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.gender = options.longs === String ? "0" : 0;
             object.gold = false;
             object.verified = false;
         }
@@ -6436,6 +6599,11 @@ $root.Profile = (function() {
             object.nickName = message.nickName;
         if (message.avatar != null && message.hasOwnProperty("avatar"))
             object.avatar = message.avatar;
+        if (message.gender != null && message.hasOwnProperty("gender"))
+            if (typeof message.gender === "number")
+                object.gender = options.longs === String ? String(message.gender) : message.gender;
+            else
+                object.gender = options.longs === String ? $util.Long.prototype.toString.call(message.gender) : options.longs === Number ? new $util.LongBits(message.gender.low >>> 0, message.gender.high >>> 0).toNumber() : message.gender;
         if (message.gold != null && message.hasOwnProperty("gold"))
             object.gold = message.gold;
         if (message.verified != null && message.hasOwnProperty("verified"))
@@ -7530,6 +7698,266 @@ $root.CosKey = (function() {
     };
 
     return CosKey;
+})();
+
+$root.UpdatePushToken = (function() {
+
+    /**
+     * Properties of an UpdatePushToken.
+     * @exports IUpdatePushToken
+     * @interface IUpdatePushToken
+     * @property {number|Long|null} [sign] UpdatePushToken sign
+     * @property {number|Long|null} [pushChannel] UpdatePushToken pushChannel
+     * @property {string|null} [pushToken] UpdatePushToken pushToken
+     */
+
+    /**
+     * Constructs a new UpdatePushToken.
+     * @exports UpdatePushToken
+     * @classdesc Represents an UpdatePushToken.
+     * @implements IUpdatePushToken
+     * @constructor
+     * @param {IUpdatePushToken=} [properties] Properties to set
+     */
+    function UpdatePushToken(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * UpdatePushToken sign.
+     * @member {number|Long} sign
+     * @memberof UpdatePushToken
+     * @instance
+     */
+    UpdatePushToken.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * UpdatePushToken pushChannel.
+     * @member {number|Long} pushChannel
+     * @memberof UpdatePushToken
+     * @instance
+     */
+    UpdatePushToken.prototype.pushChannel = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * UpdatePushToken pushToken.
+     * @member {string} pushToken
+     * @memberof UpdatePushToken
+     * @instance
+     */
+    UpdatePushToken.prototype.pushToken = "";
+
+    /**
+     * Creates a new UpdatePushToken instance using the specified properties.
+     * @function create
+     * @memberof UpdatePushToken
+     * @static
+     * @param {IUpdatePushToken=} [properties] Properties to set
+     * @returns {UpdatePushToken} UpdatePushToken instance
+     */
+    UpdatePushToken.create = function create(properties) {
+        return new UpdatePushToken(properties);
+    };
+
+    /**
+     * Encodes the specified UpdatePushToken message. Does not implicitly {@link UpdatePushToken.verify|verify} messages.
+     * @function encode
+     * @memberof UpdatePushToken
+     * @static
+     * @param {IUpdatePushToken} message UpdatePushToken message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    UpdatePushToken.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+        if (message.pushChannel != null && Object.hasOwnProperty.call(message, "pushChannel"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.pushChannel);
+        if (message.pushToken != null && Object.hasOwnProperty.call(message, "pushToken"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.pushToken);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified UpdatePushToken message, length delimited. Does not implicitly {@link UpdatePushToken.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof UpdatePushToken
+     * @static
+     * @param {IUpdatePushToken} message UpdatePushToken message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    UpdatePushToken.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes an UpdatePushToken message from the specified reader or buffer.
+     * @function decode
+     * @memberof UpdatePushToken
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {UpdatePushToken} UpdatePushToken
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    UpdatePushToken.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.UpdatePushToken();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                message.pushChannel = reader.int64();
+                break;
+            case 3:
+                message.pushToken = reader.string();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes an UpdatePushToken message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof UpdatePushToken
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {UpdatePushToken} UpdatePushToken
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    UpdatePushToken.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies an UpdatePushToken message.
+     * @function verify
+     * @memberof UpdatePushToken
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    UpdatePushToken.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
+                return "sign: integer|Long expected";
+        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
+            if (!$util.isInteger(message.pushChannel) && !(message.pushChannel && $util.isInteger(message.pushChannel.low) && $util.isInteger(message.pushChannel.high)))
+                return "pushChannel: integer|Long expected";
+        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
+            if (!$util.isString(message.pushToken))
+                return "pushToken: string expected";
+        return null;
+    };
+
+    /**
+     * Creates an UpdatePushToken message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof UpdatePushToken
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {UpdatePushToken} UpdatePushToken
+     */
+    UpdatePushToken.fromObject = function fromObject(object) {
+        if (object instanceof $root.UpdatePushToken)
+            return object;
+        var message = new $root.UpdatePushToken();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.pushChannel != null)
+            if ($util.Long)
+                (message.pushChannel = $util.Long.fromValue(object.pushChannel)).unsigned = false;
+            else if (typeof object.pushChannel === "string")
+                message.pushChannel = parseInt(object.pushChannel, 10);
+            else if (typeof object.pushChannel === "number")
+                message.pushChannel = object.pushChannel;
+            else if (typeof object.pushChannel === "object")
+                message.pushChannel = new $util.LongBits(object.pushChannel.low >>> 0, object.pushChannel.high >>> 0).toNumber();
+        if (object.pushToken != null)
+            message.pushToken = String(object.pushToken);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from an UpdatePushToken message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof UpdatePushToken
+     * @static
+     * @param {UpdatePushToken} message UpdatePushToken
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    UpdatePushToken.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.pushChannel = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.pushChannel = options.longs === String ? "0" : 0;
+            object.pushToken = "";
+        }
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
+            if (typeof message.pushChannel === "number")
+                object.pushChannel = options.longs === String ? String(message.pushChannel) : message.pushChannel;
+            else
+                object.pushChannel = options.longs === String ? $util.Long.prototype.toString.call(message.pushChannel) : options.longs === Number ? new $util.LongBits(message.pushChannel.low >>> 0, message.pushChannel.high >>> 0).toNumber() : message.pushChannel;
+        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
+            object.pushToken = message.pushToken;
+        return object;
+    };
+
+    /**
+     * Converts this UpdatePushToken to JSON.
+     * @function toJSON
+     * @memberof UpdatePushToken
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    UpdatePushToken.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return UpdatePushToken;
 })();
 
 $root.ProfileOnline = (function() {

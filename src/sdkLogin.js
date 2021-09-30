@@ -1,5 +1,14 @@
 import tool from "./tool";
-import declare from "./declare";
+import {
+  PID,
+  WS_STATE,
+  SYNC_CHAT,
+  ERROR_CODE,
+  HANDLE_TYPE,
+  OPERATION_TYPE,
+  IM_LOGIN_STATE,
+  LOCAL_OPERATION_STATUS,
+} from "./sdkTypes";
 import proFormat from "./proFormat";
 import { connectWs, closeWs, sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
@@ -22,17 +31,17 @@ function login(Global, options) {
         if (!info) {
           localDexie.initInfo();
         }
-        // if (info?.loginState === declare.IM_LOGIN_STATE.NotLogin) {
-        if (info?.loginState !== declare.IM_LOGIN_STATE.Logged) {
+        // if (info?.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+        if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
           if (tool.isNotObject(options, "imToken", "string")) {
             let errResult = tool.parameterErr({
-              name: declare.OPERATION_TYPE.Login,
+              name: OPERATION_TYPE.Login,
               key: "imToken",
             });
             return reject(errResult);
           } else if (tool.isNotWs(options.wsUrl)) {
             let errResult = tool.parameterErr({
-              name: declare.OPERATION_TYPE.Login,
+              name: OPERATION_TYPE.Login,
               key: "wsUrl",
             });
             return reject(errResult);
@@ -40,9 +49,9 @@ function login(Global, options) {
           window.localStorage.setItem("im_wsCurId", Global.tabId);
           // 启动全局定时器
           Global.globalTimer();
-          Global.loginState = declare.IM_LOGIN_STATE.Logging;
+          Global.loginState = IM_LOGIN_STATE.LOGGING;
           localDexie.updateInfo({
-            loginState: declare.IM_LOGIN_STATE.Logging,
+            loginState: Global.loginState,
             wsUrl: options.wsUrl,
             imToken: options.imToken,
           });
@@ -57,8 +66,8 @@ function login(Global, options) {
               connClose(Global, reject, err);
             }
           );
-        } else if (info.loginState === declare.IM_LOGIN_STATE.Logged) {
-          if (info.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
+        } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
+          if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
             Global.initChats();
           } else {
             Global.chatsSync = info.chatsSync;
@@ -66,23 +75,24 @@ function login(Global, options) {
           Global.connState = info.connState;
           Global.loginState = info.loginState;
           Global.uid = info.uid;
-          let result = tool.resultSuc(declare.OPERATION_TYPE.Login, {
+          let result = tool.resultSuc(OPERATION_TYPE.Login, {
             msg: "已登录",
             uid: info.uid,
           });
           resolve(result);
-        } else {
-          let result = tool.resultErr(
-            "登陆中",
-            declare.OPERATION_TYPE.Login,
-            declare.ERROR_CODE.LOGGING
-          );
-          reject(result);
         }
+        // else {
+        //   let errResult = tool.resultErr(
+        //     "登陆中",
+        //     OPERATION_TYPE.Login,
+        //     ERROR_CODE.LOGGING
+        //   );
+        //   reject(errResult);
+        // }
       })
       .catch((err) => {
-        Global.loginState = declare.IM_LOGIN_STATE.NotLogin;
-        localDexie.updateInfo({ loginState: declare.IM_LOGIN_STATE.NotLogin });
+        Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
+        localDexie.updateInfo({ loginState: Global.loginState });
         reject(err);
       });
   });
@@ -91,13 +101,13 @@ function login(Global, options) {
 // webSocket连接成功回调
 function connSuc(Global, resolve, reject, isReconect) {
   Global.handleMessage({
-    type: declare.HANDLE_TYPE.WsStateChange,
-    state: declare.WS_STATE.Connect,
+    type: HANDLE_TYPE.WsStateChange,
+    state: WS_STATE.NET_STATE_CONNECTED,
   });
   loginIm(Global)
     .then((res) => {
       if (isReconect !== true) {
-        let result = tool.resultSuc(declare.OPERATION_TYPE.Login, {
+        let result = tool.resultSuc(OPERATION_TYPE.Login, {
           msg: res.data.msg,
           updateTime: res.data.nowTime,
           uid: res.data.uid,
@@ -105,7 +115,7 @@ function connSuc(Global, resolve, reject, isReconect) {
         resolve(result);
         setTimeout(() => {
           Global.handleMessage({
-            type: declare.HANDLE_TYPE.ImLogin,
+            type: HANDLE_TYPE.ImLogin,
             data: res.data,
           });
         }, 0);
@@ -119,17 +129,17 @@ function connSuc(Global, resolve, reject, isReconect) {
 
 // webSocket连接失败回调
 function connClose(Global, reject, err) {
-  console.log("断开连接了", err);
-  if (Global.connState !== declare.WS_STATE.Disconnect) {
+  console.log("断开连接了", err, new Date().getTime());
+  if (Global.connState !== WS_STATE.NET_STATE_DISCONNECTED) {
     Global.handleMessage({
-      type: declare.HANDLE_TYPE.WsStateChange,
-      state: declare.WS_STATE.Disconnect,
+      type: HANDLE_TYPE.WsStateChange,
+      state: WS_STATE.NET_STATE_DISCONNECTED,
     });
   }
   let errResult = tool.resultErr(
     "建立websocket连接失败",
-    declare.OPERATION_TYPE.Login,
-    declare.ERROR_CODE.CONNECTERR
+    OPERATION_TYPE.Login,
+    ERROR_CODE.CONNECTERR
   );
   return reject(errResult);
 }
@@ -139,7 +149,7 @@ function loginIm(Global) {
   return new Promise((resolve, reject) => {
     let callSign = tool.createSign();
     tool.createCallEvent(Global, {
-      type: declare.OPERATION_TYPE.Login,
+      type: OPERATION_TYPE.Login,
       callSign: callSign,
       callSuc: (res) => {
         resolve(res);
@@ -147,12 +157,12 @@ function loginIm(Global) {
       callErr: (err) => {
         // 可能出现code 9 11
         closeWs();
-        let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Login);
+        let errResult = tool.serverErr(err, OPERATION_TYPE.Login);
         reject(errResult);
       },
     });
     let msg = proFormat.loginPro(callSign, Global.imToken);
-    sendWsMsg(msg, declare.PID.ImLogin);
+    sendWsMsg(msg, PID.ImLogin);
   });
 }
 
@@ -166,42 +176,41 @@ function logout(Global) {
     try {
       let callSign = tool.createSign();
       let data = {
-        code: declare.ERROR_CODE.SUCCESS,
+        code: ERROR_CODE.SUCCESS,
         msg: "Success",
       };
       if (Global.curTab) {
-        if (Global.loginState === declare.IM_LOGIN_STATE.Logged) {
+        if (Global.loginState === IM_LOGIN_STATE.LOGGED) {
           let msg = proFormat.logoutPro(callSign);
-          sendWsMsg(msg, declare.PID.ImLogout);
+          sendWsMsg(msg, PID.ImLogout);
         }
         Global.handleMessage({
-          type: declare.HANDLE_TYPE.ImLogout,
+          type: HANDLE_TYPE.ImLogout,
           data: data,
         });
-        let result = tool.resultSuc(declare.OPERATION_TYPE.Logout, data);
+        let result = tool.resultSuc(OPERATION_TYPE.Logout, data);
         resolve(result);
       } else {
         tool.createCallEvent(Global, {
-          type: declare.OPERATION_TYPE.Logout,
+          type: OPERATION_TYPE.Logout,
           callSign: callSign,
           callSuc: (res) => {
-            let result = tool.resultSuc(declare.OPERATION_TYPE.Logout, data);
+            let result = tool.resultSuc(OPERATION_TYPE.Logout, data);
             resolve(result);
           },
           callErr: (err) => {
-            let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Logout);
+            let errResult = tool.serverErr(err, OPERATION_TYPE.Logout);
             reject(errResult);
           },
         });
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Logout, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.Logout, {
           callSign: callSign,
           tabId: Global.tabId,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
-      let errResult = tool.resultErr(err, declare.OPERATION_TYPE.Logout);
-      reject(errResult);
+      reject(err);
     }
   });
 }

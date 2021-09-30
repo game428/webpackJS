@@ -1,5 +1,12 @@
 import tool from "./tool";
-import declare from "./declare";
+import {
+  PID,
+  MSG_TYPE,
+  SEND_STATE,
+  HANDLE_TYPE,
+  OPERATION_TYPE,
+  LOCAL_OPERATION_STATUS,
+} from "./sdkTypes";
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
@@ -21,19 +28,19 @@ function getMessageList(Global, options) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.GetMsgs,
+          name: OPERATION_TYPE.GetMsgs,
           key: "conversationID",
         });
         return reject(errResult);
       } else if (options.pageSize && options.pageSize > Global.maxMsgPageSize) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.GetMsgs,
+          name: OPERATION_TYPE.GetMsgs,
           msg: `最大条数不能超过${Global.maxMsgPageSize}条`,
         });
         return reject(errResult);
       }
       if (options.msgEnd === 1) {
-        let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
+        let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
           conversationID: options.conversationID,
           messages: [],
           hasMore: false,
@@ -71,13 +78,13 @@ function getMessageList(Global, options) {
 function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
-    type: declare.OPERATION_TYPE.GetMsgs,
+    type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
     callSuc: (res) => {
       if (res?.messages?.length) {
         getMsgsSuc(Global, defaultOption, res, resolve, msgs);
       } else {
-        let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
+        let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
           conversationID: defaultOption.conversationID,
           messages: [],
           hasMore: false,
@@ -86,7 +93,7 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
       }
     },
     callErr: (err) => {
-      let errResult = tool.serverErr(err, declare.OPERATION_TYPE.GetMsgs);
+      let errResult = tool.serverErr(err, OPERATION_TYPE.GetMsgs);
       reject(errResult);
     },
   });
@@ -97,13 +104,13 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
       toUid: uid,
       msgEnd: defaultOption.msgEnd,
     });
-    sendWsMsg(msg, declare.PID.GetHistory);
+    sendWsMsg(msg, PID.GetHistory);
   } else {
-    localNotice.onWebSocketNotice(declare.OPERATION_TYPE.GetMsgs, {
+    localNotice.onWebSocketNotice(OPERATION_TYPE.GetMsgs, {
       tabId: Global.tabId,
       callSign: callSign,
       options: defaultOption,
-      state: declare.LOCAL_OPERATION_STATUS.Pending,
+      state: LOCAL_OPERATION_STATUS.Pending,
     });
   }
 }
@@ -113,7 +120,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
   if (Global.curTab) {
     let newMsgs = [];
     res.messages.forEach((msg) => {
-      if (tool.isSo(msg.type)) {
+      if (msg.type !== MSG_TYPE.Recall && msg.type !== MSG_TYPE.Notification) {
         let newMsg = tool.formatMsg(msg, defaultOption.conversationID);
         newMsgs.push(newMsg);
       }
@@ -137,7 +144,7 @@ function resultMsgs(defaultOption, resolve, msgs) {
   if (resultData.length > 0) {
     hasMore = resultData[0].msgId !== 1;
   }
-  let result = tool.resultSuc(declare.OPERATION_TYPE.GetMsgs, {
+  let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
     conversationID: defaultOption.conversationID,
     messages: resultData,
     hasMore: hasMore,
@@ -159,17 +166,17 @@ function setMessageRead(Global, options) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.Read,
+          name: OPERATION_TYPE.Read,
           key: "conversationID",
         });
         return reject(errResult);
       }
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.Read,
+        type: OPERATION_TYPE.Read,
         callSign: callSign,
         callSuc: (res) => {
-          let result = tool.resultSuc(declare.OPERATION_TYPE.Read, {
+          let result = tool.resultSuc(OPERATION_TYPE.Read, {
             conversationID: res.conversationID,
             msgId: options.msgId,
             msgTime: res.updateTime,
@@ -177,20 +184,20 @@ function setMessageRead(Global, options) {
           resolve(result);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Read);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.Read);
           reject(errResult);
         },
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.readMsgPro(callSign, uid);
-        sendWsMsg(msg, declare.PID.MsgRead);
+        sendWsMsg(msg, PID.MsgRead);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Read, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.Read, {
           callSign: callSign,
           tabId: Global.tabId,
           options: options,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -206,53 +213,53 @@ function isMsgError(Global, msgObj, reject, proOptions) {
     return true;
   } else if (tool.isNotObject(msgObj, "type", "number")) {
     errResult = tool.parameterErr({
-      name: declare.OPERATION_TYPE.Send,
+      name: OPERATION_TYPE.Send,
       key: "type",
     });
   } else {
     switch (msgObj.type) {
-      case declare.MSG_TYPE.Text:
+      case MSG_TYPE.Text:
         if (tool.isNotString(msgObj.text)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             key: "text",
           });
         } else if (tool.isNotSize(msgObj.text)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             msg: "text长度超过3K",
           });
         }
         proOptions.body = msgObj.text;
         break;
-      case declare.MSG_TYPE.Img:
+      case MSG_TYPE.Img:
         if (tool.isNotHttp(msgObj.url)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             key: "url",
           });
         } else if (tool.isNotEmpty(msgObj.height)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             key: "height",
           });
         } else if (tool.isNotEmpty(msgObj.width)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             key: "width",
           });
         }
         proOptions.body = msgObj.url;
         break;
-      case declare.MSG_TYPE.Custom:
+      case MSG_TYPE.Custom:
         if (tool.isNotString(msgObj.content)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             key: "content",
           });
         } else if (tool.isNotSize(msgObj.content)) {
           errResult = tool.parameterErr({
-            name: declare.OPERATION_TYPE.Send,
+            name: OPERATION_TYPE.Send,
             msg: "content长度超过3K",
           });
         }
@@ -281,13 +288,13 @@ function sendMessage(Global, msgObj) {
       if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.Send,
+        type: OPERATION_TYPE.Send,
         callSign: callSign,
         callSuc: (res) => {
           sendMsgSuc(Global, msgObj, res, resolve);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Send);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.Send);
           reject(errResult);
         },
       });
@@ -295,13 +302,13 @@ function sendMessage(Global, msgObj) {
         proOptions.sign = callSign;
         Object.assign(proOptions, msgObj);
         let msg = proFormat.sendMsgPro(proOptions);
-        sendWsMsg(msg, declare.PID.ChatS);
+        sendWsMsg(msg, PID.ChatS);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Send, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.Send, {
           callSign: callSign,
           tabId: Global.tabId,
           options: msgObj,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -316,17 +323,17 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
     let newMsg = JSON.parse(JSON.stringify(msgObj));
     newMsg.msgId = res.data.msgId;
     newMsg.msgTime = res.data.msgTime;
-    newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
+    newMsg.sendStatus = SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
     Global.handleMessage({
-      type: declare.HANDLE_TYPE.ChatR,
+      type: HANDLE_TYPE.ChatR,
       shift: true,
       data: newMsg,
     });
   }
-  let result = tool.resultSuc(declare.OPERATION_TYPE.Send, {
+  let result = tool.resultSuc(OPERATION_TYPE.Send, {
     conversationID: msgObj.conversationID,
     msgId: res.data.msgId,
-    sendStatus: declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
+    sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   });
   resolve(result);
 }
@@ -344,13 +351,13 @@ function resendMessage(Global, msgObj) {
       if (isMsgError(Global, msgObj, reject, proOptions)) return;
       let callSign = tool.createSign(msgObj.showMsgTime);
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.Resend,
+        type: OPERATION_TYPE.Resend,
         callSign: callSign,
         callSuc: (res) => {
           resendMsgSuc(Global, msgObj, res, resolve);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Resend);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.Resend);
           reject(errResult);
         },
       });
@@ -358,13 +365,13 @@ function resendMessage(Global, msgObj) {
         proOptions.sign = callSign;
         Object.assign(proOptions, msgObj);
         let msg = proFormat.sendMsgPro(proOptions);
-        sendWsMsg(msg, declare.PID.ChatS);
+        sendWsMsg(msg, PID.ChatS);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Resend, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.Resend, {
           callSign: callSign,
           tabId: Global.tabId,
           options: msgObj,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -379,17 +386,17 @@ function resendMsgSuc(Global, msgObj, res, resolve) {
     let newMsg = JSON.parse(JSON.stringify(msgObj));
     newMsg.msgId = res.data.msgId;
     newMsg.msgTime = res.data.msgTime;
-    newMsg.sendStatus = declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
+    newMsg.sendStatus = SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
     Global.handleMessage({
-      type: declare.HANDLE_TYPE.ChatR,
+      type: HANDLE_TYPE.ChatR,
       shift: true,
       data: newMsg,
     });
   }
-  let result = tool.resultSuc(declare.OPERATION_TYPE.Resend, {
+  let result = tool.resultSuc(OPERATION_TYPE.Resend, {
     conversationID: msgObj.conversationID,
     msgId: res.data.msgId,
-    sendStatus: declare.SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
+    sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   });
   resolve(result);
 }
@@ -409,39 +416,39 @@ function revokeMessage(Global, options) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.Revoke,
+          name: OPERATION_TYPE.Revoke,
           key: "conversationID",
         });
         return reject(errResult);
       } else if (tool.isNotNumer(options.msgId, true)) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.Revoke,
+          name: OPERATION_TYPE.Revoke,
           key: "msgId",
         });
         return reject(errResult);
       }
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.Revoke,
+        type: OPERATION_TYPE.Revoke,
         callSign: callSign,
         callSuc: (res) => {
           revokeMsgSuc(Global, options, res, resolve);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.Revoke);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.Revoke);
           reject(errResult);
         },
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.revokeMsgPro(callSign, uid, options.msgId);
-        sendWsMsg(msg, declare.PID.Revoke);
+        sendWsMsg(msg, PID.Revoke);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.Revoke, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.Revoke, {
           callSign: callSign,
           tabId: Global.tabId,
           options: options,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -454,15 +461,15 @@ function revokeMessage(Global, options) {
 function revokeMsgSuc(Global, options, res, resolve) {
   if (Global.curTab) {
     Global.handleMessage({
-      type: declare.HANDLE_TYPE.ChatR,
+      type: HANDLE_TYPE.ChatR,
       shift: true,
       data: res.data,
     });
   }
-  let result = tool.resultSuc(declare.OPERATION_TYPE.Revoke, {
+  let result = tool.resultSuc(OPERATION_TYPE.Revoke, {
     conversationID: options.conversationID,
     msgId: options.msgId,
-    type: declare.MSG_TYPE.Revoked,
+    type: MSG_TYPE.Revoked,
   });
   resolve(result);
 }
@@ -480,7 +487,7 @@ function createTextMessage(Global, options) {
   if (!options?.to || !options?.payload?.text) return null;
   let newMsg = tool.msgBase(options.to, Global.uid);
   Object.assign(newMsg, {
-    type: declare.MSG_TYPE.Text,
+    type: MSG_TYPE.Text,
     text: options.payload.text,
   });
   return newMsg;
@@ -501,24 +508,10 @@ function createImageMessage(Global, options) {
   if (!options?.to || !options?.payload?.url) return null;
   let newMsg = tool.msgBase(options.to, Global.uid);
   Object.assign(newMsg, {
-    type: declare.MSG_TYPE.Img,
+    type: MSG_TYPE.Img,
     url: options.payload.url,
     width: options.payload.width, //图片的宽度
     height: options.payload.height, //图片的高度
-  });
-  return newMsg;
-}
-
-// TODO
-/***
- * 创建自定义消息
- */
-function createCustomMessage(Global, options) {
-  if (!options?.to || !options?.payload?.content) return null;
-  let newMsg = tool.msgBase(options.to, Global.uid);
-  Object.assign(newMsg, {
-    type: declare.MSG_TYPE.Custom,
-    content: options.payload.content,
   });
   return newMsg;
 }
@@ -560,5 +553,4 @@ export {
   revokeMessage,
   createTextMessage,
   createImageMessage,
-  createCustomMessage,
 };

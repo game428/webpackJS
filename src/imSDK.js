@@ -1,14 +1,29 @@
 /**
  * @class SDK
  */
-import declare from "./declare.js";
-import { closeWs, sendPing } from "./ws.js";
-import localNotice from "./localNotice.js";
-import tool from "./tool.js";
-import localDexie from "./dexieDB.js";
+import {
+  EVENT,
+  WS_STATE,
+  MSG_TYPE,
+  SYNC_CHAT,
+  ERROR_CODE,
+  SEND_STATE,
+  HANDLE_TYPE,
+  IM_LOGIN_STATE,
+} from "./sdkTypes";
+import { closeWs, sendPing } from "./ws";
+import localNotice from "./localNotice";
+import tool from "./tool";
+import localDexie from "./dexieDB";
 import handleMessage from "./sdkHandleMsg";
 import { login, logout } from "./sdkLogin";
-import { getConversationList, deleteConversation } from "./sdkChats";
+import {
+  getConversationList,
+  getAllUnreadCount,
+  getConversationProvider,
+  updateConversationProvider,
+  deleteConversation,
+} from "./sdkChats";
 import {
   getMessageList,
   setMessageRead,
@@ -17,20 +32,17 @@ import {
   revokeMessage,
   createTextMessage,
   createImageMessage,
-  createCustomMessage,
 } from "./sdkMessages";
 import { on, off, getCosKey } from "./sdkUnits";
 
 const TYPES = {
-  WS_STATE: declare.WS_STATE,
-  SYNC_CHAT: declare.SYNC_CHAT,
-  SEND_STATE: declare.SEND_STATE,
-  ERROR_CODE: declare.ERROR_CODE,
-  MSG_TYPE: declare.MSG_TYPE,
-  IM_LOGIN_STATE: declare.IM_LOGIN_STATE,
+  WS_STATE: WS_STATE,
+  SYNC_CHAT: SYNC_CHAT,
+  SEND_STATE: SEND_STATE,
+  ERROR_CODE: ERROR_CODE,
+  MSG_TYPE: MSG_TYPE,
+  IM_LOGIN_STATE: IM_LOGIN_STATE,
 };
-
-const EVENT = declare.EVENT;
 
 // 导出对象
 /**
@@ -62,12 +74,16 @@ function initSDK() {
     getMessageList: (options) => getMessageList(Global, options),
     setMessageRead: (options) => setMessageRead(Global, options),
     getConversationList: (options) => getConversationList(Global, options),
-    // "getConversationProfile": getConversationProfile,
+    getConversationProvider: (options) =>
+      getConversationProvider(Global, options),
+    updateConversationProvider: (options) =>
+      updateConversationProvider(Global, options),
     deleteConversation: (options) => deleteConversation(Global, options),
     createTextMessage: (options) => createTextMessage(Global, options),
     createImageMessage: (options) => createImageMessage(Global, options),
-    createCustomMessage: (options) => createCustomMessage(Global, options),
+    // createCustomMessage: (options) => createCustomMessage(Global, options),
     getCosKey: () => getCosKey(Global),
+    getAllUnreadCount: () => getAllUnreadCount(Global),
     on: on,
     off: off,
   };
@@ -81,7 +97,7 @@ let Global = null;
 function initGlobal() {
   Global = {
     timeOut: 20000,
-    tabId: Global && Global.tabId,
+    tabId: Global?.tabId,
     curTab: false, // 是否是当前连接的tab
     uid: null,
     wsUrl: null,
@@ -91,9 +107,9 @@ function initGlobal() {
     msgPageSize: 20,
     maxMsgPageSize: 100,
     heartBeatTimer: null, // 全局定时器
-    loginState: declare.IM_LOGIN_STATE.NotLogin, // im登录状态
-    chatsSync: declare.SYNC_CHAT.NotSyncChat, // 是否同步会话完成
-    connState: declare.WS_STATE.Disconnect, // 网络连接状态
+    loginState: IM_LOGIN_STATE.NOT_LOGIN, // im登录状态
+    chatsSync: SYNC_CHAT.NOT_SYNC_CHAT, // 是否同步会话完成
+    connState: WS_STATE.NET_STATE_DISCONNECTED, // 网络连接状态
     callEvents: {}, // 异步回调
     chatCallEvents: {}, // 会话列表异步回调
     chatList: [],
@@ -107,8 +123,8 @@ function initGlobal() {
     },
     onConn: () => {
       Global.handleMessage({
-        type: declare.HANDLE_TYPE.WsStateChange,
-        state: declare.WS_STATE.Connecting,
+        type: HANDLE_TYPE.WsStateChange,
+        state: WS_STATE.NET_STATE_CONNECTING,
       });
     },
     handleMessage: (options) => {
@@ -167,8 +183,8 @@ function create() {
   window.addEventListener("storage", (storage) => {
     localNotice.watchStorage(storage, msim, Global);
   });
-  localDexie.initDB(Global);
-  msim = new initSDK();
+  localDexie.initDB();
+  msim = initSDK();
   return msim;
 }
 
@@ -185,7 +201,7 @@ function onunload() {
     localDexie.deleteDB();
   } else if (Global.curTab) {
     Global.clearTimer();
-    if (Global.loginState === declare.IM_LOGIN_STATE.Logged) {
+    if (Global.loginState === IM_LOGIN_STATE.LOGGED) {
       window.localStorage.setItem("im_wsConnTab", imWsTabs[0]);
     } else {
       window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
@@ -205,16 +221,14 @@ function globalTimer() {
     if (count % 20 === 0) {
       sendPing();
     }
-    if (!Global.callEvents || !Object.keys(Global.callEvents).length) return;
-    let signTime = tool.createSign(time - Global.timeOut);
     for (let key in Global.callEvents) {
-      if (key <= signTime) {
+      if (Global.callEvents[key].timeOut <= time) {
         let callEvent = Global.callEvents[key];
         delete Global.callEvents[key];
         callEvent.callErr(
           new Error(
             JSON.stringify({
-              code: declare.ERROR_CODE.TIMEOUT,
+              code: ERROR_CODE.TIMEOUT,
               msg: callEvent.type + ": connection timed out",
             })
           )
@@ -230,12 +244,7 @@ function initChats() {
     localDexie.getChatList().then((chats) => {
       chats.forEach((chat) => {
         // 如果内存已有该chat，则通过对象合并更新
-        if (
-          Object.prototype.hasOwnProperty.call(
-            Global.chatKeys,
-            chat.conversationID
-          )
-        ) {
+        if (Global.chatKeys.hasOwnProperty(chat.conversationID)) {
           let oldChat = Global.chatKeys[chat.conversationID];
           Object.assign(oldChat, chat);
         } else {
@@ -243,7 +252,7 @@ function initChats() {
           Global.chatList.push(chat);
         }
       });
-      Global.chatsSync = declare.SYNC_CHAT.SyncChatSuccess;
+      Global.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;
       for (let key in Global.chatCallEvents) {
         Global.chatCallEvents[key].callSuc();
       }

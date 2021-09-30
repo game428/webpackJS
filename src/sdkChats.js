@@ -1,5 +1,13 @@
 import tool from "./tool";
-import declare from "./declare";
+import {
+  PID,
+  MSG_TYPE,
+  SYNC_CHAT,
+  ERROR_CODE,
+  HANDLE_TYPE,
+  OPERATION_TYPE,
+  LOCAL_OPERATION_STATUS,
+} from "./sdkTypes";
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
@@ -35,27 +43,27 @@ import localDexie from "./dexieDB";
 // 同步更新
 function syncChats(Global) {
   Global.handleMessage({
-    type: declare.HANDLE_TYPE.SyncChatsChange,
-    state: declare.SYNC_CHAT.SyncChatStart,
+    type: HANDLE_TYPE.SyncChatsChange,
+    state: SYNC_CHAT.SYNC_CHAT_START,
   });
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
-    type: declare.OPERATION_TYPE.GetChats,
+    type: OPERATION_TYPE.GetChats,
     callSign: callSign,
     callSuc: (res) => {
       if (res.updateTime && res.updateTime > Global.updateTime) {
         Global.updateTime = res.updateTime;
       }
       if (res.chats.length > 0) {
-        if (Global.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
+        if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
           syncMsgs(Global, res.chats);
         } else {
           getChatsSuc(Global, res.chats);
         }
       } else {
         Global.handleMessage({
-          type: declare.HANDLE_TYPE.SyncChatsChange,
-          state: declare.SYNC_CHAT.SyncChatSuccess,
+          type: HANDLE_TYPE.SyncChatsChange,
+          state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
           chats: [],
         });
       }
@@ -63,13 +71,13 @@ function syncChats(Global) {
     callErr: (err) => {
       // 增量更新失败
       Global.handleMessage({
-        type: declare.HANDLE_TYPE.SyncChatsChange,
-        state: declare.SYNC_CHAT.SyncChatFailed,
+        type: HANDLE_TYPE.SyncChatsChange,
+        state: SYNC_CHAT.SYNC_CHAT_FAILED,
       });
     },
   });
   let msg = proFormat.chatListPro(callSign, Global.updateTime);
-  sendWsMsg(msg, declare.PID.GetChatList);
+  sendWsMsg(msg, PID.GetChatList);
 }
 
 // 初始化同步
@@ -88,28 +96,27 @@ function syncMsgs(Global, chats) {
 function mergeChats(Global, chats, chathistorys) {
   let deleteSet = new Set();
   let newArr = chats.map((chatItem) => {
-    chatItem.showTime = parseInt(chatItem.showMsgTime / 1000);
-    let conversationID = tool.splicingC2CId(chatItem.uid);
-    chatItem.conversationID = conversationID;
+    let newChat = tool.formatChat(chatItem);
+    let conversationID = newChat.conversationID;
     let oldChat = Global.chatKeys[conversationID];
     if (
       chathistorys?.find((history) => history.conversationID === conversationID)
     ) {
-      getSyncMsgs(Global, oldChat, chatItem);
+      getSyncMsgs(Global, oldChat, newChat);
     }
-    if (!chatItem.deleted) {
+    if (!newChat.deleted) {
       // 如果内存已有该chat，则通过对象合并更新
       if (!oldChat) {
-        Global.chatKeys[conversationID] = chatItem;
-        Global.chatList.push(chatItem);
+        Global.chatKeys[conversationID] = newChat;
+        Global.chatList.push(newChat);
       } else {
-        Object.assign(oldChat, chatItem);
+        Object.assign(oldChat, newChat);
       }
     } else if (oldChat) {
       deleteSet.add(conversationID);
       delete Global.chatKeys[conversationID];
     }
-    return chatItem;
+    return newChat;
   });
   // 如果内存有已删除的会话，则过滤掉
   if (deleteSet.size > 0) {
@@ -122,8 +129,8 @@ function mergeChats(Global, chats, chathistorys) {
   }
 
   Global.handleMessage({
-    type: declare.HANDLE_TYPE.SyncChatsChange,
-    state: declare.SYNC_CHAT.SyncChatSuccess,
+    type: HANDLE_TYPE.SyncChatsChange,
+    state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
     chats: newArr,
   });
   return newArr;
@@ -133,7 +140,7 @@ function mergeChats(Global, chats, chathistorys) {
 function getSyncMsgs(Global, oldChat, chat) {
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
-    type: declare.OPERATION_TYPE.GetMsgs,
+    type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
     callSuc: async (res) => {
       if (!res?.messages?.length) return;
@@ -141,7 +148,7 @@ function getSyncMsgs(Global, oldChat, chat) {
       let msgList = [];
       for (let i = res.messages.length - 1; i >= 0; i--) {
         let msg = res.messages[i];
-        if (msg.type === declare.MSG_TYPE.Revoke) {
+        if (msg.type === MSG_TYPE.Recall) {
           let msgId = parseInt(msg.body);
           await localDexie
             .getMsg({
@@ -150,7 +157,7 @@ function getSyncMsgs(Global, oldChat, chat) {
             })
             .then((oldMsg) => {
               if (oldMsg) {
-                oldMsg.type = declare.MSG_TYPE.Revoked;
+                oldMsg.type = MSG_TYPE.Revoked;
                 revokeList.push(oldMsg);
               }
             });
@@ -165,7 +172,7 @@ function getSyncMsgs(Global, oldChat, chat) {
 
       if (chat.deleted !== true) {
         Global.handleMessage({
-          type: declare.HANDLE_TYPE.SyncMsgs,
+          type: HANDLE_TYPE.SyncMsgs,
           conversationID: oldChat.conversationID,
           revokeList: revokeList,
           msgList: msgList,
@@ -180,7 +187,7 @@ function getSyncMsgs(Global, oldChat, chat) {
     // msgEnd: chat.msgEnd,
     msgStart: oldChat.msgEnd,
   });
-  sendWsMsg(msg, declare.PID.GetHistory);
+  sendWsMsg(msg, PID.GetHistory);
 }
 
 /**
@@ -198,7 +205,7 @@ function getConversationList(Global, options) {
         return;
       } else if (options?.pageSize > Global.maxChatPageSize) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.GetChats,
+          name: OPERATION_TYPE.GetChats,
           msg: `最大条数不能超过${Global.maxChatPageSize}条`,
         });
         return reject(errResult);
@@ -212,12 +219,15 @@ function getConversationList(Global, options) {
       if (typeof options === "object") {
         Object.assign(defaultOption, options);
       }
-      if (Global.chatsSync === declare.SYNC_CHAT.SyncChatSuccess) {
+      if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         // 已同步，直接从内存获取
         resultChats(Global, defaultOption, resolve);
       } else {
         // 注册异步回调
         let callSign = tool.createSign();
+        if (Global.chatCallEvents.hasOwnProperty(callSign)) {
+          callSign += 1;
+        }
         Global.chatCallEvents[callSign] = {
           callSuc: () => {
             delete Global.chatCallEvents[callSign];
@@ -227,8 +237,8 @@ function getConversationList(Global, options) {
             delete Global.chatCallEvents[callSign];
             let errResult = tool.resultErr(
               "获取会话列表失败",
-              declare.OPERATION_TYPE.GetChats,
-              declare.ERROR_CODE.ERROR
+              OPERATION_TYPE.GetChats,
+              ERROR_CODE.ERROR
             );
             reject(errResult);
           },
@@ -249,16 +259,12 @@ function resultChats(Global, defaultOption, resolve) {
     Global.chatList,
     defaultOption.pageSize
   );
-  let result = tool.resultSuc(declare.OPERATION_TYPE.GetChats, {
+  let result = tool.resultSuc(OPERATION_TYPE.GetChats, {
     chats: chats,
     hasMore: chats.length > defaultOption.pageSize,
   });
   resolve(result);
 }
-
-/** 获取会话资料
- */
-// function getConversationProfile() {}
 
 /**
  * 删除会话
@@ -274,17 +280,17 @@ function deleteConversation(Global, options) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
-          name: declare.OPERATION_TYPE.DelChat,
+          name: OPERATION_TYPE.DelChat,
           key: "conversationID",
         });
         return reject(errResult);
       }
       let callSign = tool.createSign();
       tool.createCallEvent(Global, {
-        type: declare.OPERATION_TYPE.DelChat,
+        type: OPERATION_TYPE.DelChat,
         callSign: callSign,
         callSuc: (res) => {
-          let result = tool.resultSuc(declare.OPERATION_TYPE.DelChat, {
+          let result = tool.resultSuc(OPERATION_TYPE.DelChat, {
             conversationID: options.conversationID,
             updateTime: res.data.updateTime,
             deleted: res.data.deleted,
@@ -292,20 +298,20 @@ function deleteConversation(Global, options) {
           return resolve(result);
         },
         callErr: (err) => {
-          let errResult = tool.serverErr(err, declare.OPERATION_TYPE.DelChat);
+          let errResult = tool.serverErr(err, OPERATION_TYPE.DelChat);
           reject(errResult);
         },
       });
       if (Global.curTab) {
         let uid = tool.reformatC2CId(options.conversationID);
         let msg = proFormat.delChatPro(callSign, parseInt(uid));
-        sendWsMsg(msg, declare.PID.DelChat);
+        sendWsMsg(msg, PID.DelChat);
       } else {
-        localNotice.onWebSocketNotice(declare.OPERATION_TYPE.DelChat, {
+        localNotice.onWebSocketNotice(OPERATION_TYPE.DelChat, {
           callSign: callSign,
           tabId: Global.tabId,
           options: options,
-          state: declare.LOCAL_OPERATION_STATUS.Pending,
+          state: LOCAL_OPERATION_STATUS.Pending,
         });
       }
     } catch (err) {
@@ -314,4 +320,165 @@ function deleteConversation(Global, options) {
   });
 }
 
-export { syncChats, getConversationList, deleteConversation };
+/**
+ * 获取指定会话信息
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话id
+ * @return {Promise}
+ */
+function getConversationProvider(Global, options) {
+  return new Promise((resolve, reject) => {
+    if (!tool.preJudge(Global, reject)) {
+      return;
+    } else if (tool.isNotObject(options, "conversationID", "string")) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.GetChat,
+        key: "conversationID",
+      });
+      return reject(errResult);
+    }
+    if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
+      let newChat = Global.chatKeys[options.conversationID];
+      let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
+      return resolve(result);
+    } else {
+      localDexie.getChat(options.conversationID).then((chat) => {
+        console.log(1141, chat);
+        if (chat) {
+          let result = tool.resultSuc(OPERATION_TYPE.GetChat, chat);
+          return resolve(result);
+        } else {
+          getWsChat(options.conversationID, resolve, reject);
+        }
+      });
+    }
+  });
+}
+
+function getWsChat(conversationID, resolve, reject) {
+  let callSign = tool.createSign();
+  tool.createCallEvent(Global, {
+    type: OPERATION_TYPE.GetChat,
+    callSign: callSign,
+    callSuc: (res) => {
+      console.log(res, 4141);
+      if (res.data) {
+        let newChat = tool.formatChat(res.data);
+        localDexie.updateChat(newChat);
+        let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
+        return resolve(result);
+      }
+    },
+    callErr: (err) => {
+      let errResult = tool.serverErr(err, OPERATION_TYPE.GetChat);
+      reject(errResult);
+    },
+  });
+  if (Global.curTab) {
+    let uid = tool.reformatC2CId(conversationID);
+    let msg = proFormat.chatPro(callSign, uid);
+    sendWsMsg(msg, PID.GetChat);
+  } else {
+    localNotice.onWebSocketNotice(OPERATION_TYPE.GetChat, {
+      callSign: callSign,
+      tabId: Global.tabId,
+      options: options,
+      state: LOCAL_OPERATION_STATUS.Pending,
+    });
+  }
+}
+
+/**
+ * 更新指定会话本地信息
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话id
+ * @return {Promise}
+ */
+function updateConversationProvider(Global, options) {
+  return new Promise((resolve, reject) => {
+    if (!tool.preJudge(Global, reject)) {
+      return;
+    } else if (tool.isNotObject(options, "conversationID", "string")) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.UpdateChat,
+        key: "conversationID",
+      });
+      return reject(errResult);
+    }
+    if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
+      let newChat = Global.chatKeys[options.conversationID];
+      Object.assign(newChat, options);
+      let result = tool.resultSuc(OPERATION_TYPE.UpdateChat, newChat);
+      resolve(result);
+    } else {
+      localDexie.getChat(options.conversationID).then((chat) => {
+        if (chat) {
+          let newChat = Object.assign(chat, options);
+          let result = tool.resultSuc(OPERATION_TYPE.UpdateChat, newChat);
+          resolve(result);
+        } else {
+          let errResult = tool.resultErr(
+            "更新本地会话信息失败",
+            OPERATION_TYPE.UpdateChat,
+            ERROR_CODE.ERROR
+          );
+          reject(errResult);
+        }
+      });
+    }
+  });
+}
+
+/**
+ * 获取未读总数
+ * @return {Promise<number>}
+ */
+function getAllUnreadCount(Global) {
+  return new Promise((resolve, reject) => {
+    if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+      // 已同步，直接从内存获取
+      let unread = Global.chatList.reduce((pre, cur) => pre + cur.unread, 0);
+      let result = tool.resultSuc(OPERATION_TYPE.GetAllUnread, {
+        unread: unread || 0,
+      });
+      resolve(result);
+    } else {
+      // 注册异步回调
+      let callSign = tool.createSign();
+      if (Global.chatCallEvents.hasOwnProperty(callSign)) {
+        callSign += 1;
+      }
+      Global.chatCallEvents[callSign] = {
+        callSuc: () => {
+          delete Global.chatCallEvents[callSign];
+          let unread = Global.chatList.reduce(
+            (pre, cur) => pre + cur.unread,
+            0
+          );
+          let result = tool.resultSuc(OPERATION_TYPE.GetAllUnread, {
+            unread: unread,
+          });
+          resolve(result);
+        },
+        callErr: () => {
+          delete Global.chatCallEvents[callSign];
+          let errResult = tool.resultErr(
+            "获取未读数失败",
+            OPERATION_TYPE.GetAllUnread,
+            ERROR_CODE.ERROR
+          );
+          reject(errResult);
+        },
+      };
+    }
+  });
+}
+
+export {
+  syncChats,
+  getConversationList,
+  getAllUnreadCount,
+  getConversationProvider,
+  updateConversationProvider,
+  deleteConversation,
+};

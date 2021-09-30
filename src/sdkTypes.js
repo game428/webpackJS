@@ -1,4 +1,7 @@
-// protobuf 类型ID
+/***
+ * protobuf 类型ID
+ * @enum
+ */
 const PID = {
   Ping: 0,
   ImLogin: 1,
@@ -38,7 +41,7 @@ const PID = {
  */
 /**
  * @memberof TYPES#
- * @typedef TYPES
+ * @enum
  * @property {WS_STATE} WS_STATE - websocket连接状态
  * @property {SYNC_CHAT} SYNC_CHAT - 同步会话状态{@link SYNC_CHAT}
  * @property {SYNC_CHAT} SEND_STATE - 消息发送状态{@link SEND_STATE}
@@ -47,7 +50,10 @@ const PID = {
  * @property {IM_LOGIN_STATE} IM_LOGIN_STATE - im登录状态{@link IM_LOGIN_STATE}
  */
 
-// 多tab通知通讯类型
+/***
+ * 多tab通知通讯类型
+ * @enum
+ */
 const LOCAL_MESSAGE_TYPE = {
   Online: "online",
   Offline: "offline",
@@ -60,13 +66,19 @@ const LOCAL_MESSAGE_TYPE = {
   NotificationMsg: "notificationMsg",
 };
 
-// 多tab操作通讯类型
+/***
+ * 多tab操作通讯类型
+ * @enum
+ */
 const LOCAL_OPERATION_TYPE = {
   Message: "im_onMessage_",
   WS: "im_onWebsocket_",
 };
 
-// 业务操作类型
+/***
+ * 业务操作类型
+ * @enum
+ */
 const OPERATION_TYPE = {
   Login: "login",
   Logout: "logout",
@@ -88,10 +100,10 @@ const OPERATION_TYPE = {
 
 /**
  * websocket连接状态
- * @typedef {Object} WS_STATE
- * @property {string} Disconnect - websocket未连接状态,连接失败也会进入未连接状态
- * @property {string} Connecting - websocket连接中
- * @property {string} Connect - websocket连接成功
+ * @enum
+ * @property {string} NET_STATE_DISCONNECTED - websocket未连接状态,连接失败也会进入未连接状态
+ * @property {string} NET_STATE_CONNECTING - websocket连接中
+ * @property {string} NET_STATE_CONNECTED - websocket连接成功
  */
 const WS_STATE = {
   NET_STATE_DISCONNECTED: "disconnect",
@@ -101,10 +113,10 @@ const WS_STATE = {
 
 /**
  * im登录状态
- * @typedef {Object} IM_LOGIN_STATE
- * @property {string} NotLogin - im未登录状态,连接失败也会进入未登录状态
- * @property {string} Logging - im登陆中
- * @property {string} Logged - im登录成功
+ * @enum
+ * @property {string} NOT_LOGIN - im未登录状态,连接失败也会进入未登录状态
+ * @property {string} LOGGING - im登陆中
+ * @property {string} LOGGED - im登录成功
  */
 const IM_LOGIN_STATE = {
   NOT_LOGIN: "notLogin",
@@ -114,11 +126,11 @@ const IM_LOGIN_STATE = {
 
 /**
  * 会话同步状态
- * @typedef {Object} SYNC_CHAT
- * @property {string} NotSyncChat - 未开始同步会话
- * @property {string} SyncChatStart - im登陆成功后，开始同步会话
- * @property {string} SyncChatSuccess - 会话同步成功
- * @property {string} SyncChatFailed - 会话同步失败
+ * @enum
+ * @property {string} NOT_SYNC_CHAT - 未开始同步会话
+ * @property {string} SYNC_CHAT_START - im登陆成功后，开始同步会话
+ * @property {string} SYNC_CHAT_SUCCESS - 会话同步成功
+ * @property {string} SYNC_CHAT_FAILED - 会话同步失败
  */
 const SYNC_CHAT = {
   NOT_SYNC_CHAT: "NotSyncChat",
@@ -129,7 +141,7 @@ const SYNC_CHAT = {
 
 /**
  * 消息发送状态
- * @typedef {Object} SYNC_CHAT
+ * @enum
  * @property {number} BFIM_MSG_STATUS_SENDING - 消息发送中
  * @property {number} BFIM_MSG_STATUS_SEND_SUCC - 消息发送成功
  * @property {number} BFIM_MSG_STATUS_SEND_FAIL - 消息发送失败
@@ -142,7 +154,7 @@ const SEND_STATE = {
 
 /***
  * 已读状态
- * @typedef {Object} SYNC_CHAT
+ * @enum
  * @property {number} BFIM_MSG_STATUS_UNREAD - 消息未读
  * @property {number} BFIM_MSG_STATUS_READ - 消息已读
  */
@@ -151,7 +163,10 @@ const READ_STATE = {
   BFIM_MSG_STATUS_READ: 1,
 };
 
-// 多TAB通讯状态
+/***
+ * 多TAB通讯状态
+ * @enum
+ */
 const LOCAL_OPERATION_STATUS = {
   Pending: 0,
   Fulfilled: 1,
@@ -160,7 +175,7 @@ const LOCAL_OPERATION_STATUS = {
 
 /***
  * 错误类型code码
- * @typedef {Object} ERROR_CODE
+ * @enum
  * @property {number} SUCCESS - 成功
  * @property {number} ERROR - 失败
  * @property {number} TOKEN_NOT_FOUND - token不存在
@@ -197,9 +212,9 @@ const ERROR_CODE = {
   PARAMETER: 9001,
 };
 
-/***
+/**
  * 消息类型
- * @typedef {Object} MSG_TYPE
+ * @enum
  * @property {number} Text - 文本
  * @property {number} Img - 图片
  * @property {number} Audio - 音频
@@ -242,7 +257,10 @@ const MSG_TYPE = {
   Notification: 100,
 };
 
-// 服务器下发的更新会话的类型
+/***
+ * 服务器下发的更新会话的类型
+ * @enum
+ */
 const CHAT_UPDATE_EVENT = {
   MsgLastRead: 0,
   Unread: 1,
@@ -250,13 +268,12 @@ const CHAT_UPDATE_EVENT = {
   Deleted: 3,
 };
 
-// 业务通知回调类型
 /**
  * @module EVENT
  */
 /**
  * 监听事件名称
- * @typedef {Object} EVENT
+ * @enum
  * @property {string} CONNECT_CHANGE - 连接状态通知
  * @property {string} LOGIN - 登录成功
  * @property {string} LOGOUT - 退出成功
@@ -281,7 +298,10 @@ const EVENT = {
   TOKEN_NOT_FOUND: "onTokenNotFound", // token未找到或过期
 };
 
-// 处理消息的枚举类型
+/***
+ * 处理消息的枚举类型
+ * @enum
+ */
 const HANDLE_TYPE = {
   WsStateChange: "WsStateChange", // ws状态变化
   SyncChatsChange: "SyncChatsChange", // 同步会话状态变化
@@ -293,20 +313,20 @@ const HANDLE_TYPE = {
   ChatR: "ChatR", // 新消息处理
 };
 
-export default {
+export {
   PID,
-  LOCAL_MESSAGE_TYPE,
-  LOCAL_OPERATION_TYPE,
+  EVENT,
   WS_STATE,
-  IM_LOGIN_STATE,
   MSG_TYPE,
   SYNC_CHAT,
+  ERROR_CODE,
   SEND_STATE,
   READ_STATE,
-  ERROR_CODE,
-  LOCAL_OPERATION_STATUS,
-  OPERATION_TYPE,
-  CHAT_UPDATE_EVENT,
-  EVENT,
   HANDLE_TYPE,
+  OPERATION_TYPE,
+  IM_LOGIN_STATE,
+  CHAT_UPDATE_EVENT,
+  LOCAL_MESSAGE_TYPE,
+  LOCAL_OPERATION_TYPE,
+  LOCAL_OPERATION_STATUS,
 };
