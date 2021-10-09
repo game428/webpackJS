@@ -204,6 +204,8 @@ function handleResult(result) {
       callEvent && callEvent.callErr(resultPro);
       break;
     case 4: // im token 未找到（不存在或失效）
+    case 9: // 用户未注册
+    case 2008: // 被踢下线
       wsConfig.closeState = true;
       wsConfig.ws.close();
       wsConfig.Global.handleMessage({
@@ -218,15 +220,6 @@ function handleResult(result) {
           chats: [],
           hasMore: false,
         });
-      break;
-    case 2008: // 被踢下线
-      wsConfig.closeState = true;
-      wsConfig.ws.close();
-      wsConfig.Global.handleMessage({
-        type: HANDLE_TYPE.ResultError,
-        data: resultPro,
-      });
-      callEvent && callEvent.callErr(resultPro);
       break;
     default:
       callEvent && callEvent.callErr(resultPro);
@@ -328,7 +321,6 @@ function handleGetChat(result) {
   let resultPro = ChatItem.toObject(ChatItem.decode(result), {
     defaults: true,
   });
-  console.log(11, resultPro);
   var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {

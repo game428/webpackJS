@@ -183,6 +183,7 @@ function handleError(options) {
   Global.clearData();
   switch (options.data.code) {
     case ERROR_CODE.KICKED_OUT:
+    case ERROR_CODE.NO_REGISTER:
       if (msim[EVENT.KICKED_OUT]) {
         let result = tool.resultNotice(EVENT.KICKED_OUT, options.data);
         msim[EVENT.KICKED_OUT](result);
@@ -208,7 +209,6 @@ function handleMsg(options) {
   handleMsgStack();
 }
 
-// TODO 指令消息，如果会话已经被删除则不通知
 // 处理消息队列
 function handleMsgStack() {
   new Promise((resolve, reject) => {
@@ -243,11 +243,10 @@ function handleMsgStack() {
   });
 }
 
-// TODO 返回修改好后的消息体
 // 处理撤回消息
 function handleRevokeMsg(msg, resolve) {
   if (Global.curTab) {
-    let msgId = parseInt(msg.body);
+    let msgId = parseInt(msg.text);
     localDexie
       .getMsg({
         conversationID: msg.conversationID,
@@ -286,6 +285,7 @@ function handleRevokeMsg(msg, resolve) {
   resolve();
 }
 
+// 处理通知消息
 function handleNotificationMsg(msg, resolve) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.NotificationMsg, {
@@ -322,12 +322,14 @@ function handleShowMsg(msg, resolve) {
       showMsg = newMsg.content;
     }
     let updataChatObj = {
-      conversationID: msg.conversationID,
+      conversationID: newMsg.conversationID,
       msgEnd: newMsg.msgId,
       showMsgId: newMsg.msgId,
       showMsgType: newMsg.type,
       showMsg: showMsg,
       showMsgTime: newMsg.msgTime,
+      myMove: newMsg.fromUid !== Global.uid,
+      showMsgFromUid: newMsg.fromUid,
     };
     if (newMsg.fromUid !== Global.uid) {
       updataChatObj.addUnread = 1;
@@ -356,19 +358,21 @@ function updateChat(updateChat) {
         }
       );
     }
+    let newChat;
     if (updateChat.event) {
-      handleServerUpdate(updateChat, oldChat, conversationID);
+      newChat = handleServerUpdate(updateChat, oldChat, conversationID);
     } else {
       // 如果更新时间低于当前会话的时间则不更新
       if (updateChat.showMsgTime < oldChat.showMsgTime) return;
-      handleNewMsgUpdate(updateChat, oldChat, conversationID);
+      newChat = handleNewMsgUpdate(updateChat, oldChat);
     }
-    updateChatNotice(oldChat, resolve);
+    updateChatNotice(newChat, resolve);
   });
 }
 
 // 处理接收到新消息时更新会话
-function handleNewMsgUpdate(updateChat, oldChat, conversationID) {
+function handleNewMsgUpdate(updateChat, oldChat) {
+  let newChat = { ...oldChat };
   // 如果更新会话时,消息时间大于所有会话标记时间
   if (updateChat.showMsgTime > Global.updateTime) {
     Global.updateTime = updateChat.showMsgTime;
@@ -376,51 +380,46 @@ function handleNewMsgUpdate(updateChat, oldChat, conversationID) {
   if (Global.curTab) {
     switch (updateChat.showMsgType) {
       case MSG_TYPE.Recall:
-        if (updateChat.showMsgId === oldChat.showMsgId) {
+        if (updateChat.showMsgId === newChat.showMsgId) {
           // 撤回的是最后一条消息
-          oldChat.msgEnd = updateChat.msgEnd;
-          oldChat.showMsgType = MSG_TYPE.Revoked;
-          oldChat.showMsg = "";
-        } else if (oldChat.msgEnd < updateChat.msgEnd) {
+          newChat.msgEnd = updateChat.msgEnd;
+          newChat.showMsgType = MSG_TYPE.Revoked;
+          newChat.showMsg = "";
+        } else if (newChat.msgEnd < updateChat.msgEnd) {
           // 撤回的不是最后一条消息
-          oldChat.msgEnd = updateChat.msgEnd;
+          newChat.msgEnd = updateChat.msgEnd;
         }
         break;
       default:
-        if (updateChat.addUnread && updateChat.msgEnd > oldChat.msgEnd) {
-          updateChat.unread = (oldChat.unread || 0) + updateChat.addUnread;
+        if (updateChat.addUnread && updateChat.msgEnd > newChat.msgEnd) {
+          updateChat.unread = (newChat.unread || 0) + updateChat.addUnread;
         }
-        Object.assign(oldChat, updateChat);
-        oldChat.showTime = parseInt(oldChat.showMsgTime / 1000);
-        oldChat.deleted = false;
+        Object.assign(newChat, updateChat);
+        newChat.showTime = parseInt(newChat.showMsgTime / 1000);
+        newChat.deleted = false;
         break;
     }
   }
-  if (Global.chatKeys.hasOwnProperty(conversationID)) {
-    let newChat = Global.chatKeys[conversationID];
-    Object.assign(newChat, oldChat);
-  } else if (options.deleted !== true) {
-    Global.chatKeys[conversationID] = oldChat;
-    Global.chatList.unshift(oldChat);
-  }
+  return newChat;
 }
 
 // 处理服务器下发的更新会话
 function handleServerUpdate(options, chat, conversationID) {
+  let newChat = { ...chat };
   switch (options.event) {
     case CHAT_UPDATE_EVENT.MsgLastRead:
-      chat.msgLastRead = options.msgLastRead;
+      newChat.msgLastRead = options.msgLastRead;
       break;
     case CHAT_UPDATE_EVENT.Unread:
-      chat.unread = options.unread;
+      newChat.unread = options.unread;
       break;
     case CHAT_UPDATE_EVENT.IBlockU:
       // TODO 暂未实现拉黑
-      chat.iBlockU = options.iBlockU;
+      newChat.iBlockU = options.iBlockU;
       break;
     case CHAT_UPDATE_EVENT.Deleted:
       if (options.deleted) {
-        chat.deleted = options.deleted;
+        newChat.deleted = options.deleted;
         if (Global.chatKeys.hasOwnProperty(conversationID)) {
           delete Global.chatKeys[conversationID];
           Global.chatList = Global.chatList.filter(
@@ -434,10 +433,18 @@ function handleServerUpdate(options, chat, conversationID) {
   if (options.updateTime > Global.updateTime) {
     Global.updateTime = options.updateTime;
   }
+  return newChat;
 }
 
 // 更新会话通知
 function updateChatNotice(newChat, resolve) {
+  if (Global.chatKeys.hasOwnProperty(newChat.conversationID)) {
+    let oldChat = Global.chatKeys[newChat.conversationID];
+    Object.assign(oldChat, newChat);
+  } else if (newChat.deleted !== true) {
+    Global.chatKeys[conversationID] = newChat;
+    Global.chatList.unshift(newChat);
+  }
   if (msim[EVENT.CONVERSATION_LIST_UPDATED]) {
     let result = tool.resultNotice(EVENT.CONVERSATION_LIST_UPDATED, [newChat]);
     msim[EVENT.CONVERSATION_LIST_UPDATED](result);

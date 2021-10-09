@@ -251,20 +251,6 @@ function isMsgError(Global, msgObj, reject, proOptions) {
         }
         proOptions.body = msgObj.url;
         break;
-      case MSG_TYPE.Custom:
-        if (tool.isNotString(msgObj.content)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            key: "content",
-          });
-        } else if (tool.isNotSize(msgObj.content)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            msg: "content长度超过3K",
-          });
-        }
-        proOptions.body = msgObj.data;
-        break;
     }
   }
   if (errResult) {

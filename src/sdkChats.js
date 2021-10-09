@@ -96,7 +96,7 @@ function syncMsgs(Global, chats) {
 function mergeChats(Global, chats, chathistorys) {
   let deleteSet = new Set();
   let newArr = chats.map((chatItem) => {
-    let newChat = tool.formatChat(chatItem);
+    let newChat = tool.formatChat(chatItem, Global.uid);
     let conversationID = newChat.conversationID;
     let oldChat = Global.chatKeys[conversationID];
     if (
@@ -340,33 +340,31 @@ function getConversationProvider(Global, options) {
     if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
       let newChat = Global.chatKeys[options.conversationID];
       let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
-      return resolve(result);
+      resolve(result);
     } else {
       localDexie.getChat(options.conversationID).then((chat) => {
-        console.log(1141, chat);
         if (chat) {
           let result = tool.resultSuc(OPERATION_TYPE.GetChat, chat);
           return resolve(result);
         } else {
-          getWsChat(options.conversationID, resolve, reject);
+          getWsChat(Global, options.conversationID, resolve, reject);
         }
       });
     }
   });
 }
 
-function getWsChat(conversationID, resolve, reject) {
+function getWsChat(Global, conversationID, resolve, reject) {
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetChat,
     callSign: callSign,
     callSuc: (res) => {
-      console.log(res, 4141);
       if (res.data) {
-        let newChat = tool.formatChat(res.data);
+        let newChat = tool.formatChat(res.data, Global.uid);
         localDexie.updateChat(newChat);
         let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
-        return resolve(result);
+        resolve(result);
       }
     },
     callErr: (err) => {
@@ -400,7 +398,7 @@ function updateConversationProvider(Global, options) {
       return;
     } else if (tool.isNotObject(options, "conversationID", "string")) {
       let errResult = tool.parameterErr({
-        name: OPERATION_TYPE.UpdateChat,
+        name: OPERATION_TYPE.UpdateLocalChat,
         key: "conversationID",
       });
       return reject(errResult);
@@ -408,18 +406,18 @@ function updateConversationProvider(Global, options) {
     if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
       let newChat = Global.chatKeys[options.conversationID];
       Object.assign(newChat, options);
-      let result = tool.resultSuc(OPERATION_TYPE.UpdateChat, newChat);
+      let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
       resolve(result);
     } else {
       localDexie.getChat(options.conversationID).then((chat) => {
         if (chat) {
           let newChat = Object.assign(chat, options);
-          let result = tool.resultSuc(OPERATION_TYPE.UpdateChat, newChat);
+          let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
           resolve(result);
         } else {
           let errResult = tool.resultErr(
             "更新本地会话信息失败",
-            OPERATION_TYPE.UpdateChat,
+            OPERATION_TYPE.UpdateLocalChat,
             ERROR_CODE.ERROR
           );
           reject(errResult);

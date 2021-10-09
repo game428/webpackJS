@@ -47,11 +47,12 @@ function cosPro(sign) {
  * 登录
  * @param {number} sign 标识
  * @param {string} imToken token
+ * @param {number} subAppId 子应用id
  * @returns {Uint8Array} 二进制数据
  */
-function loginPro(sign, imToken) {
+function loginPro(sign, imToken, subAppId) {
   let bytes = ImLogin.encode(
-    ImLogin.create({ sign: sign, token: imToken })
+    ImLogin.create({ sign: sign, token: imToken, subApp: subAppId })
   ).finish();
   return bytes;
 }

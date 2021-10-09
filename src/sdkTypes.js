@@ -84,7 +84,7 @@ const OPERATION_TYPE = {
   Logout: "logout",
   GetChats: "getConversationList",
   GetChat: "getConversationProvider",
-  UpdateChat: "updateConversationProvider",
+  UpdateLocalChat: "updateConversationProvider",
   DelChat: "deleteConversation",
   GetMsgs: "getMessageList",
   Read: "setMessageRead",
@@ -182,7 +182,6 @@ const LOCAL_OPERATION_STATUS = {
  * @property {number} NO_REGISTER - 用户未注册
  * @property {number} SIGNED - 用户已经登录
  * @property {number} KICKED_OUT - 被踢
- * @property {number} TOKEN_OUT - token失效
  * @property {number} TIMEOUT - 操作超时
  * @property {number} DISCONNECT - websocket未连接
  * @property {number} CONNECTERR - websocket连接建立失败
@@ -200,7 +199,6 @@ const ERROR_CODE = {
   NO_REGISTER: 9,
   SIGNED: 11,
   KICKED_OUT: 2008,
-  TOKEN_OUT: 2009,
   TIMEOUT: 3000,
   DISCONNECT: 3001,
   CONNECTERR: 3002,

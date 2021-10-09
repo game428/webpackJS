@@ -219,6 +219,10 @@ $root.ImLogin = (function() {
      * @property {number|Long|null} [sign] ImLogin sign
      * @property {string|null} [token] ImLogin token
      * @property {number|Long|null} [ct] ImLogin ct
+     * @property {number|Long|null} [subApp] ImLogin subApp
+     * @property {number|Long|null} [pushChannel] ImLogin pushChannel
+     * @property {string|null} [pushToken] ImLogin pushToken
+     * @property {string|null} [lastToken] ImLogin lastToken
      */
 
     /**
@@ -261,6 +265,38 @@ $root.ImLogin = (function() {
     ImLogin.prototype.ct = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * ImLogin subApp.
+     * @member {number|Long} subApp
+     * @memberof ImLogin
+     * @instance
+     */
+    ImLogin.prototype.subApp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ImLogin pushChannel.
+     * @member {number|Long} pushChannel
+     * @memberof ImLogin
+     * @instance
+     */
+    ImLogin.prototype.pushChannel = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ImLogin pushToken.
+     * @member {string} pushToken
+     * @memberof ImLogin
+     * @instance
+     */
+    ImLogin.prototype.pushToken = "";
+
+    /**
+     * ImLogin lastToken.
+     * @member {string} lastToken
+     * @memberof ImLogin
+     * @instance
+     */
+    ImLogin.prototype.lastToken = "";
+
+    /**
      * Creates a new ImLogin instance using the specified properties.
      * @function create
      * @memberof ImLogin
@@ -290,6 +326,14 @@ $root.ImLogin = (function() {
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.token);
         if (message.ct != null && Object.hasOwnProperty.call(message, "ct"))
             writer.uint32(/* id 3, wireType 0 =*/24).int64(message.ct);
+        if (message.subApp != null && Object.hasOwnProperty.call(message, "subApp"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.subApp);
+        if (message.pushChannel != null && Object.hasOwnProperty.call(message, "pushChannel"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.pushChannel);
+        if (message.pushToken != null && Object.hasOwnProperty.call(message, "pushToken"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.pushToken);
+        if (message.lastToken != null && Object.hasOwnProperty.call(message, "lastToken"))
+            writer.uint32(/* id 7, wireType 2 =*/58).string(message.lastToken);
         return writer;
     };
 
@@ -332,6 +376,18 @@ $root.ImLogin = (function() {
                 break;
             case 3:
                 message.ct = reader.int64();
+                break;
+            case 4:
+                message.subApp = reader.int64();
+                break;
+            case 5:
+                message.pushChannel = reader.int64();
+                break;
+            case 6:
+                message.pushToken = reader.string();
+                break;
+            case 7:
+                message.lastToken = reader.string();
                 break;
             default:
                 reader.skipType(tag & 7);
@@ -377,6 +433,18 @@ $root.ImLogin = (function() {
         if (message.ct != null && message.hasOwnProperty("ct"))
             if (!$util.isInteger(message.ct) && !(message.ct && $util.isInteger(message.ct.low) && $util.isInteger(message.ct.high)))
                 return "ct: integer|Long expected";
+        if (message.subApp != null && message.hasOwnProperty("subApp"))
+            if (!$util.isInteger(message.subApp) && !(message.subApp && $util.isInteger(message.subApp.low) && $util.isInteger(message.subApp.high)))
+                return "subApp: integer|Long expected";
+        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
+            if (!$util.isInteger(message.pushChannel) && !(message.pushChannel && $util.isInteger(message.pushChannel.low) && $util.isInteger(message.pushChannel.high)))
+                return "pushChannel: integer|Long expected";
+        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
+            if (!$util.isString(message.pushToken))
+                return "pushToken: string expected";
+        if (message.lastToken != null && message.hasOwnProperty("lastToken"))
+            if (!$util.isString(message.lastToken))
+                return "lastToken: string expected";
         return null;
     };
 
@@ -412,6 +480,28 @@ $root.ImLogin = (function() {
                 message.ct = object.ct;
             else if (typeof object.ct === "object")
                 message.ct = new $util.LongBits(object.ct.low >>> 0, object.ct.high >>> 0).toNumber();
+        if (object.subApp != null)
+            if ($util.Long)
+                (message.subApp = $util.Long.fromValue(object.subApp)).unsigned = false;
+            else if (typeof object.subApp === "string")
+                message.subApp = parseInt(object.subApp, 10);
+            else if (typeof object.subApp === "number")
+                message.subApp = object.subApp;
+            else if (typeof object.subApp === "object")
+                message.subApp = new $util.LongBits(object.subApp.low >>> 0, object.subApp.high >>> 0).toNumber();
+        if (object.pushChannel != null)
+            if ($util.Long)
+                (message.pushChannel = $util.Long.fromValue(object.pushChannel)).unsigned = false;
+            else if (typeof object.pushChannel === "string")
+                message.pushChannel = parseInt(object.pushChannel, 10);
+            else if (typeof object.pushChannel === "number")
+                message.pushChannel = object.pushChannel;
+            else if (typeof object.pushChannel === "object")
+                message.pushChannel = new $util.LongBits(object.pushChannel.low >>> 0, object.pushChannel.high >>> 0).toNumber();
+        if (object.pushToken != null)
+            message.pushToken = String(object.pushToken);
+        if (object.lastToken != null)
+            message.lastToken = String(object.lastToken);
         return message;
     };
 
@@ -440,6 +530,18 @@ $root.ImLogin = (function() {
                 object.ct = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.ct = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.subApp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.subApp = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.pushChannel = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.pushChannel = options.longs === String ? "0" : 0;
+            object.pushToken = "";
+            object.lastToken = "";
         }
         if (message.sign != null && message.hasOwnProperty("sign"))
             if (typeof message.sign === "number")
@@ -453,6 +555,20 @@ $root.ImLogin = (function() {
                 object.ct = options.longs === String ? String(message.ct) : message.ct;
             else
                 object.ct = options.longs === String ? $util.Long.prototype.toString.call(message.ct) : options.longs === Number ? new $util.LongBits(message.ct.low >>> 0, message.ct.high >>> 0).toNumber() : message.ct;
+        if (message.subApp != null && message.hasOwnProperty("subApp"))
+            if (typeof message.subApp === "number")
+                object.subApp = options.longs === String ? String(message.subApp) : message.subApp;
+            else
+                object.subApp = options.longs === String ? $util.Long.prototype.toString.call(message.subApp) : options.longs === Number ? new $util.LongBits(message.subApp.low >>> 0, message.subApp.high >>> 0).toNumber() : message.subApp;
+        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
+            if (typeof message.pushChannel === "number")
+                object.pushChannel = options.longs === String ? String(message.pushChannel) : message.pushChannel;
+            else
+                object.pushChannel = options.longs === String ? $util.Long.prototype.toString.call(message.pushChannel) : options.longs === Number ? new $util.LongBits(message.pushChannel.low >>> 0, message.pushChannel.high >>> 0).toNumber() : message.pushChannel;
+        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
+            object.pushToken = message.pushToken;
+        if (message.lastToken != null && message.hasOwnProperty("lastToken"))
+            object.lastToken = message.lastToken;
         return object;
     };
 
@@ -1021,6 +1137,7 @@ $root.ChatS = (function() {
      * @property {number|null} [lat] ChatS lat
      * @property {number|null} [lng] ChatS lng
      * @property {number|Long|null} [zoom] ChatS zoom
+     * @property {string|null} [accId] ChatS accId
      * @property {string|null} [pushTitle] ChatS pushTitle
      * @property {string|null} [pushBody] ChatS pushBody
      * @property {string|null} [pushSound] ChatS pushSound
@@ -1138,6 +1255,14 @@ $root.ChatS = (function() {
     ChatS.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * ChatS accId.
+     * @member {string} accId
+     * @memberof ChatS
+     * @instance
+     */
+    ChatS.prototype.accId = "";
+
+    /**
      * ChatS pushTitle.
      * @member {string} pushTitle
      * @memberof ChatS
@@ -1209,12 +1334,14 @@ $root.ChatS = (function() {
             writer.uint32(/* id 11, wireType 1 =*/89).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
             writer.uint32(/* id 12, wireType 0 =*/96).int64(message.zoom);
+        if (message.accId != null && Object.hasOwnProperty.call(message, "accId"))
+            writer.uint32(/* id 13, wireType 2 =*/106).string(message.accId);
         if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
-            writer.uint32(/* id 13, wireType 2 =*/106).string(message.pushTitle);
+            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushTitle);
         if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
-            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushBody);
+            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushBody);
         if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
-            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushSound);
+            writer.uint32(/* id 16, wireType 2 =*/130).string(message.pushSound);
         return writer;
     };
 
@@ -1286,12 +1413,15 @@ $root.ChatS = (function() {
                 message.zoom = reader.int64();
                 break;
             case 13:
-                message.pushTitle = reader.string();
+                message.accId = reader.string();
                 break;
             case 14:
-                message.pushBody = reader.string();
+                message.pushTitle = reader.string();
                 break;
             case 15:
+                message.pushBody = reader.string();
+                break;
+            case 16:
                 message.pushSound = reader.string();
                 break;
             default:
@@ -1365,6 +1495,9 @@ $root.ChatS = (function() {
         if (message.zoom != null && message.hasOwnProperty("zoom"))
             if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
                 return "zoom: integer|Long expected";
+        if (message.accId != null && message.hasOwnProperty("accId"))
+            if (!$util.isString(message.accId))
+                return "accId: string expected";
         if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
             if (!$util.isString(message.pushTitle))
                 return "pushTitle: string expected";
@@ -1462,6 +1595,8 @@ $root.ChatS = (function() {
                 message.zoom = object.zoom;
             else if (typeof object.zoom === "object")
                 message.zoom = new $util.LongBits(object.zoom.low >>> 0, object.zoom.high >>> 0).toNumber();
+        if (object.accId != null)
+            message.accId = String(object.accId);
         if (object.pushTitle != null)
             message.pushTitle = String(object.pushTitle);
         if (object.pushBody != null)
@@ -1525,6 +1660,7 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.zoom = options.longs === String ? "0" : 0;
+            object.accId = "";
             object.pushTitle = "";
             object.pushBody = "";
             object.pushSound = "";
@@ -1574,6 +1710,8 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? String(message.zoom) : message.zoom;
             else
                 object.zoom = options.longs === String ? $util.Long.prototype.toString.call(message.zoom) : options.longs === Number ? new $util.LongBits(message.zoom.low >>> 0, message.zoom.high >>> 0).toNumber() : message.zoom;
+        if (message.accId != null && message.hasOwnProperty("accId"))
+            object.accId = message.accId;
         if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
             object.pushTitle = message.pushTitle;
         if (message.pushBody != null && message.hasOwnProperty("pushBody"))

@@ -198,44 +198,75 @@ function reformatC2CId(conversationID) {
 
 // 把消息转为本地格式
 function formatMsg(msg, conversationID) {
-  let newMsg = { ...msg };
-  let msgTime = newMsg.msgTime;
-  if (!newMsg.sign) {
-    newMsg.sign = msgTime;
-  }
-  let onlyId = createOnlyId(conversationID, newMsg.sign);
-  newMsg.showMsgTime = parseInt(msgTime / 1000);
-  newMsg.conversationID = conversationID;
-  newMsg.onlyId = onlyId;
-  newMsg.sendStatus = SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
+  let newMsg = {
+    conversationID: conversationID,
+    fromUid: msg.fromUid,
+    toUid: msg.toUid,
+    type: msg.type,
+    msgId: msg.msgId,
+    newMsg: msg.newMsg,
+    sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
+  };
+  newMsg.onlyId =
+    msg.onlyId || createOnlyId(conversationID, msg.sign || msg.msgTime);
+  newMsg.showMsgTime = parseInt(msg.msgTime / 1000) || msg.showMsgTime;
   switch (newMsg.type) {
+    case MSG_TYPE.Recall:
+      newMsg.text = msg.body;
+      break;
+    case MSG_TYPE.Revoked:
+      newMsg.text = msg.body;
+      break;
     case MSG_TYPE.Text:
-      newMsg.text = newMsg.body;
+      newMsg.text = msg.body;
       break;
     case MSG_TYPE.Img:
-      newMsg.url = newMsg.body;
+      newMsg.accId = msg.accId;
+      newMsg.url = msg.body;
+      newMsg.height = msg.height;
+      newMsg.width = msg.width;
       break;
     case MSG_TYPE.Audio:
-      newMsg.url = newMsg.body;
+      newMsg.accId = msg.accId;
+      newMsg.url = msg.body;
+      newMsg.duration = msg.duration;
       break;
     case MSG_TYPE.Video:
-      newMsg.url = newMsg.body;
+      newMsg.accId = msg.accId;
+      newMsg.url = msg.body;
+      newMsg.thumb = msg.thumb;
+      newMsg.height = msg.height;
+      newMsg.width = msg.width;
+      newMsg.duration = msg.duration;
       break;
-    case MSG_TYPE.Custom:
-      newMsg.content = newMsg.body;
+    case MSG_TYPE.Location:
+      newMsg.title = msg.title;
+      newMsg.lat = msg.lat;
+      newMsg.lng = msg.lng;
+      newMsg.zoom = msg.zoom;
+      break;
+    case MSG_TYPE.Notification:
+      newMsg.content = msg.body;
       break;
     default:
-      newMsg.content = newMsg.body;
+      newMsg.accId = msg.accId;
+      newMsg.content = msg.body;
+      newMsg.thumb = msg.thumb;
+      newMsg.height = msg.height;
+      newMsg.width = msg.width;
+      newMsg.duration = msg.duration;
       break;
   }
   return newMsg;
 }
 
 // 把会话转为本地格式
-function formatChat(chat) {
+function formatChat(chat, uid) {
   let localChat = { ...chat };
+  delete localChat.showMsgId;
   localChat.showTime = parseInt(chat.showMsgTime / 1000);
   localChat.conversationID = splicingC2CId(chat.uid);
+  if (chat.msgEnd) localChat.showMsgFromUid = chat.myMove ? chat.uid : uid;
   return localChat;
 }
 
@@ -279,15 +310,11 @@ function createCallEvent(Global, options) {
 // 公共判断
 function preJudge(Global, reject) {
   if (Global.curTab && Global.connState !== WS_STATE.NET_STATE_CONNECTED) {
-    let errResult = tool.resultErr(
-      "未连接",
-      "wsConnect",
-      ERROR_CODE.DISCONNECT
-    );
+    let errResult = resultErr("未连接", "wsConnect", ERROR_CODE.DISCONNECT);
     reject ? reject(errResult) : console.error(errResult);
     return false;
   } else if (Global.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
-    let errResult = tool.resultErr(
+    let errResult = resultErr(
       "IMSDK未登录",
       OPERATION_TYPE.Login,
       ERROR_CODE.NOLOGIN

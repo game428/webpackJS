@@ -9,13 +9,14 @@ let schemas = {};
 let chatKeys = [
   "&conversationID",
   "uid", // 用户Id
-  "msgEnd", // 最后一条消息id
+  "msgEnd", // 收到的最后一条消息id
   "msgLastRead", // 最后一条标记为已读的消息id
-  "showMsgId", // 最后一条消息Id
-  "showMsgType", // 最后一条消息类型 仅websocket端 返回
-  "showMsg", // 最后一条消息内容 仅websocket端 返回
-  "showMsgTime", // 最后一条消息服务器时间
-  "showTime", // 最后一条消息客户端显示时间
+  // "showMsgId", // 显示的最后一条消息Id
+  "showMsgType", // 显示的最后一条消息类型 仅websocket端 返回
+  "showMsg", // 显示的最后一条消息内容 仅websocket端 返回
+  "showMsgTime", // 显示的最后一条消息服务器时间
+  "showTime", // 显示的最后一条消息客户端显示时间
+  "showMsgFromUid", // 显示的最后一条消息的发送方id
   "unread", // 未读消息数
   "matched", // 是否是matched
   "newMsg", // 是否以newmessage显示
@@ -38,15 +39,14 @@ let msgKeys = [
   "showMsgTime", // 消息时间（以服务器为准 精确到毫秒的时间戳）
   "sendStatus", // 消息发送状态
   "text", // 文本消息，消息内容
+  "accId", // 附件ID
   "url", // 图片消息，图片路径
-  "path", // 图片消息，图片本地路径
-  "file", // 图片消息，图片file对象
   "type", // 消息类型
-  "title", // 消息标题
   "thumb", // 封面图
   "width", // 封面图的宽度
   "height", // 封面图的高度
   "duration", // 时长
+  "title", // 消息标题
   "lat", // 维度
   "lng", // 经度
   "zoom", // 地图缩放层级

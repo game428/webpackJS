@@ -21,10 +21,30 @@ import { syncChats } from "./sdkChats";
  * @param {Object} options - 接口参数
  * @param {string} options.wsUrl ws服务器地址
  * @param {string} options.imToken 用户在ws服务器的token
+ * @param {number} options.subAppId 子应用id
  * @return {Promise}
  */
 function login(Global, options) {
   return new Promise((resolve, reject) => {
+    if (tool.isNotWs(options.wsUrl)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.Login,
+        key: "wsUrl",
+      });
+      return reject(errResult);
+    } else if (tool.isNotString(options.imToken)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.Login,
+        key: "imToken",
+      });
+      return reject(errResult);
+    } else if (tool.isNotEmpty(options.subAppId)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.Login,
+        key: "subAppId",
+      });
+      return reject(errResult);
+    }
     localDexie
       .getInfo()
       .then((info) => {
@@ -57,6 +77,7 @@ function login(Global, options) {
           });
           Global.wsUrl = options.wsUrl;
           Global.imToken = options.imToken;
+          Global.subAppId = options.subAppId;
           connectWs(
             Global,
             (isReconect) => {
@@ -161,7 +182,7 @@ function loginIm(Global) {
         reject(errResult);
       },
     });
-    let msg = proFormat.loginPro(callSign, Global.imToken);
+    let msg = proFormat.loginPro(callSign, Global.imToken, Global.subAppId);
     sendWsMsg(msg, PID.ImLogin);
   });
 }
