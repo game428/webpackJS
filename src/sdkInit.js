@@ -65,7 +65,7 @@ const IM = {
 
 // SDK实例对象
 function initSDK() {
-  return {
+  let msimSdk = {
     login: (options) => login(Global, options),
     logout: () => logout(Global),
     sendMessage: (options) => sendMessage(Global, options),
@@ -84,9 +84,10 @@ function initSDK() {
     // createCustomMessage: (options) => createCustomMessage(Global, options),
     getCosKey: () => getCosKey(Global),
     getAllUnreadCount: () => getAllUnreadCount(Global),
-    on: on,
-    off: off,
+    on: (eventName, callback) => on(msimSdk, eventName, callback),
+    off: (eventName) => off(msimSdk, eventName),
   };
+  return msimSdk;
 }
 
 var msim = null;

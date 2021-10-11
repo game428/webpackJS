@@ -57,12 +57,15 @@ function handleSyncMsgs(options) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncMsgs, options);
   }
   if (options.msgList.length > 0 && msim[EVENT.MESSAGE_RECEIVED]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
-    msim[EVENT.MESSAGE_RECEIVED](result);
+    let msgList = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
+    msim[EVENT.MESSAGE_RECEIVED](msgList);
   }
   if (options.revokeList.length > 0 && msim[EVENT.MESSAGE_REVOKED]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, options.revokeList);
-    msim[EVENT.MESSAGE_REVOKED](result);
+    let revokeList = tool.resultNotice(
+      EVENT.MESSAGE_REVOKED,
+      options.revokeList
+    );
+    msim[EVENT.MESSAGE_REVOKED](revokeList);
   }
 }
 
@@ -332,7 +335,7 @@ function handleShowMsg(msg, resolve) {
       showMsgFromUid: newMsg.fromUid,
     };
     if (newMsg.fromUid !== Global.uid) {
-      updataChatObj.addUnread = 1;
+      updataChatObj.unread = 1;
       updataChatObj.uChatI = true;
     } else {
       updataChatObj.iChatU = true;
@@ -360,7 +363,7 @@ function updateChat(updateChat) {
     }
     let newChat;
     if (updateChat.event) {
-      newChat = handleServerUpdate(updateChat, oldChat, conversationID);
+      newChat = handleServerUpdate(updateChat, oldChat);
     } else {
       // 如果更新时间低于当前会话的时间则不更新
       if (updateChat.showMsgTime < oldChat.showMsgTime) return;
@@ -391,8 +394,8 @@ function handleNewMsgUpdate(updateChat, oldChat) {
         }
         break;
       default:
-        if (updateChat.addUnread && updateChat.msgEnd > newChat.msgEnd) {
-          updateChat.unread = (newChat.unread || 0) + updateChat.addUnread;
+        if (updateChat.unread && updateChat.msgEnd > newChat.msgEnd) {
+          updateChat.unread = (newChat.unread || 0) + updateChat.unread;
         }
         Object.assign(newChat, updateChat);
         newChat.showTime = parseInt(newChat.showMsgTime / 1000);
@@ -404,7 +407,7 @@ function handleNewMsgUpdate(updateChat, oldChat) {
 }
 
 // 处理服务器下发的更新会话
-function handleServerUpdate(options, chat, conversationID) {
+function handleServerUpdate(options, chat) {
   let newChat = { ...chat };
   switch (options.event) {
     case CHAT_UPDATE_EVENT.MsgLastRead:
@@ -420,10 +423,10 @@ function handleServerUpdate(options, chat, conversationID) {
     case CHAT_UPDATE_EVENT.Deleted:
       if (options.deleted) {
         newChat.deleted = options.deleted;
-        if (Global.chatKeys.hasOwnProperty(conversationID)) {
-          delete Global.chatKeys[conversationID];
+        if (Global.chatKeys.hasOwnProperty(chat.conversationID)) {
+          delete Global.chatKeys[chat.conversationID];
           Global.chatList = Global.chatList.filter(
-            (chatItem) => chatItem.conversationID != conversationID
+            (chatItem) => chatItem.conversationID != chat.conversationID
           );
         }
       }
@@ -442,7 +445,7 @@ function updateChatNotice(newChat, resolve) {
     let oldChat = Global.chatKeys[newChat.conversationID];
     Object.assign(oldChat, newChat);
   } else if (newChat.deleted !== true) {
-    Global.chatKeys[conversationID] = newChat;
+    Global.chatKeys[newChat.conversationID] = newChat;
     Global.chatList.unshift(newChat);
   }
   if (msim[EVENT.CONVERSATION_LIST_UPDATED]) {

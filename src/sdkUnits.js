@@ -47,16 +47,16 @@ function getCosKey(Global) {
  * @param {string} eventName - 添加监听的事件名称
  * @callback callback - 添加监听的回调事件
  */
-function on(eventName, callback) {
-  this[eventName] = callback;
+function on(msim, eventName, callback) {
+  msim[eventName] = callback;
 }
 /**
  * 注销事件监听
  * @memberof SDK
  * @param {string} eventName - 取消监听的事件名称
  */
-function off(eventName) {
-  this[eventName] = null;
+function off(msim, eventName) {
+  msim[eventName] = null;
 }
 
 export { getCosKey, on, off };

@@ -263,7 +263,7 @@ function formatMsg(msg, conversationID) {
 // 把会话转为本地格式
 function formatChat(chat, uid) {
   let localChat = { ...chat };
-  delete localChat.showMsgId;
+  delete localChat.sign;
   localChat.showTime = parseInt(chat.showMsgTime / 1000);
   localChat.conversationID = splicingC2CId(chat.uid);
   if (chat.msgEnd) localChat.showMsgFromUid = chat.myMove ? chat.uid : uid;

@@ -6,7 +6,7 @@ const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
   mode: "production", // production
-  entry: "./src/imSDK.js",
+  entry: "./src/sdkInit.js",
   output: {
     path: path.resolve(__dirname, "./dist"),
     publicPath: "/dist/",

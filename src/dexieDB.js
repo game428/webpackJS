@@ -11,7 +11,7 @@ let chatKeys = [
   "uid", // 用户Id
   "msgEnd", // 收到的最后一条消息id
   "msgLastRead", // 最后一条标记为已读的消息id
-  // "showMsgId", // 显示的最后一条消息Id
+  "showMsgId", // 显示的最后一条消息Id
   "showMsgType", // 显示的最后一条消息类型 仅websocket端 返回
   "showMsg", // 显示的最后一条消息内容 仅websocket端 返回
   "showMsgTime", // 显示的最后一条消息服务器时间
