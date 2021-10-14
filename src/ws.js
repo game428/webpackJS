@@ -25,24 +25,23 @@ let wsConfig = {
 };
 
 // 连接ws
-function connectWs(Global, connSuc, connErr) {
+function connectWs(Global, wsOptions) {
   reset();
   wsConfig.closeState = true;
   wsConfig.Global = Global;
-  let wsUrl = wsConfig.Global.wsUrl;
-  createWs(wsUrl, connSuc, connErr);
-  window.removeEventListener("online", online(wsUrl, connSuc, connErr));
-  window.addEventListener("online", online(wsUrl, connSuc, connErr));
+  createWs(wsOptions);
+  window.removeEventListener("online", online(wsOptions));
+  window.addEventListener("online", online(wsOptions));
   window.addEventListener("offline", () => {
     wsConfig.ws.close();
   });
 }
 
 // 上线重连
-function online(wsUrl, connSuc, connErr) {
+function online(wsOptions) {
   if (wsConfig.closeState || wsConfig.ws.readyState === 1) return;
   wsConfig.ws.close();
-  reconnect(wsUrl, connSuc, connErr);
+  reconnect(wsOptions);
 }
 
 // 发送消息
@@ -76,25 +75,25 @@ function reset() {
 }
 
 // 初始化ws
-function createWs(wsUrl, connSuc, connErr, isReconect) {
+function createWs(wsOptions) {
   wsConfig.Global.onConn();
-  let ws = new WebSocket(wsUrl);
+  let ws = new WebSocket(wsOptions.wsUrl);
   ws.binaryType = "arraybuffer";
   ws.onopen = (evt) => {
     wsConfig.reconnectNum = 0;
     wsConfig.closeState = false;
     wsConfig.heartBeatTime = new Date().getTime();
-    if (typeof connSuc === "function") connSuc(isReconect);
+    wsOptions.connSuc(wsOptions);
   };
   ws.onmessage = onMessage;
   ws.onclose = (err) => {
     console.log("Connection closed.", err);
-    reconnect(wsUrl, connSuc, connErr);
-    if (typeof connErr === "function") connErr(err);
+    reconnect(wsOptions);
+    wsOptions.connErr(wsOptions, err);
   };
   ws.onerror = (err) => {
-    console.log("连接错误");
-    reconnect(wsUrl, connSuc, connErr);
+    console.log("Connection Error", err);
+    reconnect(wsOptions);
   };
   wsConfig.ws = ws;
 }
@@ -112,7 +111,7 @@ function sendPing() {
 }
 
 // 重连
-function reconnect(wsUrl, connSuc, connErr) {
+function reconnect(wsOptions) {
   if (wsConfig.wsStatus || wsConfig.closeState) return;
   wsConfig.wsStatus = true;
   wsConfig.reconnectTimer = setTimeout(function() {
@@ -121,7 +120,8 @@ function reconnect(wsUrl, connSuc, connErr) {
     } else {
       wsConfig.reconnectNum *= 2;
     }
-    createWs(wsUrl, connSuc, connErr, true);
+    wsOptions.isReconect = true;
+    createWs(wsOptions);
     wsConfig.wsStatus = false;
   }, wsConfig.reconnectNum);
 }

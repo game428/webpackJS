@@ -74,6 +74,7 @@ function syncChats(Global) {
       Global.handleMessage({
         type: HANDLE_TYPE.SyncChatsChange,
         state: SYNC_CHAT.SYNC_CHAT_FAILED,
+        err,
       });
     },
   });
@@ -207,7 +208,7 @@ function getConversationList(Global, options) {
       } else if (options?.pageSize > Global.maxChatPageSize) {
         let errResult = tool.parameterErr({
           name: OPERATION_TYPE.GetChats,
-          msg: `最大条数不能超过${Global.maxChatPageSize}条`,
+          msg: `The maximum number of entries cannot exceed ${Global.maxChatPageSize}`,
         });
         return reject(errResult);
       }
@@ -215,11 +216,9 @@ function getConversationList(Global, options) {
         tabId: Global.tabId,
         pageSize: Global.chatPageSize,
         conversationID: "",
-        updateTime: null,
+        ...options,
       };
-      if (typeof options === "object") {
-        Object.assign(defaultOption, options);
-      }
+
       if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         // 已同步，直接从内存获取
         resultChats(Global, defaultOption, resolve);
@@ -234,12 +233,12 @@ function getConversationList(Global, options) {
             delete Global.chatCallEvents[callSign];
             resultChats(Global, defaultOption, resolve);
           },
-          callErr: () => {
+          callErr: (err) => {
             delete Global.chatCallEvents[callSign];
             let errResult = tool.resultErr(
-              "获取会话列表失败",
+              err?.msg || "Failed to get the conversation list",
               OPERATION_TYPE.GetChats,
-              ERROR_CODE.ERROR
+              err?.code || ERROR_CODE.ERROR
             );
             reject(errResult);
           },
@@ -417,7 +416,7 @@ function updateConversationProvider(Global, options) {
           resolve(result);
         } else {
           let errResult = tool.resultErr(
-            "更新本地会话信息失败",
+            "Failed to update local session information",
             OPERATION_TYPE.UpdateLocalChat,
             ERROR_CODE.ERROR
           );
@@ -462,7 +461,7 @@ function getAllUnreadCount(Global) {
         callErr: () => {
           delete Global.chatCallEvents[callSign];
           let errResult = tool.resultErr(
-            "获取未读数失败",
+            "Failed to get no reading",
             OPERATION_TYPE.GetAllUnread,
             ERROR_CODE.ERROR
           );

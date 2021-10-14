@@ -1137,7 +1137,6 @@ $root.ChatS = (function() {
      * @property {number|null} [lat] ChatS lat
      * @property {number|null} [lng] ChatS lng
      * @property {number|Long|null} [zoom] ChatS zoom
-     * @property {string|null} [accId] ChatS accId
      * @property {string|null} [pushTitle] ChatS pushTitle
      * @property {string|null} [pushBody] ChatS pushBody
      * @property {string|null} [pushSound] ChatS pushSound
@@ -1255,14 +1254,6 @@ $root.ChatS = (function() {
     ChatS.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
-     * ChatS accId.
-     * @member {string} accId
-     * @memberof ChatS
-     * @instance
-     */
-    ChatS.prototype.accId = "";
-
-    /**
      * ChatS pushTitle.
      * @member {string} pushTitle
      * @memberof ChatS
@@ -1334,14 +1325,12 @@ $root.ChatS = (function() {
             writer.uint32(/* id 11, wireType 1 =*/89).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
             writer.uint32(/* id 12, wireType 0 =*/96).int64(message.zoom);
-        if (message.accId != null && Object.hasOwnProperty.call(message, "accId"))
-            writer.uint32(/* id 13, wireType 2 =*/106).string(message.accId);
         if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
-            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushTitle);
+            writer.uint32(/* id 13, wireType 2 =*/106).string(message.pushTitle);
         if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
-            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushBody);
+            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushBody);
         if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
-            writer.uint32(/* id 16, wireType 2 =*/130).string(message.pushSound);
+            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushSound);
         return writer;
     };
 
@@ -1413,15 +1402,12 @@ $root.ChatS = (function() {
                 message.zoom = reader.int64();
                 break;
             case 13:
-                message.accId = reader.string();
-                break;
-            case 14:
                 message.pushTitle = reader.string();
                 break;
-            case 15:
+            case 14:
                 message.pushBody = reader.string();
                 break;
-            case 16:
+            case 15:
                 message.pushSound = reader.string();
                 break;
             default:
@@ -1495,9 +1481,6 @@ $root.ChatS = (function() {
         if (message.zoom != null && message.hasOwnProperty("zoom"))
             if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
                 return "zoom: integer|Long expected";
-        if (message.accId != null && message.hasOwnProperty("accId"))
-            if (!$util.isString(message.accId))
-                return "accId: string expected";
         if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
             if (!$util.isString(message.pushTitle))
                 return "pushTitle: string expected";
@@ -1595,8 +1578,6 @@ $root.ChatS = (function() {
                 message.zoom = object.zoom;
             else if (typeof object.zoom === "object")
                 message.zoom = new $util.LongBits(object.zoom.low >>> 0, object.zoom.high >>> 0).toNumber();
-        if (object.accId != null)
-            message.accId = String(object.accId);
         if (object.pushTitle != null)
             message.pushTitle = String(object.pushTitle);
         if (object.pushBody != null)
@@ -1660,7 +1641,6 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.zoom = options.longs === String ? "0" : 0;
-            object.accId = "";
             object.pushTitle = "";
             object.pushBody = "";
             object.pushSound = "";
@@ -1710,8 +1690,6 @@ $root.ChatS = (function() {
                 object.zoom = options.longs === String ? String(message.zoom) : message.zoom;
             else
                 object.zoom = options.longs === String ? $util.Long.prototype.toString.call(message.zoom) : options.longs === Number ? new $util.LongBits(message.zoom.low >>> 0, message.zoom.high >>> 0).toNumber() : message.zoom;
-        if (message.accId != null && message.hasOwnProperty("accId"))
-            object.accId = message.accId;
         if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
             object.pushTitle = message.pushTitle;
         if (message.pushBody != null && message.hasOwnProperty("pushBody"))

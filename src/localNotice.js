@@ -67,14 +67,7 @@ function watchStorage(storage, msim, Global) {
 
   // 指定当前tab连接ws
   if (storage.key === "im_wsConnTab" && storage.newValue === Global.tabId) {
-    Global.uid = null;
-    localDexie.updateInfo({ loginState: IM_LOGIN_STATE.NOT_LOGIN });
-    localDexie.getInfo().then((info) => {
-      msim.login({
-        wsUrl: info.wsUrl,
-        imToken: info.imToken,
-      });
-    });
+    Global.reconnection();
     window.localStorage.removeItem("im_wsConnTab");
     return;
   }

@@ -16,7 +16,7 @@ import localNotice from "./localNotice";
 import tool from "./tool";
 import localDexie from "./dexieDB";
 import handleMessage from "./sdkHandleMsg";
-import { login, logout } from "./sdkLogin";
+import { reconnection, login, logout } from "./sdkLogin";
 import {
   getConversationList,
   getAllUnreadCount,
@@ -128,6 +128,9 @@ function initGlobal() {
         state: WS_STATE.NET_STATE_CONNECTING,
       });
     },
+    reconnection: () => {
+      reconnection(Global);
+    },
     handleMessage: (options) => {
       handleMessage(Global, msim, options);
     },
@@ -161,16 +164,17 @@ function create() {
   initGlobal();
   let tabId = tool.uuid();
   let windowHeartBeat = window.localStorage.getItem("im_windowHeartBeat");
-  let time = new Date().getTime();
   let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
   imWsTabs.push(tabId);
   window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
   Global.tabId = tabId;
+  let time = new Date().getTime();
   if (!windowHeartBeat) {
     window.localStorage.setItem("im_wsCurId", tabId);
     // 启动全局定时器
     globalTimer();
-  } else if (windowHeartBeat < time - 1000) {
+  } else if (windowHeartBeat < time - 3000) {
+    console.log(windowHeartBeat, time, time - 3000);
     localNotice.clear();
     closeWs();
     localDexie.deleteDB();
@@ -199,6 +203,7 @@ function onunload() {
   localNotice.clear(imWsTabs.length === 0);
   closeWs();
   if (imWsTabs.length === 0) {
+    window.localStorage.setItem("aaa", 111);
     localDexie.deleteDB();
   } else if (Global.curTab) {
     Global.clearTimer();

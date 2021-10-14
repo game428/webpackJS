@@ -2,6 +2,7 @@ import tool from "./tool";
 import {
   PID,
   MSG_TYPE,
+  ERROR_CODE,
   SEND_STATE,
   HANDLE_TYPE,
   OPERATION_TYPE,
@@ -35,7 +36,7 @@ function getMessageList(Global, options) {
       } else if (options.pageSize && options.pageSize > Global.maxMsgPageSize) {
         let errResult = tool.parameterErr({
           name: OPERATION_TYPE.GetMsgs,
-          msg: `最大条数不能超过${Global.maxMsgPageSize}条`,
+          msg: `The maximum number of entries cannot exceed ${Global.maxMsgPageSize}`,
         });
         return reject(errResult);
       }
@@ -50,8 +51,9 @@ function getMessageList(Global, options) {
       let defaultOption = {
         tabId: Global.tabId,
         pageSize: Global.msgPageSize,
+        ...options,
       };
-      Object.assign(defaultOption, options);
+
       if (defaultOption.tabId !== Global.tabId) {
         getWsMsgs(Global, defaultOption, resolve, reject);
       } else {
@@ -227,7 +229,7 @@ function isMsgError(Global, msgObj, reject, proOptions) {
         } else if (tool.isNotSize(msgObj.text)) {
           errResult = tool.parameterErr({
             name: OPERATION_TYPE.Send,
-            msg: "text长度超过3K",
+            msg: "Textlength exceeds 3K",
           });
         }
         proOptions.body = msgObj.text;
@@ -250,6 +252,9 @@ function isMsgError(Global, msgObj, reject, proOptions) {
           });
         }
         proOptions.body = msgObj.url;
+        break;
+      default:
+        proOptions.body = msgObj.content;
         break;
     }
   }
@@ -467,16 +472,30 @@ function revokeMsgSuc(Global, options, res, resolve) {
  * @param {number} options.to - 接收方用户id
  * @param {Object} options.payload - 消息内容的容器
  * @param {string} options.payload.text - 消息文本内容
- * @returns {Message}
+ * @returns {{code: number, message?:Message, msg: string}}}
  */
 function createTextMessage(Global, options) {
-  if (!options?.to || !options?.payload?.text) return null;
+  if (!options?.to) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'to' cann't be empty",
+    };
+  }
+  if (!options.payload?.text) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'text' cann't be empty",
+    };
+  }
   let newMsg = tool.msgBase(options.to, Global.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Text,
     text: options.payload.text,
   });
-  return newMsg;
+  return {
+    code: ERROR_CODE.SUCCESS,
+    message: newMsg,
+  };
 }
 
 /**
@@ -488,10 +507,21 @@ function createTextMessage(Global, options) {
  * @param {string} options.payload.url - 图片网络地址
  * @param {string} options.payload.width - 图片宽度
  * @param {string} options.payload.height - 图片高度
- * @returns {Message}
+ * @returns {{code: number, message?:Message, msg: string}}}
  */
 function createImageMessage(Global, options) {
-  if (!options?.to || !options?.payload?.url) return null;
+  if (!options?.to) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'to' cann't be empty",
+    };
+  }
+  if (!options.payload?.url) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'url' cann't be empty",
+    };
+  }
   let newMsg = tool.msgBase(options.to, Global.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Img,
@@ -499,13 +529,53 @@ function createImageMessage(Global, options) {
     width: options.payload.width, //图片的宽度
     height: options.payload.height, //图片的高度
   });
-  return newMsg;
+  return {
+    code: ERROR_CODE.SUCCESS,
+    message: newMsg,
+  };
+}
+
+/**
+ * 创建业务自定义消息
+ * @param {Object} options - 接口参数
+ * @param {number} options.to - 接收方用户id
+ * @param {Object} options.payload - 消息内容的容器
+ * @param {string} options.payload.type - 消息类型11-30
+ * @param {string} options.payload.content - 消息内容
+ * @param {string} options.payload.width - 图片宽度
+ * @param {string} options.payload.height - 图片高度
+ * @param {string} options.payload.title - 标题
+ * @param {number} options.payload.lat - 纬度
+ * @param {number} options.payload.lng - 经度
+ * @param {number} options.payload.zoom - 地图缩放层级
+ * @param {string} options.payload.thumb - 封面图
+ * @param {number} options.payload.duration - 时长
+ * @returns {{code: number, message?:Message, msg?: string}}}
+ */
+function createBusinessMessage(Global, options) {
+  if (!options?.to) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'to' cann't be empty",
+    };
+  }
+  if (options.payload?.type > 30 || options.payload?.type < 11) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Type can only use 11-30",
+    };
+  }
+  let newMsg = tool.msgBase(options.to, Global.uid);
+  Object.assign(newMsg, options.payload);
+  return {
+    code: ERROR_CODE.SUCCESS,
+    message: newMsg,
+  };
 }
 
 /**
  * 消息对象
  * @typedef {Object} Message 消息对象
- * @property {number} [Message.sign]
  * @property {string} Message.onlyId - 消息唯一id
  * @property {string} Message.conversationID - 所属会话id
  * @property {number} Message.fromUid - 发送方用户ID
@@ -539,4 +609,5 @@ export {
   revokeMessage,
   createTextMessage,
   createImageMessage,
+  createBusinessMessage,
 };

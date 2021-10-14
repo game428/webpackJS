@@ -220,16 +220,6 @@ const ERROR_CODE = {
  * @property {number} Location - 地理位置
  * @property {number} Card - 用户名片
  * @property {number} Revoked - 已撤回的消息
- * @property {number} Wink - 媚眼
- * @property {number} Match - 匹配
- * @property {number} MatchCancel - 取消匹配
- * @property {number} AblumRequest - 请求上传相册
- * @property {number} AblumResponse - 相册上传后回执
- * @property {number} AblumAccessRequest - 请求私有相册访问权限
- * @property {number} AblumAccessResponse - 允许访问私有相册的回执
- * @property {number} ProfileRequest - 请求用户认证资料
- * @property {number} AblumShare - 分享相册
- * @property {number} WeekReport - 周报
  * @property {number} Recall - 撤回操作
  * @property {number} Notification - 通知
  */
@@ -241,16 +231,6 @@ const MSG_TYPE = {
   Location: 4,
   Card: 5,
   Revoked: 31,
-  Wink: 32,
-  Match: 33,
-  MatchCancel: 34,
-  AblumRequest: 35,
-  AblumResponse: 36,
-  AblumAccessRequest: 37,
-  AblumAccessResponse: 38,
-  ProfileRequest: 39,
-  AblumShare: 40,
-  WeekReport: 41,
   Recall: 64,
   Notification: 100,
 };

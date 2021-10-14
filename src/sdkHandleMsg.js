@@ -91,7 +91,7 @@ function handleChatChange(options) {
       if (options.state === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         Global.chatCallEvents[key].callSuc();
       } else if (options.state === SYNC_CHAT.SYNC_CHAT_FAILED) {
-        Global.chatCallEvents[key].callErr();
+        Global.chatCallEvents[key].callErr(options.err);
       }
     }
     // 增量同步
@@ -316,14 +316,15 @@ function handleShowMsg(msg, resolve) {
       data: newMsg,
     });
     localDexie.addMsg(newMsg);
+    // TODO 根据type返回，目前只有text返回，其他暂定
     let showMsg;
     if (newMsg.type === MSG_TYPE.Text) {
       showMsg = newMsg.text;
-    } else if (newMsg.type === MSG_TYPE.Img) {
-      showMsg = newMsg.url;
     } else {
       showMsg = newMsg.content;
     }
+
+    // TODO 目前只有文本，图片，音视频类型的消息，才修改uChatI,iChatU;
     let updataChatObj = {
       conversationID: newMsg.conversationID,
       msgEnd: newMsg.msgId,

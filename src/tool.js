@@ -111,7 +111,7 @@ function isNotObject(obj, key, type) {
 
 // 参数为空提示文本
 function emptyTip(key) {
-  return `${key}参数类型错误或不存在`;
+  return `${key} parameter type is wrong or does not exist`;
 }
 
 // 生成onlyId
@@ -205,6 +205,7 @@ function formatMsg(msg, conversationID) {
     type: msg.type,
     msgId: msg.msgId,
     newMsg: msg.newMsg,
+    msgTime: msg.msgTime,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   };
   newMsg.onlyId =
@@ -221,18 +222,15 @@ function formatMsg(msg, conversationID) {
       newMsg.text = msg.body;
       break;
     case MSG_TYPE.Img:
-      newMsg.accId = msg.accId;
       newMsg.url = msg.body;
       newMsg.height = msg.height;
       newMsg.width = msg.width;
       break;
     case MSG_TYPE.Audio:
-      newMsg.accId = msg.accId;
       newMsg.url = msg.body;
       newMsg.duration = msg.duration;
       break;
     case MSG_TYPE.Video:
-      newMsg.accId = msg.accId;
       newMsg.url = msg.body;
       newMsg.thumb = msg.thumb;
       newMsg.height = msg.height;
@@ -249,8 +247,11 @@ function formatMsg(msg, conversationID) {
       newMsg.content = msg.body;
       break;
     default:
-      newMsg.accId = msg.accId;
       newMsg.content = msg.body;
+      newMsg.title = msg.title;
+      newMsg.lat = msg.lat;
+      newMsg.lng = msg.lng;
+      newMsg.zoom = msg.zoom;
       newMsg.thumb = msg.thumb;
       newMsg.height = msg.height;
       newMsg.width = msg.width;
@@ -309,17 +310,24 @@ function createCallEvent(Global, options) {
 
 // 公共判断
 function preJudge(Global, reject) {
-  if (Global.curTab && Global.connState !== WS_STATE.NET_STATE_CONNECTED) {
-    let errResult = resultErr("未连接", "wsConnect", ERROR_CODE.DISCONNECT);
-    reject ? reject(errResult) : console.error(errResult);
-    return false;
-  } else if (Global.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+  if (Global.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
     let errResult = resultErr(
-      "IMSDK未登录",
+      "Imsdk is not logged",
       OPERATION_TYPE.Login,
       ERROR_CODE.NOLOGIN
     );
-    reject ? reject(errResult) : console.error(errResult);
+    reject(errResult);
+    return false;
+  } else if (
+    Global.curTab &&
+    Global.connState !== WS_STATE.NET_STATE_CONNECTED
+  ) {
+    let errResult = resultErr(
+      "disconnected",
+      "wsConnect",
+      ERROR_CODE.DISCONNECT
+    );
+    reject(errResult);
     return false;
   }
   return true;

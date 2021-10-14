@@ -39,7 +39,6 @@ let msgKeys = [
   "showMsgTime", // 消息时间（以服务器为准 精确到毫秒的时间戳）
   "sendStatus", // 消息发送状态
   "text", // 文本消息，消息内容
-  "accId", // 附件ID
   "url", // 图片消息，图片路径
   "type", // 消息类型
   "thumb", // 封面图
@@ -47,7 +46,7 @@ let msgKeys = [
   "height", // 封面图的高度
   "duration", // 时长
   "title", // 消息标题
-  "lat", // 维度
+  "lat", // 纬度
   "lng", // 经度
   "zoom", // 地图缩放层级
   "content", // 未定义type，传输的body
@@ -64,6 +63,7 @@ let sdkInfoKeys = [
   "connState",
   "wsUrl",
   "imToken",
+  "subAppId",
   "uid",
 ];
 
