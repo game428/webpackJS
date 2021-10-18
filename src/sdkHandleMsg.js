@@ -324,7 +324,6 @@ function handleShowMsg(msg, resolve) {
       showMsg = newMsg.content;
     }
 
-    // TODO 目前只有文本，图片，音视频类型的消息，才修改uChatI,iChatU;
     let updataChatObj = {
       conversationID: newMsg.conversationID,
       msgEnd: newMsg.msgId,
@@ -337,9 +336,15 @@ function handleShowMsg(msg, resolve) {
     };
     if (newMsg.fromUid !== Global.uid) {
       updataChatObj.unread = 1;
-      updataChatObj.uChatI = true;
-    } else {
-      updataChatObj.iChatU = true;
+    }
+
+    // 目前只有文本，图片，音视频类型的消息，0 - 30才修改uChatI,iChatU;
+    if (newMsg.type >= 0 && newMsg.type <= 30) {
+      if (newMsg.fromUid !== Global.uid) {
+        updataChatObj.uChatI = true;
+      } else {
+        updataChatObj.iChatU = true;
+      }
     }
     updateChat(updataChatObj).finally(() => {
       resolve();

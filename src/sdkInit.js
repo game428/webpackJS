@@ -32,6 +32,7 @@ import {
   revokeMessage,
   createTextMessage,
   createImageMessage,
+  createBusinessMessage,
 } from "./sdkMessages";
 import { on, off, getCosKey } from "./sdkUnits";
 
@@ -81,7 +82,7 @@ function initSDK() {
     deleteConversation: (options) => deleteConversation(Global, options),
     createTextMessage: (options) => createTextMessage(Global, options),
     createImageMessage: (options) => createImageMessage(Global, options),
-    // createCustomMessage: (options) => createCustomMessage(Global, options),
+    createBusinessMessage: (options) => createBusinessMessage(Global, options),
     getCosKey: () => getCosKey(Global),
     getAllUnreadCount: () => getAllUnreadCount(Global),
     on: (eventName, callback) => on(msimSdk, eventName, callback),

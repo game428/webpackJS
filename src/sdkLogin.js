@@ -49,7 +49,7 @@ function login(Global, options) {
   });
 }
 
-function loginWs(Global, options, resolve, reject) {
+function loginWs(Global, config, resolve, reject) {
   localDexie
     .getInfo()
     .then((info) => {
@@ -58,13 +58,13 @@ function loginWs(Global, options, resolve, reject) {
       }
       // if (info?.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
       if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
-        if (tool.isNotObject(options, "imToken", "string")) {
+        if (tool.isNotObject(config, "imToken", "string")) {
           let errResult = tool.parameterErr({
             name: OPERATION_TYPE.Login,
             key: "imToken",
           });
           return reject(errResult);
-        } else if (tool.isNotWs(options.wsUrl)) {
+        } else if (tool.isNotWs(config.wsUrl)) {
           let errResult = tool.parameterErr({
             name: OPERATION_TYPE.Login,
             key: "wsUrl",
@@ -77,14 +77,14 @@ function loginWs(Global, options, resolve, reject) {
         Global.loginState = IM_LOGIN_STATE.LOGGING;
         localDexie.updateInfo({
           loginState: Global.loginState,
-          wsUrl: options.wsUrl,
-          imToken: options.imToken,
-          subAppId: options.subAppId,
+          wsUrl: config.wsUrl,
+          imToken: config.imToken,
+          subAppId: config.subAppId,
         });
         let wsOptions = {
-          wsUrl: options.wsUrl,
-          imToken: options.imToken,
-          subAppId: options.subAppId,
+          wsUrl: config.wsUrl,
+          imToken: config.imToken,
+          subAppId: config.subAppId,
           resolve: resolve,
           reject: reject,
           connSuc: (options) => connSuc(Global, options),
