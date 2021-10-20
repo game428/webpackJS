@@ -223,16 +223,15 @@ function handleMsgStack() {
         let conversationID = tool.splicingC2CId(uid);
         msg = tool.formatMsg(msg, conversationID);
       }
-      switch (msg.type) {
-        case MSG_TYPE.Recall:
-          handleRevokeMsg(msg, resolve);
-          break;
-        case MSG_TYPE.Notification:
-          handleNotificationMsg(msg, resolve);
-          break;
-        default:
-          handleShowMsg(msg, resolve);
-          break;
+      if (msg.type === MSG_TYPE.Notification) {
+        // 处理通知消息
+        handleNotificationMsg(msg, resolve);
+      } else if (msg.type >= 64 && msg.type <= 99) {
+        // 处理指令消息
+        instructMsg(msg, resolve);
+      } else {
+        // 处理显示消息
+        handleShowMsg(msg, resolve);
       }
     } catch (err) {
       reject(err);
@@ -244,6 +243,33 @@ function handleMsgStack() {
       Global.handleMsgState = false;
     }
   });
+}
+
+// 处理指令消息
+function instructMsg(msg, resolve) {
+  switch (msg.type) {
+    case MSG_TYPE.Recall:
+      handleRevokeMsg(msg, resolve);
+      break;
+    case MSG_TYPE.Unmatch:
+      if (Global.chatKeys.hasOwnProperty(msg.conversationID)) {
+        if (Global.curTab) {
+          localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
+            type: HANDLE_TYPE.ChatR,
+            data: msg,
+          });
+        }
+        updateChat({
+          conversationID: msg.conversationID,
+          msgEnd: msg.msgId,
+          showMsgTime: msg.msgTime,
+          showMsgType: MSG_TYPE.Unmatch,
+        }).finally(() => {
+          resolve();
+        });
+      }
+      break;
+  }
 }
 
 // 处理撤回消息
@@ -275,7 +301,6 @@ function handleRevokeMsg(msg, resolve) {
             showMsgType: MSG_TYPE.Recall,
           }).finally(() => {
             resolve();
-            return;
           });
         }
       });
@@ -316,7 +341,7 @@ function handleShowMsg(msg, resolve) {
       data: newMsg,
     });
     localDexie.addMsg(newMsg);
-    // TODO 根据type返回，目前只有text返回，其他暂定
+    // 根据type返回，text返回body，业务自定义消息由发送方进行透传
     let showMsg;
     if (newMsg.type === MSG_TYPE.Text) {
       showMsg = newMsg.text;
@@ -338,8 +363,13 @@ function handleShowMsg(msg, resolve) {
       updataChatObj.unread = 1;
     }
 
-    // 目前只有文本，图片，音视频类型的消息，0 - 30才修改uChatI,iChatU;
+    // 如果收到33
+    if (newMsg.type === MSG_TYPE.Matched) {
+      updataChatObj.matched = true;
+    }
     if (newMsg.type >= 0 && newMsg.type <= 30) {
+      // 目前只有0 - 30,243,247才修改uChatI,iChatU;
+      // TODO 243 247
       if (newMsg.fromUid !== Global.uid) {
         updataChatObj.uChatI = true;
       } else {
@@ -398,6 +428,10 @@ function handleNewMsgUpdate(updateChat, oldChat) {
           // 撤回的不是最后一条消息
           newChat.msgEnd = updateChat.msgEnd;
         }
+        break;
+      case MSG_TYPE.Unmatch:
+        newChat.msgEnd = updateChat.msgEnd;
+        newChat.matched = false;
         break;
       default:
         if (updateChat.unread && updateChat.msgEnd > newChat.msgEnd) {

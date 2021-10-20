@@ -163,6 +163,10 @@ function connSuc(Global, wsOptions) {
             data: res.data,
           });
         }, 0);
+      } else {
+        localDexie.updateInfo({
+          uid: res.data.uid,
+        });
       }
       syncChats(Global);
     })

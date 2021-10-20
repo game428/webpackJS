@@ -163,7 +163,7 @@ function getSyncMsgs(Global, oldChat, chat) {
                 revokeList.push(oldMsg);
               }
             });
-        } else {
+        } else if (msg.type < 64) {
           let newMsg = tool.formatMsg(msg, oldChat.conversationID);
           msgList.push(newMsg);
         }

@@ -220,7 +220,9 @@ const ERROR_CODE = {
  * @property {number} Location - 地理位置
  * @property {number} Card - 用户名片
  * @property {number} Revoked - 已撤回的消息
- * @property {number} Recall - 撤回操作
+ * @property {number} Matched - 匹配
+ * @property {number} Recall - 撤回指令
+ * @property {number} Unmatch - 取消匹配指令
  * @property {number} Notification - 通知
  */
 const MSG_TYPE = {
@@ -231,7 +233,9 @@ const MSG_TYPE = {
   Location: 4,
   Card: 5,
   Revoked: 31,
+  Matched: 33,
   Recall: 64,
+  Unmatch: 65,
   Notification: 100,
 };
 
