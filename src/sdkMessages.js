@@ -25,7 +25,7 @@ import localDexie from "./dexieDB";
 function getMessageList(Global, options) {
   return new Promise((resolve, reject) => {
     try {
-      if (!tool.preJudge(Global, reject)) {
+      if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetMsgs)) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
@@ -59,10 +59,7 @@ function getMessageList(Global, options) {
       } else {
         localDexie.addChatKey(defaultOption.conversationID);
         localDexie.getMsgList(defaultOption).then((data) => {
-          if (
-            data.length < 1 ||
-            (data[0].msgId > 1 && data.length < defaultOption.pageSize)
-          ) {
+          if (data.length < defaultOption.pageSize) {
             // 如果本地没有msgId等于1的消息,且本地消息不足一页则去服务器获取
             getWsMsgs(Global, defaultOption, resolve, reject, data);
           } else {
@@ -122,7 +119,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
   if (Global.curTab) {
     let newMsgs = [];
     res.messages.forEach((msg) => {
-      if (msg.type !== MSG_TYPE.Recall && msg.type !== MSG_TYPE.Notification) {
+      if (msg.type < 64) {
         let newMsg = tool.formatMsg(msg, defaultOption.conversationID);
         newMsgs.push(newMsg);
       }
@@ -142,14 +139,10 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
 // 返回获取到的消息列表
 function resultMsgs(defaultOption, resolve, msgs) {
   let resultData = msgs.slice(0 - defaultOption.pageSize);
-  let hasMore = false;
-  if (resultData.length > 0) {
-    hasMore = resultData[0].msgId !== 1;
-  }
   let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
     conversationID: defaultOption.conversationID,
     messages: resultData,
-    hasMore: hasMore,
+    hasMore: msgs.length > defaultOption.pageSize,
   });
   resolve(result);
 }
@@ -164,7 +157,7 @@ function resultMsgs(defaultOption, resolve, msgs) {
 function setMessageRead(Global, options) {
   return new Promise((resolve, reject) => {
     try {
-      if (!tool.preJudge(Global, reject)) {
+      if (!tool.preJudge(Global, reject, OPERATION_TYPE.Read)) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
@@ -211,7 +204,7 @@ function setMessageRead(Global, options) {
 // 消息参数判断
 function isMsgError(Global, msgObj, reject, proOptions) {
   let errResult = null;
-  if (!tool.preJudge(Global, reject)) {
+  if (!tool.preJudge(Global, reject, OPERATION_TYPE.Send)) {
     return true;
   } else if (tool.isNotObject(msgObj, "type", "number")) {
     errResult = tool.parameterErr({
@@ -403,7 +396,7 @@ function resendMsgSuc(Global, msgObj, res, resolve) {
 function revokeMessage(Global, options) {
   return new Promise((resolve, reject) => {
     try {
-      if (!tool.preJudge(Global, reject)) {
+      if (!tool.preJudge(Global, reject, OPERATION_TYPE.Revoke)) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({

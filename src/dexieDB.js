@@ -5,7 +5,6 @@ const DBName = "imWsDB";
 var db = null;
 let version = 1;
 let sdkKey = "msimSdkInfo";
-let schemas = {};
 let chatKeys = [
   "&conversationID",
   "uid", // 用户Id
@@ -67,14 +66,12 @@ let sdkInfoKeys = [
   "uid",
 ];
 
-// 会话表
-schemas["chatList"] = chatKeys.join();
-// 消息表
-schemas["msgList"] = msgKeys.join();
-// 以获取过消息的会话表
-schemas["chatHistory"] = chatIdKeys.join();
-// sdk信息表
-schemas["sdkInfo"] = sdkInfoKeys.join();
+let schemas = {
+  chatList: chatKeys.join(), // 会话表
+  msgList: msgKeys.join(), // 消息表
+  chatHistory: chatIdKeys.join(), // 以获取过消息的会话表
+  sdkInfo: sdkInfoKeys.join(), // sdk信息表
+};
 
 let localDexie = {};
 
@@ -228,6 +225,17 @@ localDexie.updateMsg = function(msg) {
       })
       .modify(msg);
   }
+};
+
+localDexie.deleteMsgs = (conversationID, msgids) => {
+  return db.msgList
+    .toCollection()
+    .and(
+      (msg) =>
+        msg.conversationID === conversationID &&
+        msgids.includes(msg.msgId.toString())
+    )
+    .delete();
 };
 
 export default localDexie;

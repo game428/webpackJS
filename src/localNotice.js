@@ -1,10 +1,8 @@
 import {
   OPERATION_TYPE,
-  IM_LOGIN_STATE,
   LOCAL_OPERATION_TYPE,
   LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
-import localDexie from "./dexieDB";
 let storageKeys = [];
 
 let localNotice = {

@@ -60,6 +60,13 @@ function handleSyncMsgs(options) {
     let msgList = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
     msim[EVENT.MESSAGE_RECEIVED](msgList);
   }
+  if (options.deleteMsgIds.length > 0 && msim[EVENT.MESSAGE_DELETE]) {
+    let deleteList = tool.resultNotice(EVENT.MESSAGE_DELETE, {
+      conversationID: options.conversationID,
+      msgIds: options.deleteMsgIds,
+    });
+    msim[EVENT.MESSAGE_DELETE](deleteList);
+  }
   if (options.revokeList.length > 0 && msim[EVENT.MESSAGE_REVOKED]) {
     let revokeList = tool.resultNotice(
       EVENT.MESSAGE_REVOKED,
@@ -252,22 +259,10 @@ function instructMsg(msg, resolve) {
       handleRevokeMsg(msg, resolve);
       break;
     case MSG_TYPE.Unmatch:
-      if (Global.chatKeys.hasOwnProperty(msg.conversationID)) {
-        if (Global.curTab) {
-          localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
-            type: HANDLE_TYPE.ChatR,
-            data: msg,
-          });
-        }
-        updateChat({
-          conversationID: msg.conversationID,
-          msgEnd: msg.msgId,
-          showMsgTime: msg.msgTime,
-          showMsgType: MSG_TYPE.Unmatch,
-        }).finally(() => {
-          resolve();
-        });
-      }
+      handleUnmatchMsg(msg, resolve);
+      break;
+    case MSG_TYPE.SysDelete:
+      handleSysDeleteMsg(msg, resolve);
       break;
   }
 }
@@ -309,6 +304,56 @@ function handleRevokeMsg(msg, resolve) {
       let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [msg]);
       msim[EVENT.MESSAGE_REVOKED](result);
     }
+  }
+  resolve();
+}
+
+// 处理取消匹配消息
+function handleUnmatchMsg(msg, resolve) {
+  if (Global.chatKeys.hasOwnProperty(msg.conversationID)) {
+    if (Global.curTab) {
+      localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
+        type: HANDLE_TYPE.ChatR,
+        data: msg,
+      });
+    }
+    updateChat({
+      conversationID: msg.conversationID,
+      msgEnd: msg.msgId,
+      showMsgTime: msg.msgTime,
+      showMsgType: MSG_TYPE.Unmatch,
+    }).finally(() => {
+      resolve();
+    });
+  }
+}
+
+// 处理删除指令
+function handleSysDeleteMsg(msg, resolve) {
+  // TODO 删除数据库内已有的指定消息
+  if (Global.curTab) {
+    let msgIds = msg.content.split(",").map(Number);
+    localDexie.deleteMsgs(msg.conversationID, msgIds);
+    msg.content = msgIds;
+    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.DeleteMsg, {
+      type: HANDLE_TYPE.ChatR,
+      data: msg,
+    });
+  }
+  let chat = Global.chatKeys[msg.conversationID];
+  if (msg.content.includes(chat?.showMsgId)) {
+    updateChat({
+      conversationID: msg.conversationID,
+      showMsgType: MSG_TYPE.Deleted,
+      showMsg: "",
+    });
+  }
+  if (msim[EVENT.MESSAGE_DELETE]) {
+    let result = tool.resultNotice(EVENT.MESSAGE_DELETE, {
+      conversationID: msg.conversationID,
+      msgIds: msg.content,
+    });
+    msim[EVENT.MESSAGE_DELETE](result);
   }
   resolve();
 }

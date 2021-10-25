@@ -138,6 +138,42 @@ function mergeChats(Global, chats, chathistorys) {
   return newArr;
 }
 
+// 批量获取profile信息
+function getProfiles(Global, profiles, newArr) {
+  let callSign = tool.createSign();
+  tool.createCallEvent(Global, {
+    type: OPERATION_TYPE.GetProfiles,
+    callSign: callSign,
+    callSuc: (res) => {
+      console.log(111, res);
+      setTimeout(() => {
+        Global.handleMessage({
+          type: HANDLE_TYPE.SyncChatsChange,
+          state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
+          chats: newArr,
+        });
+      });
+    },
+    callErr: (err) => {
+      // 增量更新失败
+      Global.handleMessage({
+        type: HANDLE_TYPE.SyncChatsChange,
+        state: SYNC_CHAT.SYNC_CHAT_FAILED,
+        err,
+      });
+    },
+  });
+  let msg = proFormat.getProfiles(callSign, profiles);
+  sendWsMsg(msg, PID.GetProfiles);
+}
+
+// 获取profile信息
+function getProfile(uid) {
+  let callSign = tool.createSign();
+  let msg = proFormat.getProfile(callSign, uid);
+  sendWsMsg(msg, PID.GetProfile);
+}
+
 // 获取指定区间的消息
 function getSyncMsgs(Global, oldChat, chat) {
   let callSign = tool.createSign();
@@ -148,6 +184,7 @@ function getSyncMsgs(Global, oldChat, chat) {
       if (!res?.messages?.length) return;
       let revokeList = [];
       let msgList = [];
+      let deleteMsgIds = [];
       for (let i = res.messages.length - 1; i >= 0; i--) {
         let msg = res.messages[i];
         if (msg.type === MSG_TYPE.Recall) {
@@ -163,10 +200,19 @@ function getSyncMsgs(Global, oldChat, chat) {
                 revokeList.push(oldMsg);
               }
             });
+        } else if (msg.type === MSG_TYPE.SysDelete) {
+          msg.content.split(",").forEach((id) => {
+            deleteMsgIds.push(Number(id));
+          });
+          // TODO 删除数据库内已有的指定消息
         } else if (msg.type < 64) {
           let newMsg = tool.formatMsg(msg, oldChat.conversationID);
           msgList.push(newMsg);
         }
+      }
+
+      if (deleteMsgIds.length > 0) {
+        localDexie.deleteMsgs(oldChat.conversationID, deleteMsgIds);
       }
 
       let localMsg = revokeList.concat(msgList);
@@ -178,6 +224,7 @@ function getSyncMsgs(Global, oldChat, chat) {
           conversationID: oldChat.conversationID,
           revokeList: revokeList,
           msgList: msgList,
+          deleteMsgIds: deleteMsgIds,
         });
       }
     },
@@ -195,33 +242,18 @@ function getSyncMsgs(Global, oldChat, chat) {
 /**
  * 获取会话列表
  * @memberof SDK
- * @param {Object} options - 接口参数
- * @param {?string} options.conversationID - 会话id，从哪一条开始往后取, 为空则获取最新的
- * @param {number} [options.pageSize = 20] - 分页条数，默认20
  * @return {Promise}
  */
-function getConversationList(Global, options) {
+function getConversationList(Global) {
   return new Promise((resolve, reject) => {
     try {
-      if (!tool.preJudge(Global, reject)) {
+      if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetChats)) {
         return;
-      } else if (options?.pageSize > Global.maxChatPageSize) {
-        let errResult = tool.parameterErr({
-          name: OPERATION_TYPE.GetChats,
-          msg: `The maximum number of entries cannot exceed ${Global.maxChatPageSize}`,
-        });
-        return reject(errResult);
       }
-      let defaultOption = {
-        tabId: Global.tabId,
-        pageSize: Global.chatPageSize,
-        conversationID: "",
-        ...options,
-      };
 
       if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         // 已同步，直接从内存获取
-        resultChats(Global, defaultOption, resolve);
+        resultChats(Global, resolve);
       } else {
         // 注册异步回调
         let callSign = tool.createSign();
@@ -231,7 +263,7 @@ function getConversationList(Global, options) {
         Global.chatCallEvents[callSign] = {
           callSuc: () => {
             delete Global.chatCallEvents[callSign];
-            resultChats(Global, defaultOption, resolve);
+            resultChats(Global, resolve);
           },
           callErr: (err) => {
             delete Global.chatCallEvents[callSign];
@@ -251,17 +283,10 @@ function getConversationList(Global, options) {
 }
 
 // 返回获取到的消息列表
-function resultChats(Global, defaultOption, resolve) {
-  tool.sort(Global.chatList, "showMsgTime");
-  let chats = tool.getPageSize(
-    defaultOption.conversationID,
-    "conversationID",
-    Global.chatList,
-    defaultOption.pageSize
-  );
+function resultChats(Global, resolve) {
+  let chats = tool.sort(Global.chatList, "showMsgTime");
   let result = tool.resultSuc(OPERATION_TYPE.GetChats, {
     chats: chats,
-    hasMore: chats.length > defaultOption.pageSize,
   });
   resolve(result);
 }
@@ -276,7 +301,7 @@ function resultChats(Global, defaultOption, resolve) {
 function deleteConversation(Global, options) {
   return new Promise((resolve, reject) => {
     try {
-      if (!tool.preJudge(Global, reject)) {
+      if (!tool.preJudge(Global, reject, OPERATION_TYPE.DelChat)) {
         return;
       } else if (tool.isNotObject(options, "conversationID", "string")) {
         let errResult = tool.parameterErr({
@@ -328,7 +353,7 @@ function deleteConversation(Global, options) {
  */
 function getConversationProvider(Global, options) {
   return new Promise((resolve, reject) => {
-    if (!tool.preJudge(Global, reject)) {
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetChat)) {
       return;
     } else if (tool.isNotObject(options, "conversationID", "string")) {
       let errResult = tool.parameterErr({
@@ -394,7 +419,7 @@ function getWsChat(Global, conversationID, resolve, reject) {
  */
 function updateConversationProvider(Global, options) {
   return new Promise((resolve, reject) => {
-    if (!tool.preJudge(Global, reject)) {
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.UpdateLocalChat)) {
       return;
     } else if (tool.isNotObject(options, "conversationID", "string")) {
       let errResult = tool.parameterErr({

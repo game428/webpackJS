@@ -102,8 +102,6 @@ function initGlobal() {
     tabId: Global?.tabId,
     curTab: false, // 是否是当前连接的tab
     uid: null,
-    wsUrl: null,
-    imToken: null,
     chatPageSize: 20,
     maxChatPageSize: 100,
     msgPageSize: 20,
@@ -148,7 +146,18 @@ function clearData() {
     localDexie.clear();
     localNotice.clear();
   }
-  initGlobal();
+  Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
+  Global.chatsSync = SYNC_CHAT.NOT_SYNC_CHAT;
+  Global.connState = WS_STATE.NET_STATE_DISCONNECTED;
+  Global.callEvents = IM_LOGIN_STATE.NOT_LOGIN;
+  Global.callEvents = {};
+  Global.chatCallEvents = {};
+  Global.chatList = [];
+  Global.chatKeys = {};
+  Global.msgHandleList = [];
+  Global.handleMsgState = false;
+  Global.updateTime = null;
+  // initGlobal();
 }
 
 /**
@@ -175,7 +184,6 @@ function create() {
     // 启动全局定时器
     globalTimer();
   } else if (windowHeartBeat < time - 3000) {
-    console.log(windowHeartBeat, time, time - 3000);
     localNotice.clear();
     closeWs();
     localDexie.deleteDB();

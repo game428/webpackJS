@@ -59,11 +59,12 @@ const LOCAL_MESSAGE_TYPE = {
   Offline: "offline",
   UpdateChat: "updateChat",
   ReceivedMsg: "receivedMessage",
+  NotificationMsg: "notificationMsg",
+  DeleteMsg: "deleteMsg",
   ErrorType: "errorType",
   SyncChatsChange: "syncChatsChange",
   SyncMsgs: "syncMsgs",
   WsStateChange: "wsStateChange",
-  NotificationMsg: "notificationMsg",
 };
 
 /***
@@ -84,6 +85,7 @@ const OPERATION_TYPE = {
   Logout: "logout",
   GetChats: "getConversationList",
   GetChat: "getConversationProvider",
+  GetProfiles: "getProfileList",
   UpdateLocalChat: "updateConversationProvider",
   DelChat: "deleteConversation",
   GetMsgs: "getMessageList",
@@ -236,6 +238,8 @@ const MSG_TYPE = {
   Matched: 33,
   Recall: 64,
   Unmatch: 65,
+  SysDelete: 66,
+  Deleted: 67,
   Notification: 100,
 };
 
@@ -263,21 +267,23 @@ const CHAT_UPDATE_EVENT = {
  * @property {string} MESSAGE_RECEIVED - 接收消息监听
  * @property {string} MESSAGE_REVOKED - 撤回消息
  * @property {string} MESSAGE_NOTIFICATION - 通知消息
+ * @property {string} MESSAGE_DELETE - 删除消息
  * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
  * @property {string} KICKED_OUT - 被踢下线
  * @property {string} TOKEN_NOT_FOUND - token未找到或过期
  */
 const EVENT = {
-  CONNECT_CHANGE: "onConnectChange", // 连接状态通知
-  LOGIN: "onLogin", // 登录成功
-  LOGOUT: "onLogout", // 退出成功
-  SYNC_CHATS_CHANGE: "onSyncChatsChange", // 同步会话状态通知
-  MESSAGE_RECEIVED: "onReceivedMessage", // 接收消息监听
-  MESSAGE_REVOKED: "onRevokedMessage", // 撤回消息
+  CONNECT_CHANGE: "onConnectChange",
+  LOGIN: "onLogin",
+  LOGOUT: "onLogout",
+  SYNC_CHATS_CHANGE: "onSyncChatsChange",
+  MESSAGE_RECEIVED: "onReceivedMessage",
+  MESSAGE_REVOKED: "onRevokedMessage",
   MESSAGE_NOTIFICATION: "onNotificationMessage",
-  CONVERSATION_LIST_UPDATED: "onConversationListUpdated", // 会话列表更新
-  KICKED_OUT: "onKickedOut", // 被踢下线
-  TOKEN_NOT_FOUND: "onTokenNotFound", // token未找到或过期
+  MESSAGE_DELETE: "onDeleteMessage",
+  CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
+  KICKED_OUT: "onKickedOut",
+  TOKEN_NOT_FOUND: "onTokenNotFound",
 };
 
 /***

@@ -309,11 +309,11 @@ function createCallEvent(Global, options) {
 }
 
 // 公共判断
-function preJudge(Global, reject) {
+function preJudge(Global, reject, operationType) {
   if (Global.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
     let errResult = resultErr(
       "Imsdk is not logged",
-      OPERATION_TYPE.Login,
+      operationType,
       ERROR_CODE.NOLOGIN
     );
     reject(errResult);
@@ -324,7 +324,7 @@ function preJudge(Global, reject) {
   ) {
     let errResult = resultErr(
       "disconnected",
-      "wsConnect",
+      operationType,
       ERROR_CODE.DISCONNECT
     );
     reject(errResult);

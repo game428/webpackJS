@@ -1,5 +1,7 @@
 import {
   GetCosKey,
+  GetProfile,
+  GetProfiles,
   ImLogin,
   ImLogout,
   Ping,
@@ -114,6 +116,30 @@ function delChatPro(sign, uid) {
 }
 
 /***
+ * 批量获取用户信息
+ * @param {*} options
+ * @returns
+ */
+function getProfiles(sign, profiles) {
+  let bytes = GetProfiles.encode(
+    GetProfiles.create({ sign: sign, getProfiles: profiles })
+  ).finish();
+  return bytes;
+}
+
+/***
+ * 获取指定用户信息
+ * @param {*} options
+ * @returns
+ */
+function getProfile(sign, uid) {
+  let bytes = GetProfile.encode(
+    GetProfile.create({ sign: sign, uid: uid })
+  ).finish();
+  return bytes;
+}
+
+/***
  * 获取历史消息记录
  * @param {Object} options
  * @param {number} options.sign 标识
@@ -189,6 +215,8 @@ let proFormat = {
   readMsgPro,
   chatPro,
   cosPro,
+  getProfiles,
+  getProfile,
 };
 
 export default proFormat;
