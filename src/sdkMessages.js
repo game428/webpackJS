@@ -80,16 +80,7 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
     type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
     callSuc: (res) => {
-      if (res?.messages?.length) {
-        getMsgsSuc(Global, defaultOption, res, resolve, msgs);
-      } else {
-        let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
-          conversationID: defaultOption.conversationID,
-          messages: [],
-          hasMore: false,
-        });
-        resolve(result);
-      }
+      getMsgsSuc(Global, defaultOption, res, resolve, msgs);
     },
     callErr: (err) => {
       let errResult = tool.serverErr(err, OPERATION_TYPE.GetMsgs);
@@ -98,10 +89,14 @@ function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
   });
   if (Global.curTab) {
     let uid = tool.reformatC2CId(defaultOption.conversationID);
+    let msgEnd = defaultOption.msgEnd;
+    if (msgs?.length) {
+      msgEnd = msgs[0].msgId;
+    }
     let msg = proFormat.getMsgPro({
       sign: callSign,
       toUid: uid,
-      msgEnd: defaultOption.msgEnd,
+      msgEnd: msgEnd,
     });
     sendWsMsg(msg, PID.GetHistory);
   } else {
@@ -121,7 +116,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
     res.messages.forEach((msg) => {
       if (msg.type < 64) {
         let newMsg = tool.formatMsg(msg, defaultOption.conversationID);
-        newMsgs.push(newMsg);
+        newMsgs.unshift(newMsg);
       }
     });
     if (newMsgs.length > 0) {
@@ -130,7 +125,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
     if (msgs?.length) {
       newMsgs.push(...msgs);
     }
-    resultMsgs(defaultOption, resolve, newMsgs.reverse());
+    resultMsgs(defaultOption, resolve, newMsgs);
   } else {
     resultMsgs(defaultOption, resolve, res.messages);
   }
@@ -142,7 +137,7 @@ function resultMsgs(defaultOption, resolve, msgs) {
   let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {
     conversationID: defaultOption.conversationID,
     messages: resultData,
-    hasMore: msgs.length > defaultOption.pageSize,
+    hasMore: msgs.length >= defaultOption.pageSize,
   });
   resolve(result);
 }

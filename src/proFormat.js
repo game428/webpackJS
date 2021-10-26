@@ -150,6 +150,9 @@ function getProfile(sign, uid) {
  * @returns {Uint8Array} 二进制数据
  */
 function getMsgPro(options) {
+  if (!options.pageSize) {
+    options.offset = 50;
+  }
   let bytes = GetHistory.encode(GetHistory.create(options)).finish();
   return bytes;
 }
