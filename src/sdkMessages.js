@@ -59,11 +59,11 @@ function getMessageList(Global, options) {
       } else {
         localDexie.addChatKey(defaultOption.conversationID);
         localDexie.getMsgList(defaultOption).then((data) => {
-          if (data.length < defaultOption.pageSize) {
-            // 如果本地没有msgId等于1的消息,且本地消息不足一页则去服务器获取
-            getWsMsgs(Global, defaultOption, resolve, reject, data);
-          } else {
+          if (data.length >= defaultOption.pageSize || data[0]?.msgId === 1) {
+            // 如果本地有msgId等于1的消息,或大于一页则直接返回
             resultMsgs(defaultOption, resolve, data);
+          } else {
+            getWsMsgs(Global, defaultOption, resolve, reject, data);
           }
         });
       }
