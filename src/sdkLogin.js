@@ -7,11 +7,9 @@ import {
   HANDLE_TYPE,
   OPERATION_TYPE,
   IM_LOGIN_STATE,
-  LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
 import proFormat from "./proFormat";
 import { connectWs, closeWs, sendWsMsg } from "./ws";
-import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
 import { syncChats } from "./sdkChats";
 
@@ -57,11 +55,9 @@ function handleLogin(Global, config, resolve, reject) {
         localDexie.initInfo();
       }
       if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
-        console.log(3333);
         loginWs(Global, config, resolve, reject);
-      } else if (info.imToken !== config.imToken) {
+      } else if (info?.imToken !== config.imToken) {
         logout(Global).then(() => {
-          console.log(5555);
           loginWs(Global, config, resolve, reject);
         });
       } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
@@ -107,7 +103,6 @@ function loginWs(Global, config, resolve, reject) {
     connSuc: (options) => connSuc(Global, options),
     connErr: (options, err) => connClose(Global, options, err),
   };
-  console.log(2222);
   connectWs(Global, wsOptions);
 }
 
@@ -120,8 +115,6 @@ function reconnection(Global) {
       wsUrl: info.wsUrl,
       imToken: info.imToken,
       subAppId: info.subAppId,
-      resolve: resolve,
-      reject: reject,
       isReconect: true,
       connSuc: (options) => connSuc(Global, options),
       connErr: (options, err) => connClose(Global, options, err),
@@ -157,7 +150,6 @@ function connSuc(Global, wsOptions) {
           uid: res.data.uid,
         });
       }
-      console.log(1111);
       syncChats(Global);
     })
     .catch((err) => {
@@ -217,45 +209,17 @@ function loginIm(Global, wsOptions) {
  */
 function logout(Global) {
   return new Promise((resolve, reject) => {
-    try {
-      let callSign = tool.createSign();
-      let data = {
-        code: ERROR_CODE.SUCCESS,
-        msg: "Success",
-      };
-      if (Global.curTab) {
-        if (Global.loginState === IM_LOGIN_STATE.LOGGED) {
-          let msg = proFormat.logoutPro(callSign);
-          sendWsMsg(msg, PID.ImLogout);
-        }
-        Global.handleMessage({
-          type: HANDLE_TYPE.ImLogout,
-          data: data,
-        });
-        let result = tool.resultSuc(OPERATION_TYPE.Logout, data);
-        resolve(result);
-      } else {
-        tool.createCallEvent(Global, {
-          type: OPERATION_TYPE.Logout,
-          callSign: callSign,
-          callSuc: (res) => {
-            let result = tool.resultSuc(OPERATION_TYPE.Logout, data);
-            resolve(result);
-          },
-          callErr: (err) => {
-            let errResult = tool.serverErr(err, OPERATION_TYPE.Logout);
-            reject(errResult);
-          },
-        });
-        localNotice.onWebSocketNotice(OPERATION_TYPE.Logout, {
-          callSign: callSign,
-          tabId: Global.tabId,
-          state: LOCAL_OPERATION_STATUS.Pending,
-        });
-      }
-    } catch (err) {
-      reject(err);
-    }
+    let data = {
+      code: ERROR_CODE.SUCCESS,
+      tabId: Global.tabId,
+      msg: "Success",
+    };
+    Global.handleMessage({
+      type: HANDLE_TYPE.ImLogout,
+      data: data,
+    });
+    let result = tool.resultSuc(OPERATION_TYPE.Logout, data);
+    resolve(result);
   });
 }
 

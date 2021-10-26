@@ -11,16 +11,13 @@ import {
 } from "./sdkTypes";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
+import { sendWsMsg } from "./ws";
 import { getConversationProvider } from "./sdkChats";
 
 let Global, msim;
 
 // 处理消息
 function handleMessage(GlobalObj, msimObj, options) {
-  if (!GlobalObj.curTab === !options.curTabId) return;
-  if (GlobalObj.curTab) {
-    options.curTabId = GlobalObj.tabId;
-  }
   Global = GlobalObj;
   msim = msimObj;
   switch (options.type) {
@@ -170,9 +167,11 @@ function handleLogin(options) {
 
 // 处理退出通知
 function handleLogout(options) {
-  Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
-  if (Global.curTab) {
-    localDexie.updateInfo({ loginState: Global.loginState });
+  if (Global.curTab && Global.loginState === IM_LOGIN_STATE.LOGGED) {
+    let msg = proFormat.logoutPro(callSign);
+    sendWsMsg(msg, PID.ImLogout);
+  }
+  if (options.tabId) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Offline, options);
   }
   Global.clearData();
@@ -543,7 +542,6 @@ function updateChatNotice(newChat, resolve) {
       .then(() => {
         localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.UpdateChat, {
           type: HANDLE_TYPE.ChatItemUpdate,
-          curTabId: Global.tabId,
           data: newChat,
         });
         resolve();

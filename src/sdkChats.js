@@ -145,7 +145,6 @@ function getProfiles(Global, profiles, newArr) {
     type: OPERATION_TYPE.GetProfiles,
     callSign: callSign,
     callSuc: (res) => {
-      console.log(111, res);
       setTimeout(() => {
         Global.handleMessage({
           type: HANDLE_TYPE.SyncChatsChange,

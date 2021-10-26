@@ -48,11 +48,9 @@ function online(wsOptions) {
 
 // 发送消息
 function sendWsMsg(msg, pid) {
-  if (wsConfig.ws) {
-    wsConfig.heartBeatTime = new Date().getTime();
-    let sendMsg = proFormat.compress(msg, pid);
-    wsConfig.ws.send(sendMsg);
-  }
+  wsConfig.heartBeatTime = new Date().getTime();
+  let sendMsg = proFormat.compress(msg, pid);
+  wsConfig.ws.send(sendMsg);
 }
 
 // 关闭连接

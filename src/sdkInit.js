@@ -157,7 +157,6 @@ function clearData() {
   Global.msgHandleList = [];
   Global.handleMsgState = false;
   Global.updateTime = null;
-  // initGlobal();
 }
 
 /**
@@ -240,14 +239,10 @@ function globalTimer() {
       if (Global.callEvents[key].timeOut <= time) {
         let callEvent = Global.callEvents[key];
         delete Global.callEvents[key];
-        callEvent.callErr(
-          new Error(
-            JSON.stringify({
-              code: ERROR_CODE.TIMEOUT,
-              msg: callEvent.type + ": connection timed out",
-            })
-          )
-        );
+        callEvent.callErr({
+          code: ERROR_CODE.TIMEOUT,
+          msg: callEvent.type + ": connection timed out",
+        });
       }
     }
   }, 50);
