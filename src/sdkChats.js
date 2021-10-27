@@ -104,7 +104,7 @@ function mergeChats(Global, chats, chathistorys) {
     if (
       chathistorys?.find((history) => history.conversationID === conversationID)
     ) {
-      getSyncMsgs(Global, oldChat, newChat);
+      getSyncMsgs(Global, oldChat.msgEnd, newChat);
     }
     if (!newChat.deleted) {
       // 如果内存已有该chat，则通过对象合并更新
@@ -174,23 +174,28 @@ function getProfile(uid) {
 }
 
 // 获取指定区间的消息
-function getSyncMsgs(Global, oldChat, chat) {
+function getSyncMsgs(Global, msgEnd, chat) {
   let callSign = tool.createSign();
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
     callSuc: async (res) => {
       if (!res?.messages?.length) return;
+      let i = res.messages.length - 1;
+      if (res.messages[i].msgId > msgEnd + 1) {
+        //删除本地数据库
+        localDexie.deleteMsgs(chat.conversationID);
+      }
       let revokeList = [];
       let msgList = [];
       let deleteMsgIds = [];
-      for (let i = res.messages.length - 1; i >= 0; i--) {
+      for (; i >= 0; i--) {
         let msg = res.messages[i];
         if (msg.type === MSG_TYPE.Recall) {
           let msgId = parseInt(msg.body);
           await localDexie
             .getMsg({
-              conversationID: oldChat.conversationID,
+              conversationID: chat.conversationID,
               msgId: msgId,
             })
             .then((oldMsg) => {
@@ -203,15 +208,14 @@ function getSyncMsgs(Global, oldChat, chat) {
           msg.content.split(",").forEach((id) => {
             deleteMsgIds.push(Number(id));
           });
-          // TODO 删除数据库内已有的指定消息
         } else if (msg.type < 64) {
-          let newMsg = tool.formatMsg(msg, oldChat.conversationID);
+          let newMsg = tool.formatMsg(msg, chat.conversationID);
           msgList.push(newMsg);
         }
       }
 
       if (deleteMsgIds.length > 0) {
-        localDexie.deleteMsgs(oldChat.conversationID, deleteMsgIds);
+        localDexie.deleteMsgs(chat.conversationID, deleteMsgIds);
       }
 
       let localMsg = revokeList.concat(msgList);
@@ -220,7 +224,7 @@ function getSyncMsgs(Global, oldChat, chat) {
       if (chat.deleted !== true) {
         Global.handleMessage({
           type: HANDLE_TYPE.SyncMsgs,
-          conversationID: oldChat.conversationID,
+          conversationID: chat.conversationID,
           revokeList: revokeList,
           msgList: msgList,
           deleteMsgIds: deleteMsgIds,
@@ -231,9 +235,9 @@ function getSyncMsgs(Global, oldChat, chat) {
   });
   let msg = proFormat.getMsgPro({
     sign: callSign,
-    toUid: oldChat.uid,
-    // msgEnd: chat.msgEnd,
-    msgStart: oldChat.msgEnd,
+    toUid: chat.uid,
+    pageSize: 100,
+    msgStart: msgEnd,
   });
   sendWsMsg(msg, PID.GetHistory);
 }
@@ -241,18 +245,27 @@ function getSyncMsgs(Global, oldChat, chat) {
 /**
  * 获取会话列表
  * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {?string} options.conversationID - 会话id，从哪一条开始往后取, 为空则获取最新的
+ * @param {number} [options.pageSize = 20] - 分页条数，默认20
  * @return {Promise}
  */
-function getConversationList(Global) {
+function getConversationList(Global, options) {
   return new Promise((resolve, reject) => {
     try {
       if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetChats)) {
         return;
+      } else if (options?.pageSize && tool.isNotNumer(options?.pageSize)) {
+        let errResult = tool.parameterErr({
+          name: OPERATION_TYPE.GetChats,
+          key: "pageSize",
+        });
+        return reject(errResult);
       }
 
       if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         // 已同步，直接从内存获取
-        resultChats(Global, resolve);
+        resultChats(Global, options, resolve);
       } else {
         // 注册异步回调
         let callSign = tool.createSign();
@@ -262,7 +275,7 @@ function getConversationList(Global) {
         Global.chatCallEvents[callSign] = {
           callSuc: () => {
             delete Global.chatCallEvents[callSign];
-            resultChats(Global, resolve);
+            resultChats(Global, options, resolve);
           },
           callErr: (err) => {
             delete Global.chatCallEvents[callSign];
@@ -282,10 +295,19 @@ function getConversationList(Global) {
 }
 
 // 返回获取到的消息列表
-function resultChats(Global, resolve) {
+function resultChats(Global, options, resolve) {
   let chats = tool.sort(Global.chatList, "showMsgTime");
+  if (options?.pageSize > 0) {
+    chats = tool.getPageSize(
+      options?.conversationID,
+      "conversationID",
+      Global.chatList,
+      options?.pageSize
+    );
+  }
   let result = tool.resultSuc(OPERATION_TYPE.GetChats, {
     chats: chats,
+    hasMore: options?.pageSize > 0 && chats.length > options?.pageSize,
   });
   resolve(result);
 }

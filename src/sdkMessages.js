@@ -131,7 +131,10 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
   }
 }
 
-// 返回获取到的消息列表
+/**
+ * 返回获取到的消息列表
+ * 从服务器获取历史数据时，会一直获取到20条可显示消息为止
+ */
 function resultMsgs(defaultOption, resolve, msgs) {
   let resultData = msgs.slice(0 - defaultOption.pageSize);
   let result = tool.resultSuc(OPERATION_TYPE.GetMsgs, {

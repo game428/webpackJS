@@ -140,12 +140,10 @@ function initGlobal() {
 }
 
 // 退出时清理所有
-function clearData() {
-  if (Global.curTab) {
-    closeWs();
-    localDexie.clear();
-    localNotice.clear();
-  }
+function clearData(isClearDB) {
+  if (isClearDB) localDexie.clear();
+  localNotice.clear();
+  closeWs();
   Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
   Global.chatsSync = SYNC_CHAT.NOT_SYNC_CHAT;
   Global.connState = WS_STATE.NET_STATE_DISCONNECTED;
@@ -211,7 +209,6 @@ function onunload() {
   localNotice.clear(imWsTabs.length === 0);
   closeWs();
   if (imWsTabs.length === 0) {
-    window.localStorage.setItem("aaa", 111);
     localDexie.deleteDB();
   } else if (Global.curTab) {
     Global.clearTimer();

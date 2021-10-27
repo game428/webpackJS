@@ -55,12 +55,15 @@ function handleLogin(Global, config, resolve, reject) {
         localDexie.initInfo();
       }
       if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
+        console.log("11111111");
         loginWs(Global, config, resolve, reject);
       } else if (info?.imToken !== config.imToken) {
+        console.log("22222222", info, config);
         logout(Global).then(() => {
           loginWs(Global, config, resolve, reject);
         });
       } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
+        console.log("33333333");
         if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
           Global.initChats();
         } else {
@@ -211,7 +214,7 @@ function logout(Global) {
   return new Promise((resolve, reject) => {
     let data = {
       code: ERROR_CODE.SUCCESS,
-      tabId: Global.tabId,
+      isBroadcast: true,
       msg: "Success",
     };
     Global.handleMessage({

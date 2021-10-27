@@ -1,5 +1,6 @@
 import tool from "./tool";
 import {
+  PID,
   EVENT,
   MSG_TYPE,
   SYNC_CHAT,
@@ -11,6 +12,7 @@ import {
 } from "./sdkTypes";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
+import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import { getConversationProvider } from "./sdkChats";
 
@@ -168,13 +170,15 @@ function handleLogin(options) {
 // 处理退出通知
 function handleLogout(options) {
   if (Global.curTab && Global.loginState === IM_LOGIN_STATE.LOGGED) {
+    let callSign = tool.createSign();
     let msg = proFormat.logoutPro(callSign);
     sendWsMsg(msg, PID.ImLogout);
   }
-  if (options.tabId) {
+  if (options.data.isBroadcast) {
+    options.data.isBroadcast = false;
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Offline, options);
   }
-  Global.clearData();
+  Global.clearData(options.data.isBroadcast);
   if (msim[EVENT.LOGOUT]) {
     let result = tool.resultNotice(EVENT.LOGOUT, {
       code: options.data.code,
@@ -189,7 +193,7 @@ function handleError(options) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ErrorType, options);
   }
-  Global.clearData();
+  Global.clearData(Global.curTab);
   switch (options.data.code) {
     case ERROR_CODE.KICKED_OUT:
     case ERROR_CODE.NO_REGISTER:
