@@ -147,7 +147,6 @@ function clearData(isClearDB) {
   Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
   Global.chatsSync = SYNC_CHAT.NOT_SYNC_CHAT;
   Global.connState = WS_STATE.NET_STATE_DISCONNECTED;
-  Global.callEvents = IM_LOGIN_STATE.NOT_LOGIN;
   Global.callEvents = {};
   Global.chatCallEvents = {};
   Global.chatList = [];

@@ -55,15 +55,12 @@ function handleLogin(Global, config, resolve, reject) {
         localDexie.initInfo();
       }
       if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
-        console.log("11111111");
         loginWs(Global, config, resolve, reject);
       } else if (info?.imToken !== config.imToken) {
-        console.log("22222222", info, config);
         logout(Global).then(() => {
           loginWs(Global, config, resolve, reject);
         });
       } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
-        console.log("33333333");
         if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
           Global.initChats();
         } else {
@@ -138,7 +135,6 @@ function connSuc(Global, wsOptions) {
         Global.uid = res.data.uid;
         let result = tool.resultSuc(OPERATION_TYPE.Login, {
           msg: res.data.msg,
-          updateTime: res.data.nowTime,
           uid: res.data.uid,
         });
         wsOptions.resolve && wsOptions.resolve(result);
@@ -162,7 +158,6 @@ function connSuc(Global, wsOptions) {
 
 // webSocket连接失败回调
 function connClose(Global, wsOptions, err) {
-  console.log("断开连接了", err, new Date().getTime());
   if (Global.connState !== WS_STATE.NET_STATE_DISCONNECTED) {
     Global.handleMessage({
       type: HANDLE_TYPE.WsStateChange,

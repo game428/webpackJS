@@ -111,12 +111,6 @@ localDexie.clear = function() {
     db.tables.forEach((table) => {
       if (table.name === "sdkInfo") {
         localDexie.initInfo();
-        // localDexie.updateInfo({
-        //   sdkKeys: sdkKey,
-        //   loginState: IM_LOGIN_STATE.NOT_LOGIN,
-        //   chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
-        //   connState: WS_STATE.NET_STATE_DISCONNECTED,
-        // });
       } else {
         table.clear();
       }
@@ -127,14 +121,12 @@ localDexie.clear = function() {
 /** sdk信息表操作 */
 // 更新信息表
 localDexie.updateInfo = function(info) {
-  console.log("111111111更新ifno", info);
   return db.sdkInfo.update(sdkKey, info);
 };
 localDexie.getInfo = function() {
   return db.sdkInfo.get(sdkKey);
 };
 localDexie.initInfo = function() {
-  console.log("222222222初始化ifno");
   db.sdkInfo.put({
     sdkKeys: sdkKey,
     loginState: IM_LOGIN_STATE.NOT_LOGIN,

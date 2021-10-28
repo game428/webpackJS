@@ -161,7 +161,6 @@ function handleLogin(options) {
       code: options.data.code,
       msg: options.data.msg,
       uid: options.data.uid,
-      updateTime: options.data.updateTime,
     });
     msim[EVENT.LOGIN](result);
   }
@@ -174,11 +173,11 @@ function handleLogout(options) {
     let msg = proFormat.logoutPro(callSign);
     sendWsMsg(msg, PID.ImLogout);
   }
+  Global.clearData(options.data.isBroadcast);
   if (options.data.isBroadcast) {
     options.data.isBroadcast = false;
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Offline, options);
   }
-  Global.clearData(options.data.isBroadcast);
   if (msim[EVENT.LOGOUT]) {
     let result = tool.resultNotice(EVENT.LOGOUT, {
       code: options.data.code,
