@@ -3,7 +3,6 @@ import {
   MSG_TYPE,
   ERROR_CODE,
   SEND_STATE,
-  OPERATION_TYPE,
   IM_LOGIN_STATE,
 } from "./sdkTypes.js";
 
@@ -242,9 +241,6 @@ function formatMsg(msg, conversationID) {
       newMsg.lat = msg.lat;
       newMsg.lng = msg.lng;
       newMsg.zoom = msg.zoom;
-      break;
-    case MSG_TYPE.Notification:
-      newMsg.content = msg.body;
       break;
     default:
       newMsg.content = msg.body;

@@ -217,11 +217,6 @@ function isMsgError(Global, msgObj, reject, proOptions) {
             name: OPERATION_TYPE.Send,
             key: "text",
           });
-        } else if (tool.isNotSize(msgObj.text)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            msg: "Textlength exceeds 3K",
-          });
         }
         proOptions.body = msgObj.text;
         break;
