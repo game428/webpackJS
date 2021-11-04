@@ -252,44 +252,40 @@ function getSyncMsgs(Global, msgEnd, chat) {
  */
 function getConversationList(Global, options) {
   return new Promise((resolve, reject) => {
-    try {
-      if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetChats)) {
-        return;
-      } else if (options?.pageSize && tool.isNotNumer(options?.pageSize)) {
-        let errResult = tool.parameterErr({
-          name: OPERATION_TYPE.GetChats,
-          key: "pageSize",
-        });
-        return reject(errResult);
-      }
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.GetChats)) {
+      return;
+    } else if (options?.pageSize && tool.isNotNumer(options?.pageSize)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.GetChats,
+        key: "pageSize",
+      });
+      return reject(errResult);
+    }
 
-      if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-        // 已同步，直接从内存获取
-        resultChats(Global, options, resolve);
-      } else {
-        // 注册异步回调
-        let callSign = tool.createSign();
-        if (Global.chatCallEvents.hasOwnProperty(callSign)) {
-          callSign += 1;
-        }
-        Global.chatCallEvents[callSign] = {
-          callSuc: () => {
-            delete Global.chatCallEvents[callSign];
-            resultChats(Global, options, resolve);
-          },
-          callErr: (err) => {
-            delete Global.chatCallEvents[callSign];
-            let errResult = tool.resultErr(
-              err?.msg || "Failed to get the conversation list",
-              OPERATION_TYPE.GetChats,
-              err?.code || ERROR_CODE.ERROR
-            );
-            reject(errResult);
-          },
-        };
+    if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+      // 已同步，直接从内存获取
+      resultChats(Global, options, resolve);
+    } else {
+      // 注册异步回调
+      let callSign = tool.createSign();
+      if (Global.chatCallEvents.hasOwnProperty(callSign)) {
+        callSign += 1;
       }
-    } catch (err) {
-      reject(err);
+      Global.chatCallEvents[callSign] = {
+        callSuc: () => {
+          delete Global.chatCallEvents[callSign];
+          resultChats(Global, options, resolve);
+        },
+        callErr: (err) => {
+          delete Global.chatCallEvents[callSign];
+          let errResult = tool.resultErr(
+            err?.msg || "Failed to get the conversation list",
+            OPERATION_TYPE.GetChats,
+            err?.code || ERROR_CODE.ERROR
+          );
+          reject(errResult);
+        },
+      };
     }
   });
 }
@@ -321,47 +317,43 @@ function resultChats(Global, options, resolve) {
  */
 function deleteConversation(Global, options) {
   return new Promise((resolve, reject) => {
-    try {
-      if (!tool.preJudge(Global, reject, OPERATION_TYPE.DelChat)) {
-        return;
-      } else if (tool.isNotObject(options, "conversationID", "string")) {
-        let errResult = tool.parameterErr({
-          name: OPERATION_TYPE.DelChat,
-          key: "conversationID",
-        });
-        return reject(errResult);
-      }
-      let callSign = tool.createSign();
-      tool.createCallEvent(Global, {
-        type: OPERATION_TYPE.DelChat,
-        callSign: callSign,
-        callSuc: (res) => {
-          let result = tool.resultSuc(OPERATION_TYPE.DelChat, {
-            conversationID: options.conversationID,
-            updateTime: res.data.updateTime,
-            deleted: res.data.deleted,
-          });
-          return resolve(result);
-        },
-        callErr: (err) => {
-          let errResult = tool.serverErr(err, OPERATION_TYPE.DelChat);
-          reject(errResult);
-        },
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.DelChat)) {
+      return;
+    } else if (tool.isNotObject(options, "conversationID", "string")) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.DelChat,
+        key: "conversationID",
       });
-      if (Global.curTab) {
-        let uid = tool.reformatC2CId(options.conversationID);
-        let msg = proFormat.delChatPro(callSign, parseInt(uid));
-        sendWsMsg(msg, PID.DelChat);
-      } else {
-        localNotice.onWebSocketNotice(OPERATION_TYPE.DelChat, {
-          callSign: callSign,
-          tabId: Global.tabId,
-          options: options,
-          state: LOCAL_OPERATION_STATUS.Pending,
+      return reject(errResult);
+    }
+    let callSign = tool.createSign();
+    tool.createCallEvent(Global, {
+      type: OPERATION_TYPE.DelChat,
+      callSign: callSign,
+      callSuc: (res) => {
+        let result = tool.resultSuc(OPERATION_TYPE.DelChat, {
+          conversationID: options.conversationID,
+          updateTime: res.data.updateTime,
+          deleted: res.data.deleted,
         });
-      }
-    } catch (err) {
-      reject(err);
+        return resolve(result);
+      },
+      callErr: (err) => {
+        let errResult = tool.serverErr(err, OPERATION_TYPE.DelChat);
+        reject(errResult);
+      },
+    });
+    if (Global.curTab) {
+      let uid = tool.reformatC2CId(options.conversationID);
+      let msg = proFormat.delChatPro(callSign, parseInt(uid));
+      sendWsMsg(msg, PID.DelChat);
+    } else {
+      localNotice.onWebSocketNotice(OPERATION_TYPE.DelChat, {
+        callSign: callSign,
+        tabId: Global.tabId,
+        options: options,
+        state: LOCAL_OPERATION_STATUS.Pending,
+      });
     }
   });
 }

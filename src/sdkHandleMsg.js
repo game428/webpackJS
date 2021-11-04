@@ -238,6 +238,12 @@ function handleMsgStack() {
       } else if (msg.type >= 64 && msg.type <= 99) {
         // 处理指令消息
         instructMsg(msg, resolve);
+      } else if (msg.type === MSG_TYPE.Revoked) {
+        if (msim[EVENT.MESSAGE_REVOKED]) {
+          let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [msg]);
+          msim[EVENT.MESSAGE_REVOKED](result);
+        }
+        resolve();
       } else {
         // 处理显示消息
         handleShowMsg(msg, resolve);
@@ -271,43 +277,34 @@ function instructMsg(msg, resolve) {
 
 // 处理撤回消息
 function handleRevokeMsg(msg, resolve) {
-  if (Global.curTab) {
-    let msgId = parseInt(msg.text);
-    localDexie
-      .getMsg({
-        conversationID: msg.conversationID,
-        msgId: msgId,
-      })
-      .then((newMsg) => {
-        if (newMsg) {
-          newMsg.type = MSG_TYPE.Revoked;
-          if (msim[EVENT.MESSAGE_REVOKED]) {
-            let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
-            msim[EVENT.MESSAGE_REVOKED](result);
-          }
-          localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
-            type: HANDLE_TYPE.ChatR,
-            data: newMsg,
-          });
-          localDexie.updateMsg(newMsg);
-          updateChat({
-            conversationID: msg.conversationID,
-            msgEnd: msg.msgId,
-            showMsgId: newMsg.msgId,
-            showMsgTime: msg.msgTime,
-            showMsgType: MSG_TYPE.Recall,
-          }).finally(() => {
-            resolve();
-          });
+  let msgId = parseInt(msg.text);
+  localDexie
+    .getMsg({
+      conversationID: msg.conversationID,
+      msgId: msgId,
+    })
+    .then((newMsg) => {
+      if (newMsg) {
+        newMsg.type = MSG_TYPE.Revoked;
+        if (msim[EVENT.MESSAGE_REVOKED]) {
+          let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
+          msim[EVENT.MESSAGE_REVOKED](result);
         }
-      });
-  } else {
-    if (msim[EVENT.MESSAGE_REVOKED]) {
-      let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [msg]);
-      msim[EVENT.MESSAGE_REVOKED](result);
-    }
-  }
-  resolve();
+        localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
+          type: HANDLE_TYPE.ChatR,
+          data: newMsg,
+        });
+        localDexie.updateMsg(newMsg);
+        resolve();
+        updateChat({
+          conversationID: msg.conversationID,
+          msgEnd: msg.msgId,
+          showMsgId: newMsg.msgId,
+          showMsgTime: msg.msgTime,
+          showMsgType: MSG_TYPE.Recall,
+        });
+      }
+    });
 }
 
 // 处理取消匹配消息

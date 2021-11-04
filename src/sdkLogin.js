@@ -54,7 +54,7 @@ function handleLogin(Global, config, resolve, reject) {
       if (!info) {
         localDexie.initInfo();
       }
-      if (info?.loginState !== IM_LOGIN_STATE.LOGGED) {
+      if (!info || info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
         loginWs(Global, config, resolve, reject);
       } else if (info?.imToken !== config.imToken) {
         logout(Global).then(() => {

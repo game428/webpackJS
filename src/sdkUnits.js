@@ -11,32 +11,28 @@ import localNotice from "./localNotice";
  */
 function getCosKey(Global) {
   return new Promise((resolve, reject) => {
-    try {
-      let callSign = tool.createSign();
-      tool.createCallEvent(Global, {
-        type: OPERATION_TYPE.GetCosKey,
+    let callSign = tool.createSign();
+    tool.createCallEvent(Global, {
+      type: OPERATION_TYPE.GetCosKey,
+      callSign: callSign,
+      callSuc: (res) => {
+        let result = tool.resultSuc(OPERATION_TYPE.GetCosKey, res.data);
+        return resolve(result);
+      },
+      callErr: (err) => {
+        let errResult = tool.serverErr(err, OPERATION_TYPE.GetCosKey);
+        reject(errResult);
+      },
+    });
+    if (Global.curTab) {
+      let msg = proFormat.cosPro(callSign);
+      sendWsMsg(msg, PID.GetCosKey);
+    } else {
+      localNotice.onWebSocketNotice(OPERATION_TYPE.GetCosKey, {
         callSign: callSign,
-        callSuc: (res) => {
-          let result = tool.resultSuc(OPERATION_TYPE.GetCosKey, res.data);
-          return resolve(result);
-        },
-        callErr: (err) => {
-          let errResult = tool.serverErr(err, OPERATION_TYPE.GetCosKey);
-          reject(errResult);
-        },
+        tabId: Global.tabId,
+        state: LOCAL_OPERATION_STATUS.Pending,
       });
-      if (Global.curTab) {
-        let msg = proFormat.cosPro(callSign);
-        sendWsMsg(msg, PID.GetCosKey);
-      } else {
-        localNotice.onWebSocketNotice(OPERATION_TYPE.GetCosKey, {
-          callSign: callSign,
-          tabId: Global.tabId,
-          state: LOCAL_OPERATION_STATUS.Pending,
-        });
-      }
-    } catch (err) {
-      reject(err);
     }
   });
 }

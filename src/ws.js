@@ -50,7 +50,7 @@ function online(wsOptions) {
 function sendWsMsg(msg, pid) {
   wsConfig.heartBeatTime = new Date().getTime();
   let sendMsg = proFormat.compress(msg, pid);
-  wsConfig.ws.send(sendMsg);
+  wsConfig.ws?.send(sendMsg);
 }
 
 // 关闭连接

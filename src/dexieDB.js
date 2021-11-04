@@ -109,11 +109,7 @@ localDexie.clear = function() {
   if (!db?.tables?.length) return;
   db.transaction("rw", db.tables, () => {
     db.tables.forEach((table) => {
-      if (table.name === "sdkInfo") {
-        localDexie.initInfo();
-      } else {
-        table.clear();
-      }
+      table.clear();
     });
   });
 };
