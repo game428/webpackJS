@@ -114,7 +114,7 @@ function sendPing() {
 function reconnect(wsOptions) {
   if (wsConfig.wsStatus || wsConfig.closeState) return;
   wsConfig.wsStatus = true;
-  wsConfig.reconnectTimer = setTimeout(function() {
+  wsConfig.reconnectTimer = setTimeout(function () {
     if (wsConfig.reconnectNum === 0) {
       wsConfig.reconnectNum = 250;
     } else {
@@ -206,7 +206,6 @@ function handleResult(result) {
       callEvent && callEvent.callErr(resultPro);
       break;
     case 4: // im token 未找到（不存在或失效）
-    case 9: // 用户未注册
     case 2008: // 被踢下线
       wsConfig.closeState = true;
       wsConfig.ws.close();

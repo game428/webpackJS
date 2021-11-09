@@ -138,41 +138,6 @@ function mergeChats(Global, chats, chathistorys) {
   return newArr;
 }
 
-// 批量获取profile信息
-function getProfiles(Global, profiles, newArr) {
-  let callSign = tool.createSign();
-  tool.createCallEvent(Global, {
-    type: OPERATION_TYPE.GetProfiles,
-    callSign: callSign,
-    callSuc: (res) => {
-      setTimeout(() => {
-        Global.handleMessage({
-          type: HANDLE_TYPE.SyncChatsChange,
-          state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
-          chats: newArr,
-        });
-      });
-    },
-    callErr: (err) => {
-      // 增量更新失败
-      Global.handleMessage({
-        type: HANDLE_TYPE.SyncChatsChange,
-        state: SYNC_CHAT.SYNC_CHAT_FAILED,
-        err,
-      });
-    },
-  });
-  let msg = proFormat.getProfiles(callSign, profiles);
-  sendWsMsg(msg, PID.GetProfiles);
-}
-
-// 获取profile信息
-function getProfile(uid) {
-  let callSign = tool.createSign();
-  let msg = proFormat.getProfile(callSign, uid);
-  sendWsMsg(msg, PID.GetProfile);
-}
-
 // 获取指定区间的消息
 function getSyncMsgs(Global, msgEnd, chat) {
   let callSign = tool.createSign();

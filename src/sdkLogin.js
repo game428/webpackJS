@@ -186,7 +186,14 @@ function loginIm(Global, wsOptions) {
       },
       callErr: (err) => {
         // 可能出现code 9 11
-        closeWs();
+        if (err?.code === ERROR_CODE.NO_REGISTER) {
+          wsConfig.Global.handleMessage({
+            type: HANDLE_TYPE.ResultError,
+            data: err,
+          });
+        } else {
+          closeWs();
+        }
         let errResult = tool.serverErr(err, OPERATION_TYPE.Login);
         reject(errResult);
       },
