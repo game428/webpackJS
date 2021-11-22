@@ -114,7 +114,7 @@ function sendPing() {
 function reconnect(wsOptions) {
   if (wsConfig.wsStatus || wsConfig.closeState) return;
   wsConfig.wsStatus = true;
-  wsConfig.reconnectTimer = setTimeout(function () {
+  wsConfig.reconnectTimer = setTimeout(function() {
     if (wsConfig.reconnectNum === 0) {
       wsConfig.reconnectNum = 250;
     } else {

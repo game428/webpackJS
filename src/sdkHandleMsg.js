@@ -238,12 +238,6 @@ function handleMsgStack() {
       } else if (msg.type >= 64 && msg.type <= 99) {
         // 处理指令消息
         instructMsg(msg, resolve);
-      } else if (msg.type === MSG_TYPE.Revoked) {
-        if (msim[EVENT.MESSAGE_REVOKED]) {
-          let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [msg]);
-          msim[EVENT.MESSAGE_REVOKED](result);
-        }
-        resolve();
       } else {
         // 处理显示消息
         handleShowMsg(msg, resolve);
@@ -277,34 +271,30 @@ function instructMsg(msg, resolve) {
 
 // 处理撤回消息
 function handleRevokeMsg(msg, resolve) {
-  let msgId = parseInt(msg.text);
-  localDexie
-    .getMsg({
-      conversationID: msg.conversationID,
-      msgId: msgId,
-    })
-    .then((newMsg) => {
-      if (newMsg) {
-        newMsg.type = MSG_TYPE.Revoked;
-        if (msim[EVENT.MESSAGE_REVOKED]) {
-          let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
-          msim[EVENT.MESSAGE_REVOKED](result);
-        }
-        localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
-          type: HANDLE_TYPE.ChatR,
-          data: newMsg,
-        });
-        localDexie.updateMsg(newMsg);
-        resolve();
-        updateChat({
-          conversationID: msg.conversationID,
-          msgEnd: msg.msgId,
-          showMsgId: newMsg.msgId,
-          showMsgTime: msg.msgTime,
-          showMsgType: MSG_TYPE.Recall,
-        });
-      }
+  let newMsg = {
+    conversationID: msg.conversationID,
+    msgId: parseInt(msg.text),
+    type: MSG_TYPE.Revoked,
+  };
+  if (msim[EVENT.MESSAGE_REVOKED]) {
+    let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
+    msim[EVENT.MESSAGE_REVOKED](result);
+  }
+  if (Global.curTab) {
+    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
+      type: HANDLE_TYPE.ChatR,
+      data: msg,
     });
+    localDexie.updateMsg(newMsg);
+    updateChat({
+      conversationID: msg.conversationID,
+      msgEnd: msg.msgId,
+      showMsgId: newMsg.msgId,
+      showMsgTime: msg.msgTime,
+      showMsgType: MSG_TYPE.Recall,
+    });
+  }
+  resolve();
 }
 
 // 处理取消匹配消息
@@ -321,9 +311,8 @@ function handleUnmatchMsg(msg, resolve) {
       msgEnd: msg.msgId,
       showMsgTime: msg.msgTime,
       showMsgType: MSG_TYPE.Unmatch,
-    }).finally(() => {
-      resolve();
     });
+    resolve();
   }
 }
 
@@ -420,9 +409,8 @@ function handleShowMsg(msg, resolve) {
         updataChatObj.iChatU = true;
       }
     }
-    updateChat(updataChatObj).finally(() => {
-      resolve();
-    });
+    updateChat(updataChatObj);
+    resolve();
   } else {
     resolve();
   }
@@ -537,18 +525,12 @@ function updateChatNotice(newChat, resolve) {
     msim[EVENT.CONVERSATION_LIST_UPDATED](result);
   }
   if (Global.curTab) {
-    localDexie
-      .updateChat(newChat)
-      .then(() => {
-        localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.UpdateChat, {
-          type: HANDLE_TYPE.ChatItemUpdate,
-          data: newChat,
-        });
-        resolve();
-      })
-      .catch((err) => {
-        resolve();
-      });
+    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.UpdateChat, {
+      type: HANDLE_TYPE.ChatItemUpdate,
+      data: newChat,
+    });
+    localDexie.updateChat(newChat);
+    resolve();
   } else {
     resolve();
   }

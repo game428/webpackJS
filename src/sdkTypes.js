@@ -93,9 +93,6 @@ const OPERATION_TYPE = {
   Send: "sendMessage",
   Resend: "resendMessage",
   Revoke: "revokeMessage",
-  TextMsg: "createTextMessage",
-  ImgMsg: "createImageMessage",
-  CustomMsg: "createCustomMessage",
   GetCosKey: "getCosKey",
   GetAllUnread: "getAllUnreadCount",
 };

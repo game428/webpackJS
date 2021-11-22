@@ -5,6 +5,9 @@ const DBName = "imWsDB";
 var db = null;
 let version = 1;
 let sdkKey = "msimSdkInfo";
+let storageSdkInfo = "im_msimSdkInfo";
+let storageChatHistory = "im_chatHistory";
+let storageChatList = "im_chatList";
 let chatKeys = [
   "&conversationID",
   "uid", // 用户Id
@@ -75,14 +78,47 @@ let schemas = {
 
 let localDexie = {};
 
-localDexie.initDB = function() {
+function toRawType(value) {
+  var _toString = Object.prototype.toString;
+  return _toString.call(value).slice(8, -1);
+}
+function defaultStorage(key, storage) {
+  switch (key) {
+    case storageSdkInfo:
+      if (toRawType(storage) !== "Object") {
+        storage = null;
+      }
+      break;
+    case storageChatHistory:
+    case storageChatList:
+      if (toRawType(storage) !== "Array") {
+        storage = [];
+      }
+      break;
+  }
+  return storage;
+}
+function parseJson(key) {
   try {
-    let indexedDB =
-      window.indexedDB ||
-      window.mozIndexedDB ||
-      window.webkitIndexedDB ||
-      window.msIndexedDB;
-    if (!indexedDB) return console.error("浏览器不支持indexDB");
+    let storage = window.localStorage.getItem(key);
+    storage = JSON.parse(storage);
+    return defaultStorage(key, storage);
+  } catch {
+    return defaultStorage(key, null);
+  }
+}
+
+function setStorage(key, obj) {
+  window.localStorage.setItem(key, JSON.stringify(obj));
+}
+
+localDexie.initDB = function() {
+  let indexedDB =
+    window.indexedDB ||
+    window.mozIndexedDB ||
+    window.webkitIndexedDB ||
+    window.msIndexedDB;
+  if (indexedDB) {
     db = new Dexie(DBName);
     db.version(version).stores(schemas);
     //打开数据库时，会判断当前version值是否大于已经存在的version值，若大于则会upgrade即升到最高版本
@@ -92,91 +128,166 @@ localDexie.initDB = function() {
         version = db.verno;
       })
       .catch((err) => {
+        db = null;
         console.error(err);
       });
-  } catch (err) {
-    console.error(err);
   }
 };
 
 // 删除数据库
 localDexie.deleteDB = function() {
-  Dexie.delete(DBName);
+  if (db) {
+    Dexie.delete(DBName);
+  } else {
+    window.localStorage.removeItem(storageSdkInfo);
+    window.localStorage.removeItem(storageChatHistory);
+    window.localStorage.removeItem(storageChatList);
+  }
 };
 
 // 清空所有数据
 localDexie.clear = function() {
-  if (!db?.tables?.length) return;
-  db.transaction("rw", db.tables, () => {
-    db.tables.forEach((table) => {
-      table.clear();
+  if (db) {
+    db.transaction("rw", db.tables, () => {
+      db.tables.forEach((table) => {
+        table.clear();
+      });
     });
-  });
+  } else {
+    window.localStorage.removeItem(storageSdkInfo);
+    window.localStorage.removeItem(storageChatHistory);
+    window.localStorage.removeItem(storageChatList);
+  }
 };
 
 /** sdk信息表操作 */
 // 更新信息表
 localDexie.updateInfo = function(info) {
-  return db.sdkInfo.update(sdkKey, info);
+  if (db) {
+    db.sdkInfo.update(sdkKey, info);
+  } else {
+    let sdkInfo = parseJson(storageSdkInfo);
+    setStorage(storageSdkInfo, Object.assign({}, sdkInfo, info));
+  }
 };
 localDexie.getInfo = function() {
-  return db.sdkInfo.get(sdkKey);
+  return db
+    ? db.sdkInfo.get(sdkKey)
+    : Promise.resolve(parseJson(storageSdkInfo));
 };
 localDexie.initInfo = function() {
-  db.sdkInfo.put({
+  let infoBase = {
     sdkKeys: sdkKey,
     loginState: IM_LOGIN_STATE.NOT_LOGIN,
     chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
     connState: WS_STATE.NET_STATE_DISCONNECTED,
-  });
+  };
+  if (db) {
+    db.sdkInfo.put(infoBase);
+  } else {
+    setStorage(storageSdkInfo, infoBase);
+  }
 };
 
 /**会话表操作 */
 // 写入会话列表
 localDexie.addChatList = (chats) => {
-  db.chatList.bulkPut(chats);
+  if (db) {
+    db.chatList.bulkPut(chats);
+  } else {
+    let chatList = parseJson(storageChatList);
+    chatList = chatList.concat(chats);
+    setStorage(storageChatList, chatList);
+  }
 };
 
 // 更新会话
 localDexie.updateChat = function(data) {
-  return db.chatList.put(data);
+  if (db) {
+    return db.chatList.put(data);
+  } else {
+    let chatList = parseJson(storageChatList);
+    let newChat = data;
+    chatList = chatList.map((chat) => {
+      if (chat.conversationID === data.conversationID) {
+        newChat = Object.assign(chat, data);
+      }
+      return chat;
+    });
+    setStorage(storageChatList, chatList);
+    return Promise.resolve(newChat);
+  }
 };
 
 //获取会话列表
 localDexie.getChatList = function() {
-  return db.chatList
-    .toCollection()
-    .and((item) => item.deleted === false)
-    .toArray();
+  if (db) {
+    return db.chatList
+      .toCollection()
+      .and((item) => item.deleted === false)
+      .toArray();
+  } else {
+    let chatList = parseJson(storageChatList);
+    chatList = chatList.filter((chat) => chat.deleted === false);
+    return Promise.resolve(chatList);
+  }
 };
 
 //获取会话
 localDexie.getChat = function(conversationID) {
-  return db.chatList.get({
-    conversationID: conversationID,
-  });
+  if (db) {
+    return db.chatList.get({
+      conversationID: conversationID,
+    });
+  } else {
+    let chatList = parseJson(storageChatList);
+    let findChat = chatList.find(
+      (chat) => chat.conversationID === conversationID
+    );
+    return Promise.resolve(findChat);
+  }
 };
 
 /** 以查看会话表 */
 // 写入查看会话
 localDexie.addChatKey = function(conversationID) {
-  db.chatHistory.put({
-    conversationID: conversationID,
-  });
+  if (db) {
+    db.chatHistory.put({
+      conversationID: conversationID,
+    });
+  } else {
+    let chatHistory = parseJson(storageChatHistory);
+    let findChat = chatHistory.find(
+      (item) => item.conversationID === conversationID
+    );
+    if (!findChat) {
+      chatHistory.push({
+        conversationID: conversationID,
+      });
+      setStorage(storageChatHistory, chatHistory);
+    }
+  }
 };
 // 是否获取过
 localDexie.getChatKeys = function() {
-  return db.chatHistory.toArray();
+  if (db) {
+    return db.chatHistory.toArray();
+  } else {
+    return Promise.resolve(parseJson(storageChatHistory));
+  }
 };
 
 /**消息表操作 */
 // 写入消息列表
 localDexie.addMsgList = function(msgs) {
-  db.msgList.bulkPut(msgs);
+  db?.msgList.bulkPut(msgs);
 };
 
 //获取消息列表
 localDexie.getMsgList = function(defaultOption) {
+  if (db === null) {
+    return Promise.resolve([]);
+  }
   if (!defaultOption.msgEnd) {
     return db.msgList
       .where({
@@ -197,36 +308,23 @@ localDexie.getMsgList = function(defaultOption) {
 
 // 写入消息
 localDexie.addMsg = function(msg) {
-  return db.msgList.put(msg);
-};
-
-// 获取指定消息
-localDexie.getMsg = function(msg) {
-  return db.msgList.get({
-    conversationID: msg.conversationID,
-    msgId: msg.msgId,
-  });
+  db?.msgList.put(msg);
 };
 
 // 更新消息
 localDexie.updateMsg = function(msg) {
-  if (msg.onlyId) {
-    return db.msgList.put(msg);
-  } else {
-    return db.msgList
-      .where({
-        fromUid: msg.fromUid,
-        toUid: msg.toUid,
-        msgId: msg.msgId,
-      })
-      .modify(msg);
-  }
+  db?.msgList
+    .where({
+      conversationID: msg.conversationID,
+      msgId: msg.msgId,
+    })
+    .modify(msg);
 };
 
 // 删除
-localDexie.deleteMsgs = (conversationID, msgids) => {
+localDexie.deleteMsgs = function(conversationID, msgids) {
   if (msgids) {
-    return db.msgList
+    db?.msgList
       .toCollection()
       .and(
         (msg) =>
@@ -235,7 +333,7 @@ localDexie.deleteMsgs = (conversationID, msgids) => {
       )
       .delete();
   } else {
-    return db.msgList
+    db?.msgList
       .where({
         conversationID: conversationID,
       })

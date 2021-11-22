@@ -157,18 +157,13 @@ function getSyncMsgs(Global, msgEnd, chat) {
       for (; i >= 0; i--) {
         let msg = res.messages[i];
         if (msg.type === MSG_TYPE.Recall) {
-          let msgId = parseInt(msg.body);
-          await localDexie
-            .getMsg({
-              conversationID: chat.conversationID,
-              msgId: msgId,
-            })
-            .then((oldMsg) => {
-              if (oldMsg) {
-                oldMsg.type = MSG_TYPE.Revoked;
-                revokeList.push(oldMsg);
-              }
-            });
+          let newMsg = {
+            conversationID: msg.conversationID,
+            msgId: parseInt(msg.body),
+            type: MSG_TYPE.Revoked,
+          };
+          revokeList.push(newMsg);
+          localDexie.updateMsg(newMsg);
         } else if (msg.type === MSG_TYPE.SysDelete) {
           msg.content.split(",").forEach((id) => {
             deleteMsgIds.push(Number(id));
