@@ -7,8 +7,6 @@ import {
   ChatR,
   ChatItem,
   ChatItemUpdate,
-  ProfileList,
-  Profile,
 } from "./proto";
 import { PID, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
 import proFormat from "./proFormat";
@@ -161,18 +159,6 @@ function onMessage(evt) {
       break;
     case PID.CosKey:
       handleGetCosKey(result);
-      break;
-    case PID.ProfileList:
-      let proList = ProfileList.toObject(ProfileList.decode(result), {
-        defaults: true,
-      });
-      console.log("获得批量用户信息", proList);
-      break;
-    case PID.Profile:
-      let pro = Profile.toObject(Profile.decode(result), {
-        defaults: true,
-      });
-      console.log("获得用户信息", pro);
       break;
     default:
       break;

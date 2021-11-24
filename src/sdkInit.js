@@ -161,41 +161,44 @@ function clearData(isClearDB) {
  * @memberof MSIM
  * @param {String} wsUrl websocket地址
  * @param {String} imToken im服务器token
- * @returns {Object}
+ * @returns {Promise}
  */
 function create() {
-  if (msim !== null) {
-    return msim;
-  }
-  initGlobal();
-  let tabId = tool.uuid();
-  let windowHeartBeat = window.localStorage.getItem("im_windowHeartBeat");
-  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
-  imWsTabs.push(tabId);
-  window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
-  Global.tabId = tabId;
-  let time = new Date().getTime();
-  if (!windowHeartBeat) {
-    window.localStorage.setItem("im_wsCurId", tabId);
-    // 启动全局定时器
-    globalTimer();
-  } else if (windowHeartBeat < time - 3000) {
-    localNotice.clear();
-    closeWs();
-    localDexie.deleteDB();
-    window.localStorage.setItem("im_wsCurId", tabId);
-    // 启动全局定时器
-    globalTimer();
-  }
-  window.onunload = () => {
-    onunload();
-  };
-  window.addEventListener("storage", (storage) => {
-    localNotice.watchStorage(storage, msim, Global);
+  return new Promise((resolve, reject) => {
+    if (msim !== null) {
+      resolve(msim);
+    }
+    initGlobal();
+    let tabId = tool.uuid();
+    let windowHeartBeat = window.localStorage.getItem("im_windowHeartBeat");
+    let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
+    imWsTabs.push(tabId);
+    window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
+    Global.tabId = tabId;
+    let time = new Date().getTime();
+    if (!windowHeartBeat) {
+      window.localStorage.setItem("im_wsCurId", tabId);
+      // 启动全局定时器
+      globalTimer();
+    } else if (windowHeartBeat < time - 3000) {
+      localNotice.clear();
+      closeWs();
+      localDexie.deleteDB();
+      window.localStorage.setItem("im_wsCurId", tabId);
+      // 启动全局定时器
+      globalTimer();
+    }
+    window.onunload = () => {
+      onunload();
+    };
+    window.addEventListener("storage", (storage) => {
+      localNotice.watchStorage(storage, msim, Global);
+    });
+    localDexie.initDB(() => {
+      msim = initSDK();
+      resolve(msim);
+    });
   });
-  localDexie.initDB();
-  msim = initSDK();
-  return msim;
 }
 
 /***

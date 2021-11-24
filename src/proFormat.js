@@ -1,7 +1,5 @@
 import {
   GetCosKey,
-  GetProfile,
-  GetProfiles,
   ImLogin,
   ImLogout,
   Ping,
@@ -74,7 +72,7 @@ function logoutPro(sign) {
  * @returns {Uint8Array} 二进制数据
  */
 function pingPro() {
-  let bytes = Ping.encode(Ping.create({ type: 1 })).finish();
+  let bytes = Ping.encode(Ping.create({ type: 0 })).finish();
   return bytes;
 }
 
@@ -111,30 +109,6 @@ function chatPro(sign, uid) {
 function delChatPro(sign, uid) {
   let bytes = DelChat.encode(
     DelChat.create({ sign: sign, toUid: uid })
-  ).finish();
-  return bytes;
-}
-
-/***
- * 批量获取用户信息
- * @param {*} options
- * @returns
- */
-function getProfiles(sign, profiles) {
-  let bytes = GetProfiles.encode(
-    GetProfiles.create({ sign: sign, getProfiles: profiles })
-  ).finish();
-  return bytes;
-}
-
-/***
- * 获取指定用户信息
- * @param {*} options
- * @returns
- */
-function getProfile(sign, uid) {
-  let bytes = GetProfile.encode(
-    GetProfile.create({ sign: sign, uid: uid })
   ).finish();
   return bytes;
 }
@@ -216,8 +190,6 @@ let proFormat = {
   readMsgPro,
   chatPro,
   cosPro,
-  getProfiles,
-  getProfile,
 };
 
 export default proFormat;

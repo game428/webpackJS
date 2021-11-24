@@ -12,6 +12,7 @@
     "clean-webpack-plugin": "^4.0.0-alpha.0",
     "dexie": "^3.0.3",
     "express": "^4.17.1",
+    "google-protobuf": "^3.19.1",
     "pako": "^2.0.3",
     "protobufjs": "^6.11.2",
     "uglifyjs-webpack-plugin": "^2.2.0",

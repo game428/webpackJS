@@ -76,7 +76,9 @@ let schemas = {
   sdkInfo: sdkInfoKeys.join(), // sdk信息表
 };
 
-let localDexie = {};
+let localDexie = {
+  isInit: false,
+};
 
 function toRawType(value) {
   var _toString = Object.prototype.toString;
@@ -112,7 +114,7 @@ function setStorage(key, obj) {
   window.localStorage.setItem(key, JSON.stringify(obj));
 }
 
-localDexie.initDB = function() {
+localDexie.initDB = function(callback) {
   let indexedDB =
     window.indexedDB ||
     window.mozIndexedDB ||
@@ -126,17 +128,21 @@ localDexie.initDB = function() {
       .then((result) => {
         //打开成功后
         version = db.verno;
+        callback();
       })
       .catch((err) => {
         db = null;
-        console.error(err);
+        callback();
+        console.warn(err);
       });
+  } else {
+    callback();
   }
 };
 
 // 删除数据库
 localDexie.deleteDB = function() {
-  if (db) {
+  if (db && db.isOpen()) {
     Dexie.delete(DBName);
   } else {
     window.localStorage.removeItem(storageSdkInfo);
@@ -147,7 +153,7 @@ localDexie.deleteDB = function() {
 
 // 清空所有数据
 localDexie.clear = function() {
-  if (db) {
+  if (db && db.isOpen()) {
     db.transaction("rw", db.tables, () => {
       db.tables.forEach((table) => {
         table.clear();
@@ -163,7 +169,7 @@ localDexie.clear = function() {
 /** sdk信息表操作 */
 // 更新信息表
 localDexie.updateInfo = function(info) {
-  if (db) {
+  if (db && db.isOpen()) {
     db.sdkInfo.update(sdkKey, info);
   } else {
     let sdkInfo = parseJson(storageSdkInfo);
@@ -171,7 +177,7 @@ localDexie.updateInfo = function(info) {
   }
 };
 localDexie.getInfo = function() {
-  return db
+  return db && db.isOpen()
     ? db.sdkInfo.get(sdkKey)
     : Promise.resolve(parseJson(storageSdkInfo));
 };
@@ -182,7 +188,7 @@ localDexie.initInfo = function() {
     chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
     connState: WS_STATE.NET_STATE_DISCONNECTED,
   };
-  if (db) {
+  if (db && db.isOpen()) {
     db.sdkInfo.put(infoBase);
   } else {
     setStorage(storageSdkInfo, infoBase);
@@ -192,7 +198,7 @@ localDexie.initInfo = function() {
 /**会话表操作 */
 // 写入会话列表
 localDexie.addChatList = (chats) => {
-  if (db) {
+  if (db && db.isOpen()) {
     db.chatList.bulkPut(chats);
   } else {
     let chatList = parseJson(storageChatList);
@@ -203,7 +209,7 @@ localDexie.addChatList = (chats) => {
 
 // 更新会话
 localDexie.updateChat = function(data) {
-  if (db) {
+  if (db && db.isOpen()) {
     return db.chatList.put(data);
   } else {
     let chatList = parseJson(storageChatList);
@@ -221,7 +227,7 @@ localDexie.updateChat = function(data) {
 
 //获取会话列表
 localDexie.getChatList = function() {
-  if (db) {
+  if (db && db.isOpen()) {
     return db.chatList
       .toCollection()
       .and((item) => item.deleted === false)
@@ -235,7 +241,7 @@ localDexie.getChatList = function() {
 
 //获取会话
 localDexie.getChat = function(conversationID) {
-  if (db) {
+  if (db && db.isOpen()) {
     return db.chatList.get({
       conversationID: conversationID,
     });
@@ -251,7 +257,7 @@ localDexie.getChat = function(conversationID) {
 /** 以查看会话表 */
 // 写入查看会话
 localDexie.addChatKey = function(conversationID) {
-  if (db) {
+  if (db && db.isOpen()) {
     db.chatHistory.put({
       conversationID: conversationID,
     });
@@ -270,7 +276,7 @@ localDexie.addChatKey = function(conversationID) {
 };
 // 是否获取过
 localDexie.getChatKeys = function() {
-  if (db) {
+  if (db && db.isOpen()) {
     return db.chatHistory.toArray();
   } else {
     return Promise.resolve(parseJson(storageChatHistory));
@@ -285,7 +291,7 @@ localDexie.addMsgList = function(msgs) {
 
 //获取消息列表
 localDexie.getMsgList = function(defaultOption) {
-  if (db === null) {
+  if (db === null || db.isOpen() === false) {
     return Promise.resolve([]);
   }
   if (!defaultOption.msgEnd) {

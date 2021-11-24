@@ -267,26 +267,6 @@ function formatChat(chat, uid) {
   return localChat;
 }
 
-// 创建只读代理对象
-function readProxy(obj, options) {
-  let handler = {
-    get: (obj, prop) => {
-      return obj[prop];
-    },
-    set: (obj, prop, value) => {
-      console.error(`不允许修改${prop}属性`);
-    },
-    deleteProperty: (obj, prop) => {
-      console.error(`不允许删除${prop}属性`);
-      return false;
-    },
-  };
-  if (typeof options === "object") {
-    Object.assign(handler, options);
-  }
-  return new Proxy(obj, handler);
-}
-
 // 注册回调事件
 function createCallEvent(Global, options) {
   Global.callEvents[options.callSign] = {
@@ -353,7 +333,6 @@ export default {
   formatMsg,
   formatChat,
   emptyTip,
-  readProxy,
   createCallEvent,
   preJudge,
 };
