@@ -102,7 +102,7 @@ function handleChatChange(options) {
     }
     // 增量同步
     if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-      if (msim[EVENT.CONVERSATION_LIST_UPDATED]) {
+      if (msim[EVENT.CONVERSATION_LIST_UPDATED] && options.chats?.length > 0) {
         let result = tool.resultNotice(
           EVENT.CONVERSATION_LIST_UPDATED,
           options.chats
@@ -417,28 +417,26 @@ function handleShowMsg(msg, resolve) {
 }
 
 // 更新会话
-function updateChat(updateChat) {
-  return new Promise(async (resolve, reject) => {
-    let conversationID =
-      updateChat.conversationID || tool.splicingC2CId(updateChat.uid);
-    let oldChat = updateChat;
-    if (Global.curTab) {
-      await getConversationProvider(Global, { conversationID }).then(
-        ({ data }) => {
-          oldChat = data;
-        }
-      );
-    }
-    let newChat;
-    if (updateChat.event) {
-      newChat = handleServerUpdate(updateChat, oldChat);
-    } else {
-      // 如果更新时间低于当前会话的时间则不更新
-      if (updateChat.showMsgTime < oldChat.showMsgTime) return;
-      newChat = handleNewMsgUpdate(updateChat, oldChat);
-    }
-    updateChatNotice(newChat, resolve);
-  });
+async function updateChat(updateChat) {
+  let conversationID =
+    updateChat.conversationID || tool.splicingC2CId(updateChat.uid);
+  let oldChat = updateChat;
+  if (Global.curTab) {
+    await getConversationProvider(Global, { conversationID }).then(
+      ({ data }) => {
+        oldChat = data;
+      }
+    );
+  }
+  let newChat;
+  if (updateChat.event) {
+    newChat = handleServerUpdate(updateChat, oldChat);
+  } else {
+    // 如果更新时间低于当前会话的时间则不更新
+    if (updateChat.showMsgTime < oldChat.showMsgTime) return;
+    newChat = handleNewMsgUpdate(updateChat, oldChat);
+  }
+  updateChatNotice(newChat);
 }
 
 // 处理接收到新消息时更新会话
@@ -512,7 +510,7 @@ function handleServerUpdate(options, chat) {
 }
 
 // 更新会话通知
-function updateChatNotice(newChat, resolve) {
+function updateChatNotice(newChat) {
   if (Global.chatKeys.hasOwnProperty(newChat.conversationID)) {
     let oldChat = Global.chatKeys[newChat.conversationID];
     Object.assign(oldChat, newChat);
@@ -530,9 +528,6 @@ function updateChatNotice(newChat, resolve) {
       data: newChat,
     });
     localDexie.updateChat(newChat);
-    resolve();
-  } else {
-    resolve();
   }
 }
 

@@ -191,11 +191,11 @@ function create() {
     window.onunload = () => {
       onunload();
     };
-    window.addEventListener("storage", (storage) => {
-      localNotice.watchStorage(storage, msim, Global);
-    });
     localDexie.initDB(() => {
       msim = initSDK();
+      window.addEventListener("storage", (storage) => {
+        localNotice.watchStorage(storage, msim, Global);
+      });
       resolve(msim);
     });
   });

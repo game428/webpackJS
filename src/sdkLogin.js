@@ -58,6 +58,7 @@ function handleLogin(Global, config, resolve, reject) {
         loginWs(Global, config, resolve, reject);
       } else if (info?.imToken !== config.imToken) {
         logout(Global).then(() => {
+          localDexie.initInfo();
           loginWs(Global, config, resolve, reject);
         });
       } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
@@ -132,6 +133,7 @@ function connSuc(Global, wsOptions) {
   loginIm(Global, wsOptions)
     .then((res) => {
       if (wsOptions.isReconect !== true) {
+        wsOptions.isReconect = true;
         Global.uid = res.data.uid;
         let result = tool.resultSuc(OPERATION_TYPE.Login, {
           msg: res.data.msg,
@@ -186,9 +188,8 @@ function loginIm(Global, wsOptions) {
       },
       callErr: (err) => {
         // 可能出现code 9 11
-        if (wsOptions.isReconect !== true) {
-          closeWs();
-        } else if (err?.code === ERROR_CODE.NO_REGISTER) {
+        closeWs();
+        if (wsOptions.isReconect && err?.code === ERROR_CODE.NO_REGISTER) {
           wsConfig.Global.handleMessage({
             type: HANDLE_TYPE.ResultError,
             data: err,

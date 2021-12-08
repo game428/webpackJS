@@ -8,7 +8,7 @@ import {
   ChatItem,
   ChatItemUpdate,
 } from "./proto";
-import { PID, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
+import { PID, HANDLE_TYPE, OPERATION_TYPE, ERROR_CODE } from "./sdkTypes";
 import proFormat from "./proFormat";
 import pako from "pako";
 let wsConfig = {
@@ -23,6 +23,12 @@ let wsConfig = {
   chatListEvent: null, // 获取会话sign
   chatFormatList: [], // 会话列表
 };
+
+let loginCode = [
+  ERROR_CODE.SUCCESS,
+  ERROR_CODE.TOKEN_NOT_FOUND,
+  ERROR_CODE.KICKED_OUT,
+];
 
 // 连接ws
 function connectWs(Global, wsOptions) {
@@ -40,8 +46,12 @@ function connectWs(Global, wsOptions) {
 // 上线重连
 function online(wsOptions) {
   if (wsConfig.closeState || wsConfig.ws.readyState === 1) return;
-  wsConfig.ws.close();
-  reconnect(wsOptions);
+  wsConfig.wsStatus = false;
+  if (wsConfig.ws) {
+    wsConfig.ws.close();
+  } else {
+    reconnect(wsOptions);
+  }
 }
 
 // 发送消息
@@ -98,7 +108,7 @@ function createWs(wsOptions) {
 
 // 发送心跳消息
 function sendPing() {
-  if (wsConfig?.ws?.readyState !== 1) return;
+  if (wsConfig.ws?.readyState !== 1) return;
   let date = new Date().getTime();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
     console.log("发送ping");
@@ -118,7 +128,6 @@ function reconnect(wsOptions) {
     } else {
       wsConfig.reconnectNum *= 2;
     }
-    wsOptions.isReconect = true;
     createWs(wsOptions);
     wsConfig.wsStatus = false;
   }, wsConfig.reconnectNum);
@@ -176,8 +185,12 @@ function handleResult(result) {
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
   }
+  if (callEvent?.type === OPERATION_TYPE.Login && !loginCode.includes(code)) {
+    wsConfig.ws.close();
+    return;
+  }
   switch (code) {
-    case 0: // 请求成功
+    case ERROR_CODE.SUCCESS: // 请求成功
       if (!callEvent) return;
       if (callEvent.type === OPERATION_TYPE.GetChats) {
         wsConfig.chatListEvent = callEvent;
@@ -188,11 +201,11 @@ function handleResult(result) {
         });
       }
       break;
-    case 1: // 请求失败（不区分原因）
+    case ERROR_CODE.ERROR: // 请求失败（不区分原因）
       callEvent && callEvent.callErr(resultPro);
       break;
-    case 4: // im token 未找到（不存在或失效）
-    case 2008: // 被踢下线
+    case ERROR_CODE.TOKEN_NOT_FOUND: // im token 未找到（不存在或失效）
+    case ERROR_CODE.KICKED_OUT: // 被踢下线
       wsConfig.closeState = true;
       wsConfig.ws.close();
       wsConfig.Global.handleMessage({
