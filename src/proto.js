@@ -3,29 +3,12 @@
 
 var $protobuf = require("protobufjs/minimal");
 
-// Common aliases
 var $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
 
-// Exported root namespace
 var $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
 
 $root.Ping = (function() {
 
-    /**
-     * Properties of a Ping.
-     * @exports IPing
-     * @interface IPing
-     * @property {number|Long|null} [type] Ping type
-     */
-
-    /**
-     * Constructs a new Ping.
-     * @exports Ping
-     * @classdesc Represents a Ping.
-     * @implements IPing
-     * @constructor
-     * @param {IPing=} [properties] Properties to set
-     */
     function Ping(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -33,67 +16,16 @@ $root.Ping = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * Ping type.
-     * @member {number|Long} type
-     * @memberof Ping
-     * @instance
-     */
     Ping.prototype.type = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new Ping instance using the specified properties.
-     * @function create
-     * @memberof Ping
-     * @static
-     * @param {IPing=} [properties] Properties to set
-     * @returns {Ping} Ping instance
-     */
-    Ping.create = function create(properties) {
-        return new Ping(properties);
-    };
-
-    /**
-     * Encodes the specified Ping message. Does not implicitly {@link Ping.verify|verify} messages.
-     * @function encode
-     * @memberof Ping
-     * @static
-     * @param {IPing} message Ping message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     Ping.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.type != null && Object.hasOwnProperty.call(message, "type"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.type);
+            writer.uint32(8).int64(message.type);
         return writer;
     };
 
-    /**
-     * Encodes the specified Ping message, length delimited. Does not implicitly {@link Ping.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof Ping
-     * @static
-     * @param {IPing} message Ping message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    Ping.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a Ping message from the specified reader or buffer.
-     * @function decode
-     * @memberof Ping
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {Ping} Ping
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     Ping.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -112,47 +44,6 @@ $root.Ping = (function() {
         return message;
     };
 
-    /**
-     * Decodes a Ping message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof Ping
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Ping} Ping
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    Ping.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a Ping message.
-     * @function verify
-     * @memberof Ping
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    Ping.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.type != null && message.hasOwnProperty("type"))
-            if (!$util.isInteger(message.type) && !(message.type && $util.isInteger(message.type.low) && $util.isInteger(message.type.high)))
-                return "type: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a Ping message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof Ping
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {Ping} Ping
-     */
     Ping.fromObject = function fromObject(object) {
         if (object instanceof $root.Ping)
             return object;
@@ -169,15 +60,6 @@ $root.Ping = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a Ping message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof Ping
-     * @static
-     * @param {Ping} message Ping
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     Ping.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -196,13 +78,6 @@ $root.Ping = (function() {
         return object;
     };
 
-    /**
-     * Converts this Ping to JSON.
-     * @function toJSON
-     * @memberof Ping
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     Ping.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -212,27 +87,6 @@ $root.Ping = (function() {
 
 $root.ImLogin = (function() {
 
-    /**
-     * Properties of an ImLogin.
-     * @exports IImLogin
-     * @interface IImLogin
-     * @property {number|Long|null} [sign] ImLogin sign
-     * @property {string|null} [token] ImLogin token
-     * @property {number|Long|null} [ct] ImLogin ct
-     * @property {number|Long|null} [subApp] ImLogin subApp
-     * @property {number|Long|null} [pushChannel] ImLogin pushChannel
-     * @property {string|null} [pushToken] ImLogin pushToken
-     * @property {string|null} [lastToken] ImLogin lastToken
-     */
-
-    /**
-     * Constructs a new ImLogin.
-     * @exports ImLogin
-     * @classdesc Represents an ImLogin.
-     * @implements IImLogin
-     * @constructor
-     * @param {IImLogin=} [properties] Properties to set
-     */
     function ImLogin(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -240,127 +94,34 @@ $root.ImLogin = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ImLogin sign.
-     * @member {number|Long} sign
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ImLogin token.
-     * @member {string} token
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.token = "";
-
-    /**
-     * ImLogin ct.
-     * @member {number|Long} ct
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.ct = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ImLogin subApp.
-     * @member {number|Long} subApp
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.subApp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ImLogin pushChannel.
-     * @member {number|Long} pushChannel
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.pushChannel = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ImLogin pushToken.
-     * @member {string} pushToken
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.pushToken = "";
-
-    /**
-     * ImLogin lastToken.
-     * @member {string} lastToken
-     * @memberof ImLogin
-     * @instance
-     */
     ImLogin.prototype.lastToken = "";
 
-    /**
-     * Creates a new ImLogin instance using the specified properties.
-     * @function create
-     * @memberof ImLogin
-     * @static
-     * @param {IImLogin=} [properties] Properties to set
-     * @returns {ImLogin} ImLogin instance
-     */
-    ImLogin.create = function create(properties) {
-        return new ImLogin(properties);
-    };
-
-    /**
-     * Encodes the specified ImLogin message. Does not implicitly {@link ImLogin.verify|verify} messages.
-     * @function encode
-     * @memberof ImLogin
-     * @static
-     * @param {IImLogin} message ImLogin message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ImLogin.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.token != null && Object.hasOwnProperty.call(message, "token"))
-            writer.uint32(/* id 2, wireType 2 =*/18).string(message.token);
+            writer.uint32(18).string(message.token);
         if (message.ct != null && Object.hasOwnProperty.call(message, "ct"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.ct);
+            writer.uint32(24).int64(message.ct);
         if (message.subApp != null && Object.hasOwnProperty.call(message, "subApp"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.subApp);
+            writer.uint32(32).int64(message.subApp);
         if (message.pushChannel != null && Object.hasOwnProperty.call(message, "pushChannel"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.pushChannel);
+            writer.uint32(40).int64(message.pushChannel);
         if (message.pushToken != null && Object.hasOwnProperty.call(message, "pushToken"))
-            writer.uint32(/* id 6, wireType 2 =*/50).string(message.pushToken);
+            writer.uint32(50).string(message.pushToken);
         if (message.lastToken != null && Object.hasOwnProperty.call(message, "lastToken"))
-            writer.uint32(/* id 7, wireType 2 =*/58).string(message.lastToken);
+            writer.uint32(58).string(message.lastToken);
         return writer;
     };
 
-    /**
-     * Encodes the specified ImLogin message, length delimited. Does not implicitly {@link ImLogin.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ImLogin
-     * @static
-     * @param {IImLogin} message ImLogin message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ImLogin.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes an ImLogin message from the specified reader or buffer.
-     * @function decode
-     * @memberof ImLogin
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ImLogin} ImLogin
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ImLogin.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -397,65 +158,6 @@ $root.ImLogin = (function() {
         return message;
     };
 
-    /**
-     * Decodes an ImLogin message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ImLogin
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ImLogin} ImLogin
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ImLogin.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies an ImLogin message.
-     * @function verify
-     * @memberof ImLogin
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ImLogin.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.token != null && message.hasOwnProperty("token"))
-            if (!$util.isString(message.token))
-                return "token: string expected";
-        if (message.ct != null && message.hasOwnProperty("ct"))
-            if (!$util.isInteger(message.ct) && !(message.ct && $util.isInteger(message.ct.low) && $util.isInteger(message.ct.high)))
-                return "ct: integer|Long expected";
-        if (message.subApp != null && message.hasOwnProperty("subApp"))
-            if (!$util.isInteger(message.subApp) && !(message.subApp && $util.isInteger(message.subApp.low) && $util.isInteger(message.subApp.high)))
-                return "subApp: integer|Long expected";
-        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
-            if (!$util.isInteger(message.pushChannel) && !(message.pushChannel && $util.isInteger(message.pushChannel.low) && $util.isInteger(message.pushChannel.high)))
-                return "pushChannel: integer|Long expected";
-        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
-            if (!$util.isString(message.pushToken))
-                return "pushToken: string expected";
-        if (message.lastToken != null && message.hasOwnProperty("lastToken"))
-            if (!$util.isString(message.lastToken))
-                return "lastToken: string expected";
-        return null;
-    };
-
-    /**
-     * Creates an ImLogin message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ImLogin
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ImLogin} ImLogin
-     */
     ImLogin.fromObject = function fromObject(object) {
         if (object instanceof $root.ImLogin)
             return object;
@@ -505,15 +207,6 @@ $root.ImLogin = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from an ImLogin message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ImLogin
-     * @static
-     * @param {ImLogin} message ImLogin
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ImLogin.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -572,13 +265,6 @@ $root.ImLogin = (function() {
         return object;
     };
 
-    /**
-     * Converts this ImLogin to JSON.
-     * @function toJSON
-     * @memberof ImLogin
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ImLogin.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -588,21 +274,6 @@ $root.ImLogin = (function() {
 
 $root.ImLogout = (function() {
 
-    /**
-     * Properties of an ImLogout.
-     * @exports IImLogout
-     * @interface IImLogout
-     * @property {number|Long|null} [sign] ImLogout sign
-     */
-
-    /**
-     * Constructs a new ImLogout.
-     * @exports ImLogout
-     * @classdesc Represents an ImLogout.
-     * @implements IImLogout
-     * @constructor
-     * @param {IImLogout=} [properties] Properties to set
-     */
     function ImLogout(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -610,67 +281,16 @@ $root.ImLogout = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ImLogout sign.
-     * @member {number|Long} sign
-     * @memberof ImLogout
-     * @instance
-     */
     ImLogout.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new ImLogout instance using the specified properties.
-     * @function create
-     * @memberof ImLogout
-     * @static
-     * @param {IImLogout=} [properties] Properties to set
-     * @returns {ImLogout} ImLogout instance
-     */
-    ImLogout.create = function create(properties) {
-        return new ImLogout(properties);
-    };
-
-    /**
-     * Encodes the specified ImLogout message. Does not implicitly {@link ImLogout.verify|verify} messages.
-     * @function encode
-     * @memberof ImLogout
-     * @static
-     * @param {IImLogout} message ImLogout message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ImLogout.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         return writer;
     };
 
-    /**
-     * Encodes the specified ImLogout message, length delimited. Does not implicitly {@link ImLogout.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ImLogout
-     * @static
-     * @param {IImLogout} message ImLogout message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ImLogout.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes an ImLogout message from the specified reader or buffer.
-     * @function decode
-     * @memberof ImLogout
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ImLogout} ImLogout
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ImLogout.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -689,47 +309,6 @@ $root.ImLogout = (function() {
         return message;
     };
 
-    /**
-     * Decodes an ImLogout message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ImLogout
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ImLogout} ImLogout
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ImLogout.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies an ImLogout message.
-     * @function verify
-     * @memberof ImLogout
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ImLogout.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates an ImLogout message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ImLogout
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ImLogout} ImLogout
-     */
     ImLogout.fromObject = function fromObject(object) {
         if (object instanceof $root.ImLogout)
             return object;
@@ -746,15 +325,6 @@ $root.ImLogout = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from an ImLogout message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ImLogout
-     * @static
-     * @param {ImLogout} message ImLogout
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ImLogout.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -773,13 +343,6 @@ $root.ImLogout = (function() {
         return object;
     };
 
-    /**
-     * Converts this ImLogout to JSON.
-     * @function toJSON
-     * @memberof ImLogout
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ImLogout.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -789,25 +352,6 @@ $root.ImLogout = (function() {
 
 $root.Result = (function() {
 
-    /**
-     * Properties of a Result.
-     * @exports IResult
-     * @interface IResult
-     * @property {number|Long|null} [sign] Result sign
-     * @property {number|Long|null} [code] Result code
-     * @property {string|null} [msg] Result msg
-     * @property {number|Long|null} [nowTime] Result nowTime
-     * @property {number|Long|null} [uid] Result uid
-     */
-
-    /**
-     * Constructs a new Result.
-     * @exports Result
-     * @classdesc Represents a Result.
-     * @implements IResult
-     * @constructor
-     * @param {IResult=} [properties] Properties to set
-     */
     function Result(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -815,107 +359,28 @@ $root.Result = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * Result sign.
-     * @member {number|Long} sign
-     * @memberof Result
-     * @instance
-     */
     Result.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * Result code.
-     * @member {number|Long} code
-     * @memberof Result
-     * @instance
-     */
     Result.prototype.code = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * Result msg.
-     * @member {string} msg
-     * @memberof Result
-     * @instance
-     */
     Result.prototype.msg = "";
-
-    /**
-     * Result nowTime.
-     * @member {number|Long} nowTime
-     * @memberof Result
-     * @instance
-     */
     Result.prototype.nowTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * Result uid.
-     * @member {number|Long} uid
-     * @memberof Result
-     * @instance
-     */
     Result.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new Result instance using the specified properties.
-     * @function create
-     * @memberof Result
-     * @static
-     * @param {IResult=} [properties] Properties to set
-     * @returns {Result} Result instance
-     */
-    Result.create = function create(properties) {
-        return new Result(properties);
-    };
-
-    /**
-     * Encodes the specified Result message. Does not implicitly {@link Result.verify|verify} messages.
-     * @function encode
-     * @memberof Result
-     * @static
-     * @param {IResult} message Result message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     Result.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.code != null && Object.hasOwnProperty.call(message, "code"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.code);
+            writer.uint32(16).int64(message.code);
         if (message.msg != null && Object.hasOwnProperty.call(message, "msg"))
-            writer.uint32(/* id 3, wireType 2 =*/26).string(message.msg);
+            writer.uint32(26).string(message.msg);
         if (message.nowTime != null && Object.hasOwnProperty.call(message, "nowTime"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.nowTime);
+            writer.uint32(32).int64(message.nowTime);
         if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.uid);
+            writer.uint32(40).int64(message.uid);
         return writer;
     };
 
-    /**
-     * Encodes the specified Result message, length delimited. Does not implicitly {@link Result.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof Result
-     * @static
-     * @param {IResult} message Result message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    Result.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a Result message from the specified reader or buffer.
-     * @function decode
-     * @memberof Result
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {Result} Result
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     Result.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -946,59 +411,6 @@ $root.Result = (function() {
         return message;
     };
 
-    /**
-     * Decodes a Result message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof Result
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Result} Result
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    Result.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a Result message.
-     * @function verify
-     * @memberof Result
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    Result.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.code != null && message.hasOwnProperty("code"))
-            if (!$util.isInteger(message.code) && !(message.code && $util.isInteger(message.code.low) && $util.isInteger(message.code.high)))
-                return "code: integer|Long expected";
-        if (message.msg != null && message.hasOwnProperty("msg"))
-            if (!$util.isString(message.msg))
-                return "msg: string expected";
-        if (message.nowTime != null && message.hasOwnProperty("nowTime"))
-            if (!$util.isInteger(message.nowTime) && !(message.nowTime && $util.isInteger(message.nowTime.low) && $util.isInteger(message.nowTime.high)))
-                return "nowTime: integer|Long expected";
-        if (message.uid != null && message.hasOwnProperty("uid"))
-            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
-                return "uid: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a Result message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof Result
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {Result} Result
-     */
     Result.fromObject = function fromObject(object) {
         if (object instanceof $root.Result)
             return object;
@@ -1044,15 +456,6 @@ $root.Result = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a Result message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof Result
-     * @static
-     * @param {Result} message Result
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     Result.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -1105,13 +508,6 @@ $root.Result = (function() {
         return object;
     };
 
-    /**
-     * Converts this Result to JSON.
-     * @function toJSON
-     * @memberof Result
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     Result.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -1121,35 +517,6 @@ $root.Result = (function() {
 
 $root.ChatS = (function() {
 
-    /**
-     * Properties of a ChatS.
-     * @exports IChatS
-     * @interface IChatS
-     * @property {number|Long|null} [sign] ChatS sign
-     * @property {number|Long|null} [type] ChatS type
-     * @property {number|Long|null} [toUid] ChatS toUid
-     * @property {string|null} [title] ChatS title
-     * @property {string|null} [body] ChatS body
-     * @property {string|null} [thumb] ChatS thumb
-     * @property {number|Long|null} [width] ChatS width
-     * @property {number|Long|null} [height] ChatS height
-     * @property {number|Long|null} [duration] ChatS duration
-     * @property {number|null} [lat] ChatS lat
-     * @property {number|null} [lng] ChatS lng
-     * @property {number|Long|null} [zoom] ChatS zoom
-     * @property {string|null} [pushTitle] ChatS pushTitle
-     * @property {string|null} [pushBody] ChatS pushBody
-     * @property {string|null} [pushSound] ChatS pushSound
-     */
-
-    /**
-     * Constructs a new ChatS.
-     * @exports ChatS
-     * @classdesc Represents a ChatS.
-     * @implements IChatS
-     * @constructor
-     * @param {IChatS=} [properties] Properties to set
-     */
     function ChatS(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -1157,207 +524,58 @@ $root.ChatS = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatS sign.
-     * @member {number|Long} sign
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS type.
-     * @member {number|Long} type
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.type = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS toUid.
-     * @member {number|Long} toUid
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS title.
-     * @member {string} title
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.title = "";
-
-    /**
-     * ChatS body.
-     * @member {string} body
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.body = "";
-
-    /**
-     * ChatS thumb.
-     * @member {string} thumb
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.thumb = "";
-
-    /**
-     * ChatS width.
-     * @member {number|Long} width
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.width = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS height.
-     * @member {number|Long} height
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.height = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS duration.
-     * @member {number|Long} duration
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.duration = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS lat.
-     * @member {number} lat
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.lat = 0;
-
-    /**
-     * ChatS lng.
-     * @member {number} lng
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.lng = 0;
-
-    /**
-     * ChatS zoom.
-     * @member {number|Long} zoom
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatS pushTitle.
-     * @member {string} pushTitle
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.pushTitle = "";
-
-    /**
-     * ChatS pushBody.
-     * @member {string} pushBody
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.pushBody = "";
-
-    /**
-     * ChatS pushSound.
-     * @member {string} pushSound
-     * @memberof ChatS
-     * @instance
-     */
     ChatS.prototype.pushSound = "";
 
-    /**
-     * Creates a new ChatS instance using the specified properties.
-     * @function create
-     * @memberof ChatS
-     * @static
-     * @param {IChatS=} [properties] Properties to set
-     * @returns {ChatS} ChatS instance
-     */
-    ChatS.create = function create(properties) {
-        return new ChatS(properties);
-    };
-
-    /**
-     * Encodes the specified ChatS message. Does not implicitly {@link ChatS.verify|verify} messages.
-     * @function encode
-     * @memberof ChatS
-     * @static
-     * @param {IChatS} message ChatS message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatS.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.type != null && Object.hasOwnProperty.call(message, "type"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.type);
+            writer.uint32(16).int64(message.type);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.toUid);
+            writer.uint32(24).int64(message.toUid);
         if (message.title != null && Object.hasOwnProperty.call(message, "title"))
-            writer.uint32(/* id 4, wireType 2 =*/34).string(message.title);
+            writer.uint32(34).string(message.title);
         if (message.body != null && Object.hasOwnProperty.call(message, "body"))
-            writer.uint32(/* id 5, wireType 2 =*/42).string(message.body);
+            writer.uint32(42).string(message.body);
         if (message.thumb != null && Object.hasOwnProperty.call(message, "thumb"))
-            writer.uint32(/* id 6, wireType 2 =*/50).string(message.thumb);
+            writer.uint32(50).string(message.thumb);
         if (message.width != null && Object.hasOwnProperty.call(message, "width"))
-            writer.uint32(/* id 7, wireType 0 =*/56).int64(message.width);
+            writer.uint32(56).int64(message.width);
         if (message.height != null && Object.hasOwnProperty.call(message, "height"))
-            writer.uint32(/* id 8, wireType 0 =*/64).int64(message.height);
+            writer.uint32(64).int64(message.height);
         if (message.duration != null && Object.hasOwnProperty.call(message, "duration"))
-            writer.uint32(/* id 9, wireType 0 =*/72).int64(message.duration);
+            writer.uint32(72).int64(message.duration);
         if (message.lat != null && Object.hasOwnProperty.call(message, "lat"))
-            writer.uint32(/* id 10, wireType 1 =*/81).double(message.lat);
+            writer.uint32(81).double(message.lat);
         if (message.lng != null && Object.hasOwnProperty.call(message, "lng"))
-            writer.uint32(/* id 11, wireType 1 =*/89).double(message.lng);
+            writer.uint32(89).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
-            writer.uint32(/* id 12, wireType 0 =*/96).int64(message.zoom);
+            writer.uint32(96).int64(message.zoom);
         if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
-            writer.uint32(/* id 13, wireType 2 =*/106).string(message.pushTitle);
+            writer.uint32(106).string(message.pushTitle);
         if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
-            writer.uint32(/* id 14, wireType 2 =*/114).string(message.pushBody);
+            writer.uint32(114).string(message.pushBody);
         if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
-            writer.uint32(/* id 15, wireType 2 =*/122).string(message.pushSound);
+            writer.uint32(122).string(message.pushSound);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatS message, length delimited. Does not implicitly {@link ChatS.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatS
-     * @static
-     * @param {IChatS} message ChatS message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatS.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatS message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatS
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatS} ChatS
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatS.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -1418,89 +636,6 @@ $root.ChatS = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatS message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatS
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatS} ChatS
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatS.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatS message.
-     * @function verify
-     * @memberof ChatS
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatS.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.type != null && message.hasOwnProperty("type"))
-            if (!$util.isInteger(message.type) && !(message.type && $util.isInteger(message.type.low) && $util.isInteger(message.type.high)))
-                return "type: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        if (message.title != null && message.hasOwnProperty("title"))
-            if (!$util.isString(message.title))
-                return "title: string expected";
-        if (message.body != null && message.hasOwnProperty("body"))
-            if (!$util.isString(message.body))
-                return "body: string expected";
-        if (message.thumb != null && message.hasOwnProperty("thumb"))
-            if (!$util.isString(message.thumb))
-                return "thumb: string expected";
-        if (message.width != null && message.hasOwnProperty("width"))
-            if (!$util.isInteger(message.width) && !(message.width && $util.isInteger(message.width.low) && $util.isInteger(message.width.high)))
-                return "width: integer|Long expected";
-        if (message.height != null && message.hasOwnProperty("height"))
-            if (!$util.isInteger(message.height) && !(message.height && $util.isInteger(message.height.low) && $util.isInteger(message.height.high)))
-                return "height: integer|Long expected";
-        if (message.duration != null && message.hasOwnProperty("duration"))
-            if (!$util.isInteger(message.duration) && !(message.duration && $util.isInteger(message.duration.low) && $util.isInteger(message.duration.high)))
-                return "duration: integer|Long expected";
-        if (message.lat != null && message.hasOwnProperty("lat"))
-            if (typeof message.lat !== "number")
-                return "lat: number expected";
-        if (message.lng != null && message.hasOwnProperty("lng"))
-            if (typeof message.lng !== "number")
-                return "lng: number expected";
-        if (message.zoom != null && message.hasOwnProperty("zoom"))
-            if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
-                return "zoom: integer|Long expected";
-        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
-            if (!$util.isString(message.pushTitle))
-                return "pushTitle: string expected";
-        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
-            if (!$util.isString(message.pushBody))
-                return "pushBody: string expected";
-        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
-            if (!$util.isString(message.pushSound))
-                return "pushSound: string expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatS message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatS
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatS} ChatS
-     */
     ChatS.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatS)
             return object;
@@ -1587,15 +722,6 @@ $root.ChatS = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatS message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatS
-     * @static
-     * @param {ChatS} message ChatS
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatS.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -1699,13 +825,6 @@ $root.ChatS = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatS to JSON.
-     * @function toJSON
-     * @memberof ChatS
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatS.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -1715,23 +834,6 @@ $root.ChatS = (function() {
 
 $root.ChatSR = (function() {
 
-    /**
-     * Properties of a ChatSR.
-     * @exports IChatSR
-     * @interface IChatSR
-     * @property {number|Long|null} [sign] ChatSR sign
-     * @property {number|Long|null} [msgId] ChatSR msgId
-     * @property {number|Long|null} [msgTime] ChatSR msgTime
-     */
-
-    /**
-     * Constructs a new ChatSR.
-     * @exports ChatSR
-     * @classdesc Represents a ChatSR.
-     * @implements IChatSR
-     * @constructor
-     * @param {IChatSR=} [properties] Properties to set
-     */
     function ChatSR(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -1739,87 +841,22 @@ $root.ChatSR = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatSR sign.
-     * @member {number|Long} sign
-     * @memberof ChatSR
-     * @instance
-     */
     ChatSR.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatSR msgId.
-     * @member {number|Long} msgId
-     * @memberof ChatSR
-     * @instance
-     */
     ChatSR.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatSR msgTime.
-     * @member {number|Long} msgTime
-     * @memberof ChatSR
-     * @instance
-     */
     ChatSR.prototype.msgTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new ChatSR instance using the specified properties.
-     * @function create
-     * @memberof ChatSR
-     * @static
-     * @param {IChatSR=} [properties] Properties to set
-     * @returns {ChatSR} ChatSR instance
-     */
-    ChatSR.create = function create(properties) {
-        return new ChatSR(properties);
-    };
-
-    /**
-     * Encodes the specified ChatSR message. Does not implicitly {@link ChatSR.verify|verify} messages.
-     * @function encode
-     * @memberof ChatSR
-     * @static
-     * @param {IChatSR} message ChatSR message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatSR.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.msgId);
+            writer.uint32(16).int64(message.msgId);
         if (message.msgTime != null && Object.hasOwnProperty.call(message, "msgTime"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.msgTime);
+            writer.uint32(24).int64(message.msgTime);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatSR message, length delimited. Does not implicitly {@link ChatSR.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatSR
-     * @static
-     * @param {IChatSR} message ChatSR message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatSR.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatSR message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatSR
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatSR} ChatSR
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatSR.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -1844,53 +881,6 @@ $root.ChatSR = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatSR message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatSR
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatSR} ChatSR
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatSR.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatSR message.
-     * @function verify
-     * @memberof ChatSR
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatSR.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.msgId != null && message.hasOwnProperty("msgId"))
-            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
-                return "msgId: integer|Long expected";
-        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
-            if (!$util.isInteger(message.msgTime) && !(message.msgTime && $util.isInteger(message.msgTime.low) && $util.isInteger(message.msgTime.high)))
-                return "msgTime: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatSR message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatSR
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatSR} ChatSR
-     */
     ChatSR.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatSR)
             return object;
@@ -1925,15 +915,6 @@ $root.ChatSR = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatSR message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatSR
-     * @static
-     * @param {ChatSR} message ChatSR
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatSR.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -1973,13 +954,6 @@ $root.ChatSR = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatSR to JSON.
-     * @function toJSON
-     * @memberof ChatSR
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatSR.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -1989,40 +963,6 @@ $root.ChatSR = (function() {
 
 $root.ChatR = (function() {
 
-    /**
-     * Properties of a ChatR.
-     * @exports IChatR
-     * @interface IChatR
-     * @property {number|Long|null} [sign] ChatR sign
-     * @property {number|Long|null} [fromUid] ChatR fromUid
-     * @property {number|Long|null} [toUid] ChatR toUid
-     * @property {number|Long|null} [msgId] ChatR msgId
-     * @property {number|Long|null} [msgTime] ChatR msgTime
-     * @property {number|Long|null} [sput] ChatR sput
-     * @property {boolean|null} [newMsg] ChatR newMsg
-     * @property {number|Long|null} [type] ChatR type
-     * @property {string|null} [title] ChatR title
-     * @property {string|null} [body] ChatR body
-     * @property {string|null} [thumb] ChatR thumb
-     * @property {number|Long|null} [width] ChatR width
-     * @property {number|Long|null} [height] ChatR height
-     * @property {number|Long|null} [duration] ChatR duration
-     * @property {number|null} [lat] ChatR lat
-     * @property {number|null} [lng] ChatR lng
-     * @property {number|Long|null} [zoom] ChatR zoom
-     * @property {string|null} [pushTitle] ChatR pushTitle
-     * @property {string|null} [pushBody] ChatR pushBody
-     * @property {string|null} [pushSound] ChatR pushSound
-     */
-
-    /**
-     * Constructs a new ChatR.
-     * @exports ChatR
-     * @classdesc Represents a ChatR.
-     * @implements IChatR
-     * @constructor
-     * @param {IChatR=} [properties] Properties to set
-     */
     function ChatR(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -2030,257 +970,73 @@ $root.ChatR = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatR sign.
-     * @member {number|Long} sign
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR fromUid.
-     * @member {number|Long} fromUid
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.fromUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR toUid.
-     * @member {number|Long} toUid
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR msgId.
-     * @member {number|Long} msgId
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR msgTime.
-     * @member {number|Long} msgTime
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.msgTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR sput.
-     * @member {number|Long} sput
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.sput = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR newMsg.
-     * @member {boolean} newMsg
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.newMsg = false;
-
-    /**
-     * ChatR type.
-     * @member {number|Long} type
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.type = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR title.
-     * @member {string} title
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.title = "";
-
-    /**
-     * ChatR body.
-     * @member {string} body
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.body = "";
-
-    /**
-     * ChatR thumb.
-     * @member {string} thumb
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.thumb = "";
-
-    /**
-     * ChatR width.
-     * @member {number|Long} width
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.width = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR height.
-     * @member {number|Long} height
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.height = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR duration.
-     * @member {number|Long} duration
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.duration = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR lat.
-     * @member {number} lat
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.lat = 0;
-
-    /**
-     * ChatR lng.
-     * @member {number} lng
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.lng = 0;
-
-    /**
-     * ChatR zoom.
-     * @member {number|Long} zoom
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.zoom = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatR pushTitle.
-     * @member {string} pushTitle
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.pushTitle = "";
-
-    /**
-     * ChatR pushBody.
-     * @member {string} pushBody
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.pushBody = "";
-
-    /**
-     * ChatR pushSound.
-     * @member {string} pushSound
-     * @memberof ChatR
-     * @instance
-     */
     ChatR.prototype.pushSound = "";
 
-    /**
-     * Creates a new ChatR instance using the specified properties.
-     * @function create
-     * @memberof ChatR
-     * @static
-     * @param {IChatR=} [properties] Properties to set
-     * @returns {ChatR} ChatR instance
-     */
-    ChatR.create = function create(properties) {
-        return new ChatR(properties);
-    };
-
-    /**
-     * Encodes the specified ChatR message. Does not implicitly {@link ChatR.verify|verify} messages.
-     * @function encode
-     * @memberof ChatR
-     * @static
-     * @param {IChatR} message ChatR message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatR.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.fromUid != null && Object.hasOwnProperty.call(message, "fromUid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.fromUid);
+            writer.uint32(16).int64(message.fromUid);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.toUid);
+            writer.uint32(24).int64(message.toUid);
         if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.msgId);
+            writer.uint32(32).int64(message.msgId);
         if (message.msgTime != null && Object.hasOwnProperty.call(message, "msgTime"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.msgTime);
+            writer.uint32(40).int64(message.msgTime);
         if (message.sput != null && Object.hasOwnProperty.call(message, "sput"))
-            writer.uint32(/* id 6, wireType 0 =*/48).int64(message.sput);
+            writer.uint32(48).int64(message.sput);
         if (message.newMsg != null && Object.hasOwnProperty.call(message, "newMsg"))
-            writer.uint32(/* id 7, wireType 0 =*/56).bool(message.newMsg);
+            writer.uint32(56).bool(message.newMsg);
         if (message.type != null && Object.hasOwnProperty.call(message, "type"))
-            writer.uint32(/* id 8, wireType 0 =*/64).int64(message.type);
+            writer.uint32(64).int64(message.type);
         if (message.title != null && Object.hasOwnProperty.call(message, "title"))
-            writer.uint32(/* id 9, wireType 2 =*/74).string(message.title);
+            writer.uint32(74).string(message.title);
         if (message.body != null && Object.hasOwnProperty.call(message, "body"))
-            writer.uint32(/* id 10, wireType 2 =*/82).string(message.body);
+            writer.uint32(82).string(message.body);
         if (message.thumb != null && Object.hasOwnProperty.call(message, "thumb"))
-            writer.uint32(/* id 11, wireType 2 =*/90).string(message.thumb);
+            writer.uint32(90).string(message.thumb);
         if (message.width != null && Object.hasOwnProperty.call(message, "width"))
-            writer.uint32(/* id 12, wireType 0 =*/96).int64(message.width);
+            writer.uint32(96).int64(message.width);
         if (message.height != null && Object.hasOwnProperty.call(message, "height"))
-            writer.uint32(/* id 13, wireType 0 =*/104).int64(message.height);
+            writer.uint32(104).int64(message.height);
         if (message.duration != null && Object.hasOwnProperty.call(message, "duration"))
-            writer.uint32(/* id 14, wireType 0 =*/112).int64(message.duration);
+            writer.uint32(112).int64(message.duration);
         if (message.lat != null && Object.hasOwnProperty.call(message, "lat"))
-            writer.uint32(/* id 15, wireType 1 =*/121).double(message.lat);
+            writer.uint32(121).double(message.lat);
         if (message.lng != null && Object.hasOwnProperty.call(message, "lng"))
-            writer.uint32(/* id 16, wireType 1 =*/129).double(message.lng);
+            writer.uint32(129).double(message.lng);
         if (message.zoom != null && Object.hasOwnProperty.call(message, "zoom"))
-            writer.uint32(/* id 17, wireType 0 =*/136).int64(message.zoom);
+            writer.uint32(136).int64(message.zoom);
         if (message.pushTitle != null && Object.hasOwnProperty.call(message, "pushTitle"))
-            writer.uint32(/* id 18, wireType 2 =*/146).string(message.pushTitle);
+            writer.uint32(146).string(message.pushTitle);
         if (message.pushBody != null && Object.hasOwnProperty.call(message, "pushBody"))
-            writer.uint32(/* id 19, wireType 2 =*/154).string(message.pushBody);
+            writer.uint32(154).string(message.pushBody);
         if (message.pushSound != null && Object.hasOwnProperty.call(message, "pushSound"))
-            writer.uint32(/* id 20, wireType 2 =*/162).string(message.pushSound);
+            writer.uint32(162).string(message.pushSound);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatR message, length delimited. Does not implicitly {@link ChatR.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatR
-     * @static
-     * @param {IChatR} message ChatR message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatR.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatR message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatR
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatR} ChatR
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatR.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -2356,104 +1112,6 @@ $root.ChatR = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatR message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatR
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatR} ChatR
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatR.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatR message.
-     * @function verify
-     * @memberof ChatR
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatR.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.fromUid != null && message.hasOwnProperty("fromUid"))
-            if (!$util.isInteger(message.fromUid) && !(message.fromUid && $util.isInteger(message.fromUid.low) && $util.isInteger(message.fromUid.high)))
-                return "fromUid: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        if (message.msgId != null && message.hasOwnProperty("msgId"))
-            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
-                return "msgId: integer|Long expected";
-        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
-            if (!$util.isInteger(message.msgTime) && !(message.msgTime && $util.isInteger(message.msgTime.low) && $util.isInteger(message.msgTime.high)))
-                return "msgTime: integer|Long expected";
-        if (message.sput != null && message.hasOwnProperty("sput"))
-            if (!$util.isInteger(message.sput) && !(message.sput && $util.isInteger(message.sput.low) && $util.isInteger(message.sput.high)))
-                return "sput: integer|Long expected";
-        if (message.newMsg != null && message.hasOwnProperty("newMsg"))
-            if (typeof message.newMsg !== "boolean")
-                return "newMsg: boolean expected";
-        if (message.type != null && message.hasOwnProperty("type"))
-            if (!$util.isInteger(message.type) && !(message.type && $util.isInteger(message.type.low) && $util.isInteger(message.type.high)))
-                return "type: integer|Long expected";
-        if (message.title != null && message.hasOwnProperty("title"))
-            if (!$util.isString(message.title))
-                return "title: string expected";
-        if (message.body != null && message.hasOwnProperty("body"))
-            if (!$util.isString(message.body))
-                return "body: string expected";
-        if (message.thumb != null && message.hasOwnProperty("thumb"))
-            if (!$util.isString(message.thumb))
-                return "thumb: string expected";
-        if (message.width != null && message.hasOwnProperty("width"))
-            if (!$util.isInteger(message.width) && !(message.width && $util.isInteger(message.width.low) && $util.isInteger(message.width.high)))
-                return "width: integer|Long expected";
-        if (message.height != null && message.hasOwnProperty("height"))
-            if (!$util.isInteger(message.height) && !(message.height && $util.isInteger(message.height.low) && $util.isInteger(message.height.high)))
-                return "height: integer|Long expected";
-        if (message.duration != null && message.hasOwnProperty("duration"))
-            if (!$util.isInteger(message.duration) && !(message.duration && $util.isInteger(message.duration.low) && $util.isInteger(message.duration.high)))
-                return "duration: integer|Long expected";
-        if (message.lat != null && message.hasOwnProperty("lat"))
-            if (typeof message.lat !== "number")
-                return "lat: number expected";
-        if (message.lng != null && message.hasOwnProperty("lng"))
-            if (typeof message.lng !== "number")
-                return "lng: number expected";
-        if (message.zoom != null && message.hasOwnProperty("zoom"))
-            if (!$util.isInteger(message.zoom) && !(message.zoom && $util.isInteger(message.zoom.low) && $util.isInteger(message.zoom.high)))
-                return "zoom: integer|Long expected";
-        if (message.pushTitle != null && message.hasOwnProperty("pushTitle"))
-            if (!$util.isString(message.pushTitle))
-                return "pushTitle: string expected";
-        if (message.pushBody != null && message.hasOwnProperty("pushBody"))
-            if (!$util.isString(message.pushBody))
-                return "pushBody: string expected";
-        if (message.pushSound != null && message.hasOwnProperty("pushSound"))
-            if (!$util.isString(message.pushSound))
-                return "pushSound: string expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatR message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatR
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatR} ChatR
-     */
     ChatR.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatR)
             return object;
@@ -2578,15 +1236,6 @@ $root.ChatR = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatR message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatR
-     * @static
-     * @param {ChatR} message ChatR
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatR.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -2733,13 +1382,6 @@ $root.ChatR = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatR to JSON.
-     * @function toJSON
-     * @memberof ChatR
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatR.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -2749,22 +1391,6 @@ $root.ChatR = (function() {
 
 $root.ChatRBatch = (function() {
 
-    /**
-     * Properties of a ChatRBatch.
-     * @exports IChatRBatch
-     * @interface IChatRBatch
-     * @property {number|Long|null} [sign] ChatRBatch sign
-     * @property {Array.<IChatR>|null} [msgs] ChatRBatch msgs
-     */
-
-    /**
-     * Constructs a new ChatRBatch.
-     * @exports ChatRBatch
-     * @classdesc Represents a ChatRBatch.
-     * @implements IChatRBatch
-     * @constructor
-     * @param {IChatRBatch=} [properties] Properties to set
-     */
     function ChatRBatch(properties) {
         this.msgs = [];
         if (properties)
@@ -2773,78 +1399,20 @@ $root.ChatRBatch = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatRBatch sign.
-     * @member {number|Long} sign
-     * @memberof ChatRBatch
-     * @instance
-     */
     ChatRBatch.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatRBatch msgs.
-     * @member {Array.<IChatR>} msgs
-     * @memberof ChatRBatch
-     * @instance
-     */
     ChatRBatch.prototype.msgs = $util.emptyArray;
 
-    /**
-     * Creates a new ChatRBatch instance using the specified properties.
-     * @function create
-     * @memberof ChatRBatch
-     * @static
-     * @param {IChatRBatch=} [properties] Properties to set
-     * @returns {ChatRBatch} ChatRBatch instance
-     */
-    ChatRBatch.create = function create(properties) {
-        return new ChatRBatch(properties);
-    };
-
-    /**
-     * Encodes the specified ChatRBatch message. Does not implicitly {@link ChatRBatch.verify|verify} messages.
-     * @function encode
-     * @memberof ChatRBatch
-     * @static
-     * @param {IChatRBatch} message ChatRBatch message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatRBatch.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.msgs != null && message.msgs.length)
             for (var i = 0; i < message.msgs.length; ++i)
-                $root.ChatR.encode(message.msgs[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                $root.ChatR.encode(message.msgs[i], writer.uint32(18).fork()).ldelim();
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatRBatch message, length delimited. Does not implicitly {@link ChatRBatch.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatRBatch
-     * @static
-     * @param {IChatRBatch} message ChatRBatch message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatRBatch.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatRBatch message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatRBatch
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatRBatch} ChatRBatch
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatRBatch.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -2868,56 +1436,6 @@ $root.ChatRBatch = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatRBatch message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatRBatch
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatRBatch} ChatRBatch
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatRBatch.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatRBatch message.
-     * @function verify
-     * @memberof ChatRBatch
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatRBatch.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.msgs != null && message.hasOwnProperty("msgs")) {
-            if (!Array.isArray(message.msgs))
-                return "msgs: array expected";
-            for (var i = 0; i < message.msgs.length; ++i) {
-                var error = $root.ChatR.verify(message.msgs[i]);
-                if (error)
-                    return "msgs." + error;
-            }
-        }
-        return null;
-    };
-
-    /**
-     * Creates a ChatRBatch message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatRBatch
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatRBatch} ChatRBatch
-     */
     ChatRBatch.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatRBatch)
             return object;
@@ -2944,15 +1462,6 @@ $root.ChatRBatch = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatRBatch message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatRBatch
-     * @static
-     * @param {ChatRBatch} message ChatRBatch
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatRBatch.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -2978,13 +1487,6 @@ $root.ChatRBatch = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatRBatch to JSON.
-     * @function toJSON
-     * @memberof ChatRBatch
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatRBatch.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -2994,25 +1496,6 @@ $root.ChatRBatch = (function() {
 
 $root.GetHistory = (function() {
 
-    /**
-     * Properties of a GetHistory.
-     * @exports IGetHistory
-     * @interface IGetHistory
-     * @property {number|Long|null} [sign] GetHistory sign
-     * @property {number|Long|null} [toUid] GetHistory toUid
-     * @property {number|Long|null} [msgEnd] GetHistory msgEnd
-     * @property {number|Long|null} [msgStart] GetHistory msgStart
-     * @property {number|Long|null} [offset] GetHistory offset
-     */
-
-    /**
-     * Constructs a new GetHistory.
-     * @exports GetHistory
-     * @classdesc Represents a GetHistory.
-     * @implements IGetHistory
-     * @constructor
-     * @param {IGetHistory=} [properties] Properties to set
-     */
     function GetHistory(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -3020,107 +1503,28 @@ $root.GetHistory = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * GetHistory sign.
-     * @member {number|Long} sign
-     * @memberof GetHistory
-     * @instance
-     */
     GetHistory.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetHistory toUid.
-     * @member {number|Long} toUid
-     * @memberof GetHistory
-     * @instance
-     */
     GetHistory.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetHistory msgEnd.
-     * @member {number|Long} msgEnd
-     * @memberof GetHistory
-     * @instance
-     */
     GetHistory.prototype.msgEnd = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetHistory msgStart.
-     * @member {number|Long} msgStart
-     * @memberof GetHistory
-     * @instance
-     */
     GetHistory.prototype.msgStart = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetHistory offset.
-     * @member {number|Long} offset
-     * @memberof GetHistory
-     * @instance
-     */
     GetHistory.prototype.offset = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new GetHistory instance using the specified properties.
-     * @function create
-     * @memberof GetHistory
-     * @static
-     * @param {IGetHistory=} [properties] Properties to set
-     * @returns {GetHistory} GetHistory instance
-     */
-    GetHistory.create = function create(properties) {
-        return new GetHistory(properties);
-    };
-
-    /**
-     * Encodes the specified GetHistory message. Does not implicitly {@link GetHistory.verify|verify} messages.
-     * @function encode
-     * @memberof GetHistory
-     * @static
-     * @param {IGetHistory} message GetHistory message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     GetHistory.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.toUid);
+            writer.uint32(16).int64(message.toUid);
         if (message.msgEnd != null && Object.hasOwnProperty.call(message, "msgEnd"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.msgEnd);
+            writer.uint32(24).int64(message.msgEnd);
         if (message.msgStart != null && Object.hasOwnProperty.call(message, "msgStart"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.msgStart);
+            writer.uint32(32).int64(message.msgStart);
         if (message.offset != null && Object.hasOwnProperty.call(message, "offset"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.offset);
+            writer.uint32(40).int64(message.offset);
         return writer;
     };
 
-    /**
-     * Encodes the specified GetHistory message, length delimited. Does not implicitly {@link GetHistory.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof GetHistory
-     * @static
-     * @param {IGetHistory} message GetHistory message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    GetHistory.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a GetHistory message from the specified reader or buffer.
-     * @function decode
-     * @memberof GetHistory
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {GetHistory} GetHistory
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     GetHistory.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -3151,59 +1555,6 @@ $root.GetHistory = (function() {
         return message;
     };
 
-    /**
-     * Decodes a GetHistory message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof GetHistory
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {GetHistory} GetHistory
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    GetHistory.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a GetHistory message.
-     * @function verify
-     * @memberof GetHistory
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    GetHistory.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        if (message.msgEnd != null && message.hasOwnProperty("msgEnd"))
-            if (!$util.isInteger(message.msgEnd) && !(message.msgEnd && $util.isInteger(message.msgEnd.low) && $util.isInteger(message.msgEnd.high)))
-                return "msgEnd: integer|Long expected";
-        if (message.msgStart != null && message.hasOwnProperty("msgStart"))
-            if (!$util.isInteger(message.msgStart) && !(message.msgStart && $util.isInteger(message.msgStart.low) && $util.isInteger(message.msgStart.high)))
-                return "msgStart: integer|Long expected";
-        if (message.offset != null && message.hasOwnProperty("offset"))
-            if (!$util.isInteger(message.offset) && !(message.offset && $util.isInteger(message.offset.low) && $util.isInteger(message.offset.high)))
-                return "offset: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a GetHistory message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof GetHistory
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {GetHistory} GetHistory
-     */
     GetHistory.fromObject = function fromObject(object) {
         if (object instanceof $root.GetHistory)
             return object;
@@ -3256,15 +1607,6 @@ $root.GetHistory = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a GetHistory message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof GetHistory
-     * @static
-     * @param {GetHistory} message GetHistory
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     GetHistory.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -3324,13 +1666,6 @@ $root.GetHistory = (function() {
         return object;
     };
 
-    /**
-     * Converts this GetHistory to JSON.
-     * @function toJSON
-     * @memberof GetHistory
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     GetHistory.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -3340,23 +1675,6 @@ $root.GetHistory = (function() {
 
 $root.Revoke = (function() {
 
-    /**
-     * Properties of a Revoke.
-     * @exports IRevoke
-     * @interface IRevoke
-     * @property {number|Long|null} [sign] Revoke sign
-     * @property {number|Long|null} [toUid] Revoke toUid
-     * @property {number|Long|null} [msgId] Revoke msgId
-     */
-
-    /**
-     * Constructs a new Revoke.
-     * @exports Revoke
-     * @classdesc Represents a Revoke.
-     * @implements IRevoke
-     * @constructor
-     * @param {IRevoke=} [properties] Properties to set
-     */
     function Revoke(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -3364,87 +1682,22 @@ $root.Revoke = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * Revoke sign.
-     * @member {number|Long} sign
-     * @memberof Revoke
-     * @instance
-     */
     Revoke.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * Revoke toUid.
-     * @member {number|Long} toUid
-     * @memberof Revoke
-     * @instance
-     */
     Revoke.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * Revoke msgId.
-     * @member {number|Long} msgId
-     * @memberof Revoke
-     * @instance
-     */
     Revoke.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new Revoke instance using the specified properties.
-     * @function create
-     * @memberof Revoke
-     * @static
-     * @param {IRevoke=} [properties] Properties to set
-     * @returns {Revoke} Revoke instance
-     */
-    Revoke.create = function create(properties) {
-        return new Revoke(properties);
-    };
-
-    /**
-     * Encodes the specified Revoke message. Does not implicitly {@link Revoke.verify|verify} messages.
-     * @function encode
-     * @memberof Revoke
-     * @static
-     * @param {IRevoke} message Revoke message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     Revoke.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.toUid);
+            writer.uint32(16).int64(message.toUid);
         if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.msgId);
+            writer.uint32(24).int64(message.msgId);
         return writer;
     };
 
-    /**
-     * Encodes the specified Revoke message, length delimited. Does not implicitly {@link Revoke.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof Revoke
-     * @static
-     * @param {IRevoke} message Revoke message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    Revoke.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a Revoke message from the specified reader or buffer.
-     * @function decode
-     * @memberof Revoke
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {Revoke} Revoke
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     Revoke.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -3469,53 +1722,6 @@ $root.Revoke = (function() {
         return message;
     };
 
-    /**
-     * Decodes a Revoke message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof Revoke
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Revoke} Revoke
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    Revoke.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a Revoke message.
-     * @function verify
-     * @memberof Revoke
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    Revoke.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        if (message.msgId != null && message.hasOwnProperty("msgId"))
-            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
-                return "msgId: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a Revoke message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof Revoke
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {Revoke} Revoke
-     */
     Revoke.fromObject = function fromObject(object) {
         if (object instanceof $root.Revoke)
             return object;
@@ -3550,15 +1756,6 @@ $root.Revoke = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a Revoke message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof Revoke
-     * @static
-     * @param {Revoke} message Revoke
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     Revoke.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -3598,13 +1795,6 @@ $root.Revoke = (function() {
         return object;
     };
 
-    /**
-     * Converts this Revoke to JSON.
-     * @function toJSON
-     * @memberof Revoke
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     Revoke.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -3614,23 +1804,6 @@ $root.Revoke = (function() {
 
 $root.MsgRead = (function() {
 
-    /**
-     * Properties of a MsgRead.
-     * @exports IMsgRead
-     * @interface IMsgRead
-     * @property {number|Long|null} [sign] MsgRead sign
-     * @property {number|Long|null} [toUid] MsgRead toUid
-     * @property {number|Long|null} [msgId] MsgRead msgId
-     */
-
-    /**
-     * Constructs a new MsgRead.
-     * @exports MsgRead
-     * @classdesc Represents a MsgRead.
-     * @implements IMsgRead
-     * @constructor
-     * @param {IMsgRead=} [properties] Properties to set
-     */
     function MsgRead(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -3638,87 +1811,22 @@ $root.MsgRead = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * MsgRead sign.
-     * @member {number|Long} sign
-     * @memberof MsgRead
-     * @instance
-     */
     MsgRead.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * MsgRead toUid.
-     * @member {number|Long} toUid
-     * @memberof MsgRead
-     * @instance
-     */
     MsgRead.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * MsgRead msgId.
-     * @member {number|Long} msgId
-     * @memberof MsgRead
-     * @instance
-     */
     MsgRead.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new MsgRead instance using the specified properties.
-     * @function create
-     * @memberof MsgRead
-     * @static
-     * @param {IMsgRead=} [properties] Properties to set
-     * @returns {MsgRead} MsgRead instance
-     */
-    MsgRead.create = function create(properties) {
-        return new MsgRead(properties);
-    };
-
-    /**
-     * Encodes the specified MsgRead message. Does not implicitly {@link MsgRead.verify|verify} messages.
-     * @function encode
-     * @memberof MsgRead
-     * @static
-     * @param {IMsgRead} message MsgRead message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     MsgRead.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.toUid);
+            writer.uint32(16).int64(message.toUid);
         if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.msgId);
+            writer.uint32(24).int64(message.msgId);
         return writer;
     };
 
-    /**
-     * Encodes the specified MsgRead message, length delimited. Does not implicitly {@link MsgRead.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof MsgRead
-     * @static
-     * @param {IMsgRead} message MsgRead message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    MsgRead.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a MsgRead message from the specified reader or buffer.
-     * @function decode
-     * @memberof MsgRead
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {MsgRead} MsgRead
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     MsgRead.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -3743,53 +1851,6 @@ $root.MsgRead = (function() {
         return message;
     };
 
-    /**
-     * Decodes a MsgRead message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof MsgRead
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {MsgRead} MsgRead
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    MsgRead.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a MsgRead message.
-     * @function verify
-     * @memberof MsgRead
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    MsgRead.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        if (message.msgId != null && message.hasOwnProperty("msgId"))
-            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
-                return "msgId: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a MsgRead message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof MsgRead
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {MsgRead} MsgRead
-     */
     MsgRead.fromObject = function fromObject(object) {
         if (object instanceof $root.MsgRead)
             return object;
@@ -3824,15 +1885,6 @@ $root.MsgRead = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a MsgRead message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof MsgRead
-     * @static
-     * @param {MsgRead} message MsgRead
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     MsgRead.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -3872,13 +1924,6 @@ $root.MsgRead = (function() {
         return object;
     };
 
-    /**
-     * Converts this MsgRead to JSON.
-     * @function toJSON
-     * @memberof MsgRead
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     MsgRead.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -3888,22 +1933,6 @@ $root.MsgRead = (function() {
 
 $root.DelChat = (function() {
 
-    /**
-     * Properties of a DelChat.
-     * @exports IDelChat
-     * @interface IDelChat
-     * @property {number|Long|null} [sign] DelChat sign
-     * @property {number|Long|null} [toUid] DelChat toUid
-     */
-
-    /**
-     * Constructs a new DelChat.
-     * @exports DelChat
-     * @classdesc Represents a DelChat.
-     * @implements IDelChat
-     * @constructor
-     * @param {IDelChat=} [properties] Properties to set
-     */
     function DelChat(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -3911,77 +1940,19 @@ $root.DelChat = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * DelChat sign.
-     * @member {number|Long} sign
-     * @memberof DelChat
-     * @instance
-     */
     DelChat.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * DelChat toUid.
-     * @member {number|Long} toUid
-     * @memberof DelChat
-     * @instance
-     */
     DelChat.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new DelChat instance using the specified properties.
-     * @function create
-     * @memberof DelChat
-     * @static
-     * @param {IDelChat=} [properties] Properties to set
-     * @returns {DelChat} DelChat instance
-     */
-    DelChat.create = function create(properties) {
-        return new DelChat(properties);
-    };
-
-    /**
-     * Encodes the specified DelChat message. Does not implicitly {@link DelChat.verify|verify} messages.
-     * @function encode
-     * @memberof DelChat
-     * @static
-     * @param {IDelChat} message DelChat message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     DelChat.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.toUid);
+            writer.uint32(16).int64(message.toUid);
         return writer;
     };
 
-    /**
-     * Encodes the specified DelChat message, length delimited. Does not implicitly {@link DelChat.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof DelChat
-     * @static
-     * @param {IDelChat} message DelChat message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    DelChat.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a DelChat message from the specified reader or buffer.
-     * @function decode
-     * @memberof DelChat
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {DelChat} DelChat
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     DelChat.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -4003,50 +1974,6 @@ $root.DelChat = (function() {
         return message;
     };
 
-    /**
-     * Decodes a DelChat message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof DelChat
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {DelChat} DelChat
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    DelChat.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a DelChat message.
-     * @function verify
-     * @memberof DelChat
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    DelChat.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.toUid != null && message.hasOwnProperty("toUid"))
-            if (!$util.isInteger(message.toUid) && !(message.toUid && $util.isInteger(message.toUid.low) && $util.isInteger(message.toUid.high)))
-                return "toUid: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a DelChat message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof DelChat
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {DelChat} DelChat
-     */
     DelChat.fromObject = function fromObject(object) {
         if (object instanceof $root.DelChat)
             return object;
@@ -4072,15 +1999,6 @@ $root.DelChat = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a DelChat message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof DelChat
-     * @static
-     * @param {DelChat} message DelChat
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     DelChat.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -4110,13 +2028,6 @@ $root.DelChat = (function() {
         return object;
     };
 
-    /**
-     * Converts this DelChat to JSON.
-     * @function toJSON
-     * @memberof DelChat
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     DelChat.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -4126,23 +2037,6 @@ $root.DelChat = (function() {
 
 $root.GetChatList = (function() {
 
-    /**
-     * Properties of a GetChatList.
-     * @exports IGetChatList
-     * @interface IGetChatList
-     * @property {number|Long|null} [sign] GetChatList sign
-     * @property {number|Long|null} [updateTime] GetChatList updateTime
-     * @property {number|Long|null} [uid] GetChatList uid
-     */
-
-    /**
-     * Constructs a new GetChatList.
-     * @exports GetChatList
-     * @classdesc Represents a GetChatList.
-     * @implements IGetChatList
-     * @constructor
-     * @param {IGetChatList=} [properties] Properties to set
-     */
     function GetChatList(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -4150,87 +2044,22 @@ $root.GetChatList = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * GetChatList sign.
-     * @member {number|Long} sign
-     * @memberof GetChatList
-     * @instance
-     */
     GetChatList.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetChatList updateTime.
-     * @member {number|Long} updateTime
-     * @memberof GetChatList
-     * @instance
-     */
     GetChatList.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetChatList uid.
-     * @member {number|Long} uid
-     * @memberof GetChatList
-     * @instance
-     */
     GetChatList.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new GetChatList instance using the specified properties.
-     * @function create
-     * @memberof GetChatList
-     * @static
-     * @param {IGetChatList=} [properties] Properties to set
-     * @returns {GetChatList} GetChatList instance
-     */
-    GetChatList.create = function create(properties) {
-        return new GetChatList(properties);
-    };
-
-    /**
-     * Encodes the specified GetChatList message. Does not implicitly {@link GetChatList.verify|verify} messages.
-     * @function encode
-     * @memberof GetChatList
-     * @static
-     * @param {IGetChatList} message GetChatList message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     GetChatList.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.updateTime);
+            writer.uint32(16).int64(message.updateTime);
         if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.uid);
+            writer.uint32(24).int64(message.uid);
         return writer;
     };
 
-    /**
-     * Encodes the specified GetChatList message, length delimited. Does not implicitly {@link GetChatList.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof GetChatList
-     * @static
-     * @param {IGetChatList} message GetChatList message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    GetChatList.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a GetChatList message from the specified reader or buffer.
-     * @function decode
-     * @memberof GetChatList
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {GetChatList} GetChatList
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     GetChatList.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -4255,53 +2084,6 @@ $root.GetChatList = (function() {
         return message;
     };
 
-    /**
-     * Decodes a GetChatList message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof GetChatList
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {GetChatList} GetChatList
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    GetChatList.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a GetChatList message.
-     * @function verify
-     * @memberof GetChatList
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    GetChatList.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
-            if (!$util.isInteger(message.updateTime) && !(message.updateTime && $util.isInteger(message.updateTime.low) && $util.isInteger(message.updateTime.high)))
-                return "updateTime: integer|Long expected";
-        if (message.uid != null && message.hasOwnProperty("uid"))
-            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
-                return "uid: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a GetChatList message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof GetChatList
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {GetChatList} GetChatList
-     */
     GetChatList.fromObject = function fromObject(object) {
         if (object instanceof $root.GetChatList)
             return object;
@@ -4336,15 +2118,6 @@ $root.GetChatList = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a GetChatList message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof GetChatList
-     * @static
-     * @param {GetChatList} message GetChatList
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     GetChatList.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -4384,13 +2157,6 @@ $root.GetChatList = (function() {
         return object;
     };
 
-    /**
-     * Converts this GetChatList to JSON.
-     * @function toJSON
-     * @memberof GetChatList
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     GetChatList.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -4400,39 +2166,6 @@ $root.GetChatList = (function() {
 
 $root.ChatItem = (function() {
 
-    /**
-     * Properties of a ChatItem.
-     * @exports IChatItem
-     * @interface IChatItem
-     * @property {number|Long|null} [sign] ChatItem sign
-     * @property {number|Long|null} [uid] ChatItem uid
-     * @property {number|Long|null} [msgEnd] ChatItem msgEnd
-     * @property {number|Long|null} [msgLastRead] ChatItem msgLastRead
-     * @property {number|Long|null} [showMsgId] ChatItem showMsgId
-     * @property {number|Long|null} [showMsgType] ChatItem showMsgType
-     * @property {string|null} [showMsg] ChatItem showMsg
-     * @property {number|Long|null} [showMsgTime] ChatItem showMsgTime
-     * @property {number|Long|null} [unread] ChatItem unread
-     * @property {boolean|null} [matched] ChatItem matched
-     * @property {boolean|null} [newMsg] ChatItem newMsg
-     * @property {boolean|null} [myMove] ChatItem myMove
-     * @property {boolean|null} [iceBreak] ChatItem iceBreak
-     * @property {boolean|null} [tipFree] ChatItem tipFree
-     * @property {boolean|null} [topAlbum] ChatItem topAlbum
-     * @property {boolean|null} [iBlockU] ChatItem iBlockU
-     * @property {boolean|null} [iChatU] ChatItem iChatU
-     * @property {boolean|null} [uChatI] ChatItem uChatI
-     * @property {boolean|null} [deleted] ChatItem deleted
-     */
-
-    /**
-     * Constructs a new ChatItem.
-     * @exports ChatItem
-     * @classdesc Represents a ChatItem.
-     * @implements IChatItem
-     * @constructor
-     * @param {IChatItem=} [properties] Properties to set
-     */
     function ChatItem(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -4440,247 +2173,70 @@ $root.ChatItem = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatItem sign.
-     * @member {number|Long} sign
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem uid.
-     * @member {number|Long} uid
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem msgEnd.
-     * @member {number|Long} msgEnd
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.msgEnd = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem msgLastRead.
-     * @member {number|Long} msgLastRead
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.msgLastRead = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem showMsgId.
-     * @member {number|Long} showMsgId
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.showMsgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem showMsgType.
-     * @member {number|Long} showMsgType
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.showMsgType = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem showMsg.
-     * @member {string} showMsg
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.showMsg = "";
-
-    /**
-     * ChatItem showMsgTime.
-     * @member {number|Long} showMsgTime
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.showMsgTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem unread.
-     * @member {number|Long} unread
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.unread = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItem matched.
-     * @member {boolean} matched
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.matched = false;
-
-    /**
-     * ChatItem newMsg.
-     * @member {boolean} newMsg
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.newMsg = false;
-
-    /**
-     * ChatItem myMove.
-     * @member {boolean} myMove
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.myMove = false;
-
-    /**
-     * ChatItem iceBreak.
-     * @member {boolean} iceBreak
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.iceBreak = false;
-
-    /**
-     * ChatItem tipFree.
-     * @member {boolean} tipFree
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.tipFree = false;
-
-    /**
-     * ChatItem topAlbum.
-     * @member {boolean} topAlbum
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.topAlbum = false;
-
-    /**
-     * ChatItem iBlockU.
-     * @member {boolean} iBlockU
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.iBlockU = false;
-
-    /**
-     * ChatItem iChatU.
-     * @member {boolean} iChatU
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.iChatU = false;
-
-    /**
-     * ChatItem uChatI.
-     * @member {boolean} uChatI
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.uChatI = false;
-
-    /**
-     * ChatItem deleted.
-     * @member {boolean} deleted
-     * @memberof ChatItem
-     * @instance
-     */
     ChatItem.prototype.deleted = false;
 
-    /**
-     * Creates a new ChatItem instance using the specified properties.
-     * @function create
-     * @memberof ChatItem
-     * @static
-     * @param {IChatItem=} [properties] Properties to set
-     * @returns {ChatItem} ChatItem instance
-     */
-    ChatItem.create = function create(properties) {
-        return new ChatItem(properties);
-    };
-
-    /**
-     * Encodes the specified ChatItem message. Does not implicitly {@link ChatItem.verify|verify} messages.
-     * @function encode
-     * @memberof ChatItem
-     * @static
-     * @param {IChatItem} message ChatItem message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatItem.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
+            writer.uint32(16).int64(message.uid);
         if (message.msgEnd != null && Object.hasOwnProperty.call(message, "msgEnd"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.msgEnd);
+            writer.uint32(24).int64(message.msgEnd);
         if (message.msgLastRead != null && Object.hasOwnProperty.call(message, "msgLastRead"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.msgLastRead);
+            writer.uint32(32).int64(message.msgLastRead);
         if (message.showMsgId != null && Object.hasOwnProperty.call(message, "showMsgId"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.showMsgId);
+            writer.uint32(40).int64(message.showMsgId);
         if (message.showMsgType != null && Object.hasOwnProperty.call(message, "showMsgType"))
-            writer.uint32(/* id 6, wireType 0 =*/48).int64(message.showMsgType);
+            writer.uint32(48).int64(message.showMsgType);
         if (message.showMsg != null && Object.hasOwnProperty.call(message, "showMsg"))
-            writer.uint32(/* id 7, wireType 2 =*/58).string(message.showMsg);
+            writer.uint32(58).string(message.showMsg);
         if (message.showMsgTime != null && Object.hasOwnProperty.call(message, "showMsgTime"))
-            writer.uint32(/* id 8, wireType 0 =*/64).int64(message.showMsgTime);
+            writer.uint32(64).int64(message.showMsgTime);
         if (message.unread != null && Object.hasOwnProperty.call(message, "unread"))
-            writer.uint32(/* id 9, wireType 0 =*/72).int64(message.unread);
+            writer.uint32(72).int64(message.unread);
         if (message.matched != null && Object.hasOwnProperty.call(message, "matched"))
-            writer.uint32(/* id 10, wireType 0 =*/80).bool(message.matched);
+            writer.uint32(80).bool(message.matched);
         if (message.newMsg != null && Object.hasOwnProperty.call(message, "newMsg"))
-            writer.uint32(/* id 11, wireType 0 =*/88).bool(message.newMsg);
+            writer.uint32(88).bool(message.newMsg);
         if (message.myMove != null && Object.hasOwnProperty.call(message, "myMove"))
-            writer.uint32(/* id 12, wireType 0 =*/96).bool(message.myMove);
+            writer.uint32(96).bool(message.myMove);
         if (message.iceBreak != null && Object.hasOwnProperty.call(message, "iceBreak"))
-            writer.uint32(/* id 13, wireType 0 =*/104).bool(message.iceBreak);
+            writer.uint32(104).bool(message.iceBreak);
         if (message.tipFree != null && Object.hasOwnProperty.call(message, "tipFree"))
-            writer.uint32(/* id 14, wireType 0 =*/112).bool(message.tipFree);
+            writer.uint32(112).bool(message.tipFree);
         if (message.topAlbum != null && Object.hasOwnProperty.call(message, "topAlbum"))
-            writer.uint32(/* id 15, wireType 0 =*/120).bool(message.topAlbum);
+            writer.uint32(120).bool(message.topAlbum);
         if (message.iBlockU != null && Object.hasOwnProperty.call(message, "iBlockU"))
-            writer.uint32(/* id 16, wireType 0 =*/128).bool(message.iBlockU);
+            writer.uint32(128).bool(message.iBlockU);
         if (message.iChatU != null && Object.hasOwnProperty.call(message, "iChatU"))
-            writer.uint32(/* id 17, wireType 0 =*/136).bool(message.iChatU);
+            writer.uint32(136).bool(message.iChatU);
         if (message.uChatI != null && Object.hasOwnProperty.call(message, "uChatI"))
-            writer.uint32(/* id 18, wireType 0 =*/144).bool(message.uChatI);
+            writer.uint32(144).bool(message.uChatI);
         if (message.deleted != null && Object.hasOwnProperty.call(message, "deleted"))
-            writer.uint32(/* id 19, wireType 0 =*/152).bool(message.deleted);
+            writer.uint32(152).bool(message.deleted);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatItem message, length delimited. Does not implicitly {@link ChatItem.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatItem
-     * @static
-     * @param {IChatItem} message ChatItem message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatItem.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatItem message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatItem
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatItem} ChatItem
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatItem.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -4753,101 +2309,6 @@ $root.ChatItem = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatItem message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatItem
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatItem} ChatItem
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatItem.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatItem message.
-     * @function verify
-     * @memberof ChatItem
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatItem.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.uid != null && message.hasOwnProperty("uid"))
-            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
-                return "uid: integer|Long expected";
-        if (message.msgEnd != null && message.hasOwnProperty("msgEnd"))
-            if (!$util.isInteger(message.msgEnd) && !(message.msgEnd && $util.isInteger(message.msgEnd.low) && $util.isInteger(message.msgEnd.high)))
-                return "msgEnd: integer|Long expected";
-        if (message.msgLastRead != null && message.hasOwnProperty("msgLastRead"))
-            if (!$util.isInteger(message.msgLastRead) && !(message.msgLastRead && $util.isInteger(message.msgLastRead.low) && $util.isInteger(message.msgLastRead.high)))
-                return "msgLastRead: integer|Long expected";
-        if (message.showMsgId != null && message.hasOwnProperty("showMsgId"))
-            if (!$util.isInteger(message.showMsgId) && !(message.showMsgId && $util.isInteger(message.showMsgId.low) && $util.isInteger(message.showMsgId.high)))
-                return "showMsgId: integer|Long expected";
-        if (message.showMsgType != null && message.hasOwnProperty("showMsgType"))
-            if (!$util.isInteger(message.showMsgType) && !(message.showMsgType && $util.isInteger(message.showMsgType.low) && $util.isInteger(message.showMsgType.high)))
-                return "showMsgType: integer|Long expected";
-        if (message.showMsg != null && message.hasOwnProperty("showMsg"))
-            if (!$util.isString(message.showMsg))
-                return "showMsg: string expected";
-        if (message.showMsgTime != null && message.hasOwnProperty("showMsgTime"))
-            if (!$util.isInteger(message.showMsgTime) && !(message.showMsgTime && $util.isInteger(message.showMsgTime.low) && $util.isInteger(message.showMsgTime.high)))
-                return "showMsgTime: integer|Long expected";
-        if (message.unread != null && message.hasOwnProperty("unread"))
-            if (!$util.isInteger(message.unread) && !(message.unread && $util.isInteger(message.unread.low) && $util.isInteger(message.unread.high)))
-                return "unread: integer|Long expected";
-        if (message.matched != null && message.hasOwnProperty("matched"))
-            if (typeof message.matched !== "boolean")
-                return "matched: boolean expected";
-        if (message.newMsg != null && message.hasOwnProperty("newMsg"))
-            if (typeof message.newMsg !== "boolean")
-                return "newMsg: boolean expected";
-        if (message.myMove != null && message.hasOwnProperty("myMove"))
-            if (typeof message.myMove !== "boolean")
-                return "myMove: boolean expected";
-        if (message.iceBreak != null && message.hasOwnProperty("iceBreak"))
-            if (typeof message.iceBreak !== "boolean")
-                return "iceBreak: boolean expected";
-        if (message.tipFree != null && message.hasOwnProperty("tipFree"))
-            if (typeof message.tipFree !== "boolean")
-                return "tipFree: boolean expected";
-        if (message.topAlbum != null && message.hasOwnProperty("topAlbum"))
-            if (typeof message.topAlbum !== "boolean")
-                return "topAlbum: boolean expected";
-        if (message.iBlockU != null && message.hasOwnProperty("iBlockU"))
-            if (typeof message.iBlockU !== "boolean")
-                return "iBlockU: boolean expected";
-        if (message.iChatU != null && message.hasOwnProperty("iChatU"))
-            if (typeof message.iChatU !== "boolean")
-                return "iChatU: boolean expected";
-        if (message.uChatI != null && message.hasOwnProperty("uChatI"))
-            if (typeof message.uChatI !== "boolean")
-                return "uChatI: boolean expected";
-        if (message.deleted != null && message.hasOwnProperty("deleted"))
-            if (typeof message.deleted !== "boolean")
-                return "deleted: boolean expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatItem message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatItem
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatItem} ChatItem
-     */
     ChatItem.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatItem)
             return object;
@@ -4949,15 +2410,6 @@ $root.ChatItem = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatItem message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatItem
-     * @static
-     * @param {ChatItem} message ChatItem
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatItem.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -5080,13 +2532,6 @@ $root.ChatItem = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatItem to JSON.
-     * @function toJSON
-     * @memberof ChatItem
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatItem.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -5096,28 +2541,6 @@ $root.ChatItem = (function() {
 
 $root.ChatItemUpdate = (function() {
 
-    /**
-     * Properties of a ChatItemUpdate.
-     * @exports IChatItemUpdate
-     * @interface IChatItemUpdate
-     * @property {number|Long|null} [sign] ChatItemUpdate sign
-     * @property {number|Long|null} [uid] ChatItemUpdate uid
-     * @property {number|Long|null} [event] ChatItemUpdate event
-     * @property {number|Long|null} [updateTime] ChatItemUpdate updateTime
-     * @property {number|Long|null} [msgLastRead] ChatItemUpdate msgLastRead
-     * @property {number|Long|null} [unread] ChatItemUpdate unread
-     * @property {boolean|null} [iBlockU] ChatItemUpdate iBlockU
-     * @property {boolean|null} [deleted] ChatItemUpdate deleted
-     */
-
-    /**
-     * Constructs a new ChatItemUpdate.
-     * @exports ChatItemUpdate
-     * @classdesc Represents a ChatItemUpdate.
-     * @implements IChatItemUpdate
-     * @constructor
-     * @param {IChatItemUpdate=} [properties] Properties to set
-     */
     function ChatItemUpdate(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -5125,137 +2548,37 @@ $root.ChatItemUpdate = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatItemUpdate sign.
-     * @member {number|Long} sign
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate uid.
-     * @member {number|Long} uid
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate event.
-     * @member {number|Long} event
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.event = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate updateTime.
-     * @member {number|Long} updateTime
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate msgLastRead.
-     * @member {number|Long} msgLastRead
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.msgLastRead = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate unread.
-     * @member {number|Long} unread
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.unread = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatItemUpdate iBlockU.
-     * @member {boolean} iBlockU
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.iBlockU = false;
-
-    /**
-     * ChatItemUpdate deleted.
-     * @member {boolean} deleted
-     * @memberof ChatItemUpdate
-     * @instance
-     */
     ChatItemUpdate.prototype.deleted = false;
 
-    /**
-     * Creates a new ChatItemUpdate instance using the specified properties.
-     * @function create
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {IChatItemUpdate=} [properties] Properties to set
-     * @returns {ChatItemUpdate} ChatItemUpdate instance
-     */
-    ChatItemUpdate.create = function create(properties) {
-        return new ChatItemUpdate(properties);
-    };
-
-    /**
-     * Encodes the specified ChatItemUpdate message. Does not implicitly {@link ChatItemUpdate.verify|verify} messages.
-     * @function encode
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {IChatItemUpdate} message ChatItemUpdate message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatItemUpdate.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
+            writer.uint32(16).int64(message.uid);
         if (message.event != null && Object.hasOwnProperty.call(message, "event"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.event);
+            writer.uint32(24).int64(message.event);
         if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.updateTime);
+            writer.uint32(32).int64(message.updateTime);
         if (message.msgLastRead != null && Object.hasOwnProperty.call(message, "msgLastRead"))
-            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.msgLastRead);
+            writer.uint32(40).int64(message.msgLastRead);
         if (message.unread != null && Object.hasOwnProperty.call(message, "unread"))
-            writer.uint32(/* id 6, wireType 0 =*/48).int64(message.unread);
+            writer.uint32(48).int64(message.unread);
         if (message.iBlockU != null && Object.hasOwnProperty.call(message, "iBlockU"))
-            writer.uint32(/* id 7, wireType 0 =*/56).bool(message.iBlockU);
+            writer.uint32(56).bool(message.iBlockU);
         if (message.deleted != null && Object.hasOwnProperty.call(message, "deleted"))
-            writer.uint32(/* id 8, wireType 0 =*/64).bool(message.deleted);
+            writer.uint32(64).bool(message.deleted);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatItemUpdate message, length delimited. Does not implicitly {@link ChatItemUpdate.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {IChatItemUpdate} message ChatItemUpdate message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatItemUpdate.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatItemUpdate message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatItemUpdate} ChatItemUpdate
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatItemUpdate.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -5295,68 +2618,6 @@ $root.ChatItemUpdate = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatItemUpdate message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatItemUpdate} ChatItemUpdate
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatItemUpdate.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatItemUpdate message.
-     * @function verify
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatItemUpdate.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.uid != null && message.hasOwnProperty("uid"))
-            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
-                return "uid: integer|Long expected";
-        if (message.event != null && message.hasOwnProperty("event"))
-            if (!$util.isInteger(message.event) && !(message.event && $util.isInteger(message.event.low) && $util.isInteger(message.event.high)))
-                return "event: integer|Long expected";
-        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
-            if (!$util.isInteger(message.updateTime) && !(message.updateTime && $util.isInteger(message.updateTime.low) && $util.isInteger(message.updateTime.high)))
-                return "updateTime: integer|Long expected";
-        if (message.msgLastRead != null && message.hasOwnProperty("msgLastRead"))
-            if (!$util.isInteger(message.msgLastRead) && !(message.msgLastRead && $util.isInteger(message.msgLastRead.low) && $util.isInteger(message.msgLastRead.high)))
-                return "msgLastRead: integer|Long expected";
-        if (message.unread != null && message.hasOwnProperty("unread"))
-            if (!$util.isInteger(message.unread) && !(message.unread && $util.isInteger(message.unread.low) && $util.isInteger(message.unread.high)))
-                return "unread: integer|Long expected";
-        if (message.iBlockU != null && message.hasOwnProperty("iBlockU"))
-            if (typeof message.iBlockU !== "boolean")
-                return "iBlockU: boolean expected";
-        if (message.deleted != null && message.hasOwnProperty("deleted"))
-            if (typeof message.deleted !== "boolean")
-                return "deleted: boolean expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatItemUpdate message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatItemUpdate} ChatItemUpdate
-     */
     ChatItemUpdate.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatItemUpdate)
             return object;
@@ -5422,15 +2683,6 @@ $root.ChatItemUpdate = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatItemUpdate message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatItemUpdate
-     * @static
-     * @param {ChatItemUpdate} message ChatItemUpdate
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatItemUpdate.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -5506,13 +2758,6 @@ $root.ChatItemUpdate = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatItemUpdate to JSON.
-     * @function toJSON
-     * @memberof ChatItemUpdate
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatItemUpdate.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -5522,24 +2767,6 @@ $root.ChatItemUpdate = (function() {
 
 $root.ChatList = (function() {
 
-    /**
-     * Properties of a ChatList.
-     * @exports IChatList
-     * @interface IChatList
-     * @property {number|Long|null} [sign] ChatList sign
-     * @property {Array.<IChatItem>|null} [chatItems] ChatList chatItems
-     * @property {number|Long|null} [updateTime] ChatList updateTime
-     * @property {boolean|null} [hasMore] ChatList hasMore
-     */
-
-    /**
-     * Constructs a new ChatList.
-     * @exports ChatList
-     * @classdesc Represents a ChatList.
-     * @implements IChatList
-     * @constructor
-     * @param {IChatList=} [properties] Properties to set
-     */
     function ChatList(properties) {
         this.chatItems = [];
         if (properties)
@@ -5548,98 +2775,26 @@ $root.ChatList = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * ChatList sign.
-     * @member {number|Long} sign
-     * @memberof ChatList
-     * @instance
-     */
     ChatList.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatList chatItems.
-     * @member {Array.<IChatItem>} chatItems
-     * @memberof ChatList
-     * @instance
-     */
     ChatList.prototype.chatItems = $util.emptyArray;
-
-    /**
-     * ChatList updateTime.
-     * @member {number|Long} updateTime
-     * @memberof ChatList
-     * @instance
-     */
     ChatList.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * ChatList hasMore.
-     * @member {boolean} hasMore
-     * @memberof ChatList
-     * @instance
-     */
     ChatList.prototype.hasMore = false;
 
-    /**
-     * Creates a new ChatList instance using the specified properties.
-     * @function create
-     * @memberof ChatList
-     * @static
-     * @param {IChatList=} [properties] Properties to set
-     * @returns {ChatList} ChatList instance
-     */
-    ChatList.create = function create(properties) {
-        return new ChatList(properties);
-    };
-
-    /**
-     * Encodes the specified ChatList message. Does not implicitly {@link ChatList.verify|verify} messages.
-     * @function encode
-     * @memberof ChatList
-     * @static
-     * @param {IChatList} message ChatList message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     ChatList.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.chatItems != null && message.chatItems.length)
             for (var i = 0; i < message.chatItems.length; ++i)
-                $root.ChatItem.encode(message.chatItems[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                $root.ChatItem.encode(message.chatItems[i], writer.uint32(18).fork()).ldelim();
         if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
-            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.updateTime);
+            writer.uint32(24).int64(message.updateTime);
         if (message.hasMore != null && Object.hasOwnProperty.call(message, "hasMore"))
-            writer.uint32(/* id 4, wireType 0 =*/32).bool(message.hasMore);
+            writer.uint32(32).bool(message.hasMore);
         return writer;
     };
 
-    /**
-     * Encodes the specified ChatList message, length delimited. Does not implicitly {@link ChatList.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof ChatList
-     * @static
-     * @param {IChatList} message ChatList message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    ChatList.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a ChatList message from the specified reader or buffer.
-     * @function decode
-     * @memberof ChatList
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {ChatList} ChatList
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     ChatList.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -5669,62 +2824,6 @@ $root.ChatList = (function() {
         return message;
     };
 
-    /**
-     * Decodes a ChatList message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof ChatList
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {ChatList} ChatList
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    ChatList.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a ChatList message.
-     * @function verify
-     * @memberof ChatList
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    ChatList.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.chatItems != null && message.hasOwnProperty("chatItems")) {
-            if (!Array.isArray(message.chatItems))
-                return "chatItems: array expected";
-            for (var i = 0; i < message.chatItems.length; ++i) {
-                var error = $root.ChatItem.verify(message.chatItems[i]);
-                if (error)
-                    return "chatItems." + error;
-            }
-        }
-        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
-            if (!$util.isInteger(message.updateTime) && !(message.updateTime && $util.isInteger(message.updateTime.low) && $util.isInteger(message.updateTime.high)))
-                return "updateTime: integer|Long expected";
-        if (message.hasMore != null && message.hasOwnProperty("hasMore"))
-            if (typeof message.hasMore !== "boolean")
-                return "hasMore: boolean expected";
-        return null;
-    };
-
-    /**
-     * Creates a ChatList message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof ChatList
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {ChatList} ChatList
-     */
     ChatList.fromObject = function fromObject(object) {
         if (object instanceof $root.ChatList)
             return object;
@@ -5762,15 +2861,6 @@ $root.ChatList = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a ChatList message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof ChatList
-     * @static
-     * @param {ChatList} message ChatList
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     ChatList.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -5810,13 +2900,6 @@ $root.ChatList = (function() {
         return object;
     };
 
-    /**
-     * Converts this ChatList to JSON.
-     * @function toJSON
-     * @memberof ChatList
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     ChatList.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -5826,22 +2909,6 @@ $root.ChatList = (function() {
 
 $root.GetChat = (function() {
 
-    /**
-     * Properties of a GetChat.
-     * @exports IGetChat
-     * @interface IGetChat
-     * @property {number|Long|null} [sign] GetChat sign
-     * @property {number|Long|null} [uid] GetChat uid
-     */
-
-    /**
-     * Constructs a new GetChat.
-     * @exports GetChat
-     * @classdesc Represents a GetChat.
-     * @implements IGetChat
-     * @constructor
-     * @param {IGetChat=} [properties] Properties to set
-     */
     function GetChat(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -5849,77 +2916,19 @@ $root.GetChat = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * GetChat sign.
-     * @member {number|Long} sign
-     * @memberof GetChat
-     * @instance
-     */
     GetChat.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * GetChat uid.
-     * @member {number|Long} uid
-     * @memberof GetChat
-     * @instance
-     */
     GetChat.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new GetChat instance using the specified properties.
-     * @function create
-     * @memberof GetChat
-     * @static
-     * @param {IGetChat=} [properties] Properties to set
-     * @returns {GetChat} GetChat instance
-     */
-    GetChat.create = function create(properties) {
-        return new GetChat(properties);
-    };
-
-    /**
-     * Encodes the specified GetChat message. Does not implicitly {@link GetChat.verify|verify} messages.
-     * @function encode
-     * @memberof GetChat
-     * @static
-     * @param {IGetChat} message GetChat message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     GetChat.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
+            writer.uint32(16).int64(message.uid);
         return writer;
     };
 
-    /**
-     * Encodes the specified GetChat message, length delimited. Does not implicitly {@link GetChat.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof GetChat
-     * @static
-     * @param {IGetChat} message GetChat message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    GetChat.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a GetChat message from the specified reader or buffer.
-     * @function decode
-     * @memberof GetChat
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {GetChat} GetChat
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     GetChat.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -5941,50 +2950,6 @@ $root.GetChat = (function() {
         return message;
     };
 
-    /**
-     * Decodes a GetChat message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof GetChat
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {GetChat} GetChat
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    GetChat.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a GetChat message.
-     * @function verify
-     * @memberof GetChat
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    GetChat.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.uid != null && message.hasOwnProperty("uid"))
-            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
-                return "uid: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a GetChat message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof GetChat
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {GetChat} GetChat
-     */
     GetChat.fromObject = function fromObject(object) {
         if (object instanceof $root.GetChat)
             return object;
@@ -6010,15 +2975,6 @@ $root.GetChat = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a GetChat message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof GetChat
-     * @static
-     * @param {GetChat} message GetChat
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     GetChat.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -6048,13 +3004,6 @@ $root.GetChat = (function() {
         return object;
     };
 
-    /**
-     * Converts this GetChat to JSON.
-     * @function toJSON
-     * @memberof GetChat
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     GetChat.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -6064,21 +3013,6 @@ $root.GetChat = (function() {
 
 $root.GetCosKey = (function() {
 
-    /**
-     * Properties of a GetCosKey.
-     * @exports IGetCosKey
-     * @interface IGetCosKey
-     * @property {number|Long|null} [sign] GetCosKey sign
-     */
-
-    /**
-     * Constructs a new GetCosKey.
-     * @exports GetCosKey
-     * @classdesc Represents a GetCosKey.
-     * @implements IGetCosKey
-     * @constructor
-     * @param {IGetCosKey=} [properties] Properties to set
-     */
     function GetCosKey(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -6086,67 +3020,16 @@ $root.GetCosKey = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * GetCosKey sign.
-     * @member {number|Long} sign
-     * @memberof GetCosKey
-     * @instance
-     */
     GetCosKey.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
-    /**
-     * Creates a new GetCosKey instance using the specified properties.
-     * @function create
-     * @memberof GetCosKey
-     * @static
-     * @param {IGetCosKey=} [properties] Properties to set
-     * @returns {GetCosKey} GetCosKey instance
-     */
-    GetCosKey.create = function create(properties) {
-        return new GetCosKey(properties);
-    };
-
-    /**
-     * Encodes the specified GetCosKey message. Does not implicitly {@link GetCosKey.verify|verify} messages.
-     * @function encode
-     * @memberof GetCosKey
-     * @static
-     * @param {IGetCosKey} message GetCosKey message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     GetCosKey.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         return writer;
     };
 
-    /**
-     * Encodes the specified GetCosKey message, length delimited. Does not implicitly {@link GetCosKey.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof GetCosKey
-     * @static
-     * @param {IGetCosKey} message GetCosKey message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    GetCosKey.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a GetCosKey message from the specified reader or buffer.
-     * @function decode
-     * @memberof GetCosKey
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {GetCosKey} GetCosKey
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     GetCosKey.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -6165,47 +3048,6 @@ $root.GetCosKey = (function() {
         return message;
     };
 
-    /**
-     * Decodes a GetCosKey message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof GetCosKey
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {GetCosKey} GetCosKey
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    GetCosKey.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a GetCosKey message.
-     * @function verify
-     * @memberof GetCosKey
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    GetCosKey.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        return null;
-    };
-
-    /**
-     * Creates a GetCosKey message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof GetCosKey
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {GetCosKey} GetCosKey
-     */
     GetCosKey.fromObject = function fromObject(object) {
         if (object instanceof $root.GetCosKey)
             return object;
@@ -6222,15 +3064,6 @@ $root.GetCosKey = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a GetCosKey message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof GetCosKey
-     * @static
-     * @param {GetCosKey} message GetCosKey
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     GetCosKey.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -6249,13 +3082,6 @@ $root.GetCosKey = (function() {
         return object;
     };
 
-    /**
-     * Converts this GetCosKey to JSON.
-     * @function toJSON
-     * @memberof GetCosKey
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     GetCosKey.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -6265,30 +3091,6 @@ $root.GetCosKey = (function() {
 
 $root.CosKey = (function() {
 
-    /**
-     * Properties of a CosKey.
-     * @exports ICosKey
-     * @interface ICosKey
-     * @property {number|Long|null} [sign] CosKey sign
-     * @property {string|null} [token] CosKey token
-     * @property {string|null} [id] CosKey id
-     * @property {string|null} [key] CosKey key
-     * @property {string|null} [bucket] CosKey bucket
-     * @property {string|null} [region] CosKey region
-     * @property {number|Long|null} [startTime] CosKey startTime
-     * @property {number|Long|null} [expTime] CosKey expTime
-     * @property {string|null} [path] CosKey path
-     * @property {string|null} [pathDemo] CosKey pathDemo
-     */
-
-    /**
-     * Constructs a new CosKey.
-     * @exports CosKey
-     * @classdesc Represents a CosKey.
-     * @implements ICosKey
-     * @constructor
-     * @param {ICosKey=} [properties] Properties to set
-     */
     function CosKey(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -6296,157 +3098,43 @@ $root.CosKey = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * CosKey sign.
-     * @member {number|Long} sign
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * CosKey token.
-     * @member {string} token
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.token = "";
-
-    /**
-     * CosKey id.
-     * @member {string} id
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.id = "";
-
-    /**
-     * CosKey key.
-     * @member {string} key
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.key = "";
-
-    /**
-     * CosKey bucket.
-     * @member {string} bucket
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.bucket = "";
-
-    /**
-     * CosKey region.
-     * @member {string} region
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.region = "";
-
-    /**
-     * CosKey startTime.
-     * @member {number|Long} startTime
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.startTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * CosKey expTime.
-     * @member {number|Long} expTime
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.expTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * CosKey path.
-     * @member {string} path
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.path = "";
-
-    /**
-     * CosKey pathDemo.
-     * @member {string} pathDemo
-     * @memberof CosKey
-     * @instance
-     */
     CosKey.prototype.pathDemo = "";
 
-    /**
-     * Creates a new CosKey instance using the specified properties.
-     * @function create
-     * @memberof CosKey
-     * @static
-     * @param {ICosKey=} [properties] Properties to set
-     * @returns {CosKey} CosKey instance
-     */
-    CosKey.create = function create(properties) {
-        return new CosKey(properties);
-    };
-
-    /**
-     * Encodes the specified CosKey message. Does not implicitly {@link CosKey.verify|verify} messages.
-     * @function encode
-     * @memberof CosKey
-     * @static
-     * @param {ICosKey} message CosKey message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     CosKey.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.token != null && Object.hasOwnProperty.call(message, "token"))
-            writer.uint32(/* id 2, wireType 2 =*/18).string(message.token);
+            writer.uint32(18).string(message.token);
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
-            writer.uint32(/* id 3, wireType 2 =*/26).string(message.id);
+            writer.uint32(26).string(message.id);
         if (message.key != null && Object.hasOwnProperty.call(message, "key"))
-            writer.uint32(/* id 4, wireType 2 =*/34).string(message.key);
+            writer.uint32(34).string(message.key);
         if (message.bucket != null && Object.hasOwnProperty.call(message, "bucket"))
-            writer.uint32(/* id 5, wireType 2 =*/42).string(message.bucket);
+            writer.uint32(42).string(message.bucket);
         if (message.region != null && Object.hasOwnProperty.call(message, "region"))
-            writer.uint32(/* id 6, wireType 2 =*/50).string(message.region);
+            writer.uint32(50).string(message.region);
         if (message.startTime != null && Object.hasOwnProperty.call(message, "startTime"))
-            writer.uint32(/* id 7, wireType 0 =*/56).int64(message.startTime);
+            writer.uint32(56).int64(message.startTime);
         if (message.expTime != null && Object.hasOwnProperty.call(message, "expTime"))
-            writer.uint32(/* id 8, wireType 0 =*/64).int64(message.expTime);
+            writer.uint32(64).int64(message.expTime);
         if (message.path != null && Object.hasOwnProperty.call(message, "path"))
-            writer.uint32(/* id 9, wireType 2 =*/74).string(message.path);
+            writer.uint32(74).string(message.path);
         if (message.pathDemo != null && Object.hasOwnProperty.call(message, "pathDemo"))
-            writer.uint32(/* id 10, wireType 2 =*/82).string(message.pathDemo);
+            writer.uint32(82).string(message.pathDemo);
         return writer;
     };
 
-    /**
-     * Encodes the specified CosKey message, length delimited. Does not implicitly {@link CosKey.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof CosKey
-     * @static
-     * @param {ICosKey} message CosKey message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    CosKey.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a CosKey message from the specified reader or buffer.
-     * @function decode
-     * @memberof CosKey
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {CosKey} CosKey
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     CosKey.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -6492,74 +3180,6 @@ $root.CosKey = (function() {
         return message;
     };
 
-    /**
-     * Decodes a CosKey message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof CosKey
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {CosKey} CosKey
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    CosKey.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a CosKey message.
-     * @function verify
-     * @memberof CosKey
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    CosKey.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.token != null && message.hasOwnProperty("token"))
-            if (!$util.isString(message.token))
-                return "token: string expected";
-        if (message.id != null && message.hasOwnProperty("id"))
-            if (!$util.isString(message.id))
-                return "id: string expected";
-        if (message.key != null && message.hasOwnProperty("key"))
-            if (!$util.isString(message.key))
-                return "key: string expected";
-        if (message.bucket != null && message.hasOwnProperty("bucket"))
-            if (!$util.isString(message.bucket))
-                return "bucket: string expected";
-        if (message.region != null && message.hasOwnProperty("region"))
-            if (!$util.isString(message.region))
-                return "region: string expected";
-        if (message.startTime != null && message.hasOwnProperty("startTime"))
-            if (!$util.isInteger(message.startTime) && !(message.startTime && $util.isInteger(message.startTime.low) && $util.isInteger(message.startTime.high)))
-                return "startTime: integer|Long expected";
-        if (message.expTime != null && message.hasOwnProperty("expTime"))
-            if (!$util.isInteger(message.expTime) && !(message.expTime && $util.isInteger(message.expTime.low) && $util.isInteger(message.expTime.high)))
-                return "expTime: integer|Long expected";
-        if (message.path != null && message.hasOwnProperty("path"))
-            if (!$util.isString(message.path))
-                return "path: string expected";
-        if (message.pathDemo != null && message.hasOwnProperty("pathDemo"))
-            if (!$util.isString(message.pathDemo))
-                return "pathDemo: string expected";
-        return null;
-    };
-
-    /**
-     * Creates a CosKey message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof CosKey
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {CosKey} CosKey
-     */
     CosKey.fromObject = function fromObject(object) {
         if (object instanceof $root.CosKey)
             return object;
@@ -6608,15 +3228,6 @@ $root.CosKey = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from a CosKey message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof CosKey
-     * @static
-     * @param {CosKey} message CosKey
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     CosKey.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -6677,13 +3288,6 @@ $root.CosKey = (function() {
         return object;
     };
 
-    /**
-     * Converts this CosKey to JSON.
-     * @function toJSON
-     * @memberof CosKey
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     CosKey.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
@@ -6693,23 +3297,6 @@ $root.CosKey = (function() {
 
 $root.UpdatePushToken = (function() {
 
-    /**
-     * Properties of an UpdatePushToken.
-     * @exports IUpdatePushToken
-     * @interface IUpdatePushToken
-     * @property {number|Long|null} [sign] UpdatePushToken sign
-     * @property {number|Long|null} [pushChannel] UpdatePushToken pushChannel
-     * @property {string|null} [pushToken] UpdatePushToken pushToken
-     */
-
-    /**
-     * Constructs a new UpdatePushToken.
-     * @exports UpdatePushToken
-     * @classdesc Represents an UpdatePushToken.
-     * @implements IUpdatePushToken
-     * @constructor
-     * @param {IUpdatePushToken=} [properties] Properties to set
-     */
     function UpdatePushToken(properties) {
         if (properties)
             for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -6717,87 +3304,22 @@ $root.UpdatePushToken = (function() {
                     this[keys[i]] = properties[keys[i]];
     }
 
-    /**
-     * UpdatePushToken sign.
-     * @member {number|Long} sign
-     * @memberof UpdatePushToken
-     * @instance
-     */
     UpdatePushToken.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * UpdatePushToken pushChannel.
-     * @member {number|Long} pushChannel
-     * @memberof UpdatePushToken
-     * @instance
-     */
     UpdatePushToken.prototype.pushChannel = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-    /**
-     * UpdatePushToken pushToken.
-     * @member {string} pushToken
-     * @memberof UpdatePushToken
-     * @instance
-     */
     UpdatePushToken.prototype.pushToken = "";
 
-    /**
-     * Creates a new UpdatePushToken instance using the specified properties.
-     * @function create
-     * @memberof UpdatePushToken
-     * @static
-     * @param {IUpdatePushToken=} [properties] Properties to set
-     * @returns {UpdatePushToken} UpdatePushToken instance
-     */
-    UpdatePushToken.create = function create(properties) {
-        return new UpdatePushToken(properties);
-    };
-
-    /**
-     * Encodes the specified UpdatePushToken message. Does not implicitly {@link UpdatePushToken.verify|verify} messages.
-     * @function encode
-     * @memberof UpdatePushToken
-     * @static
-     * @param {IUpdatePushToken} message UpdatePushToken message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
     UpdatePushToken.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
         if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sign);
+            writer.uint32(8).int64(message.sign);
         if (message.pushChannel != null && Object.hasOwnProperty.call(message, "pushChannel"))
-            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.pushChannel);
+            writer.uint32(16).int64(message.pushChannel);
         if (message.pushToken != null && Object.hasOwnProperty.call(message, "pushToken"))
-            writer.uint32(/* id 3, wireType 2 =*/26).string(message.pushToken);
+            writer.uint32(26).string(message.pushToken);
         return writer;
     };
 
-    /**
-     * Encodes the specified UpdatePushToken message, length delimited. Does not implicitly {@link UpdatePushToken.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof UpdatePushToken
-     * @static
-     * @param {IUpdatePushToken} message UpdatePushToken message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    UpdatePushToken.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes an UpdatePushToken message from the specified reader or buffer.
-     * @function decode
-     * @memberof UpdatePushToken
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {UpdatePushToken} UpdatePushToken
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
     UpdatePushToken.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
@@ -6822,53 +3344,6 @@ $root.UpdatePushToken = (function() {
         return message;
     };
 
-    /**
-     * Decodes an UpdatePushToken message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof UpdatePushToken
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {UpdatePushToken} UpdatePushToken
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    UpdatePushToken.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies an UpdatePushToken message.
-     * @function verify
-     * @memberof UpdatePushToken
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    UpdatePushToken.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.sign != null && message.hasOwnProperty("sign"))
-            if (!$util.isInteger(message.sign) && !(message.sign && $util.isInteger(message.sign.low) && $util.isInteger(message.sign.high)))
-                return "sign: integer|Long expected";
-        if (message.pushChannel != null && message.hasOwnProperty("pushChannel"))
-            if (!$util.isInteger(message.pushChannel) && !(message.pushChannel && $util.isInteger(message.pushChannel.low) && $util.isInteger(message.pushChannel.high)))
-                return "pushChannel: integer|Long expected";
-        if (message.pushToken != null && message.hasOwnProperty("pushToken"))
-            if (!$util.isString(message.pushToken))
-                return "pushToken: string expected";
-        return null;
-    };
-
-    /**
-     * Creates an UpdatePushToken message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof UpdatePushToken
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {UpdatePushToken} UpdatePushToken
-     */
     UpdatePushToken.fromObject = function fromObject(object) {
         if (object instanceof $root.UpdatePushToken)
             return object;
@@ -6896,15 +3371,6 @@ $root.UpdatePushToken = (function() {
         return message;
     };
 
-    /**
-     * Creates a plain object from an UpdatePushToken message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof UpdatePushToken
-     * @static
-     * @param {UpdatePushToken} message UpdatePushToken
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
     UpdatePushToken.toObject = function toObject(message, options) {
         if (!options)
             options = {};
@@ -6937,13 +3403,6 @@ $root.UpdatePushToken = (function() {
         return object;
     };
 
-    /**
-     * Converts this UpdatePushToken to JSON.
-     * @function toJSON
-     * @memberof UpdatePushToken
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
     UpdatePushToken.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };

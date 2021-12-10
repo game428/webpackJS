@@ -39,7 +39,7 @@ function compress(bytes, pid) {
  * @returns {Uint8Array} 二进制数据
  */
 function cosPro(sign) {
-  let bytes = GetCosKey.encode(GetCosKey.create({ sign: sign })).finish();
+  let bytes = GetCosKey.encode(GetCosKey.fromObject({ sign: sign })).finish();
   return bytes;
 }
 
@@ -52,7 +52,7 @@ function cosPro(sign) {
  */
 function loginPro(sign, imToken, subAppId) {
   let bytes = ImLogin.encode(
-    ImLogin.create({ sign: sign, token: imToken, subApp: subAppId })
+    ImLogin.fromObject({ sign: sign, token: imToken, subApp: subAppId })
   ).finish();
   return bytes;
 }
@@ -63,7 +63,7 @@ function loginPro(sign, imToken, subAppId) {
  * @returns {Uint8Array} 二进制数据
  */
 function logoutPro(sign) {
-  let bytes = ImLogout.encode(ImLogout.create({ sign: sign })).finish();
+  let bytes = ImLogout.encode(ImLogout.fromObject({ sign: sign })).finish();
   return bytes;
 }
 
@@ -72,7 +72,7 @@ function logoutPro(sign) {
  * @returns {Uint8Array} 二进制数据
  */
 function pingPro() {
-  let bytes = Ping.encode(Ping.create({ type: 0 })).finish();
+  let bytes = Ping.encode(Ping.fromObject({ type: 0 })).finish();
   return bytes;
 }
 
@@ -84,7 +84,7 @@ function pingPro() {
  */
 function chatListPro(sign, updateTime) {
   let bytes = GetChatList.encode(
-    GetChatList.create({ sign: sign, updateTime: updateTime })
+    GetChatList.fromObject({ sign: sign, updateTime: updateTime })
   ).finish();
   return bytes;
 }
@@ -96,7 +96,9 @@ function chatListPro(sign, updateTime) {
  * @returns {Uint8Array} 二进制数据
  */
 function chatPro(sign, uid) {
-  let bytes = GetChat.encode(GetChat.create({ sign: sign, uid: uid })).finish();
+  let bytes = GetChat.encode(
+    GetChat.fromObject({ sign: sign, uid: uid })
+  ).finish();
   return bytes;
 }
 
@@ -108,7 +110,7 @@ function chatPro(sign, uid) {
  */
 function delChatPro(sign, uid) {
   let bytes = DelChat.encode(
-    DelChat.create({ sign: sign, toUid: uid })
+    DelChat.fromObject({ sign: sign, toUid: uid })
   ).finish();
   return bytes;
 }
@@ -125,7 +127,7 @@ function delChatPro(sign, uid) {
  */
 function getMsgPro(options) {
   options.offset = options.pageSize || 20;
-  let bytes = GetHistory.encode(GetHistory.create(options)).finish();
+  let bytes = GetHistory.encode(GetHistory.fromObject(options)).finish();
   return bytes;
 }
 
@@ -146,7 +148,7 @@ function getMsgPro(options) {
  * @param {number} [options.zoom] - 地图缩放层级
  */
 function sendMsgPro(options) {
-  let bytes = ChatS.encode(ChatS.create(options)).finish();
+  let bytes = ChatS.encode(ChatS.fromObject(options)).finish();
   return bytes;
 }
 
@@ -159,7 +161,7 @@ function sendMsgPro(options) {
  */
 function revokeMsgPro(sign, uid, msgId) {
   let bytes = Revoke.encode(
-    Revoke.create({ sign: sign, toUid: uid, msgId: msgId })
+    Revoke.fromObject({ sign: sign, toUid: uid, msgId: msgId })
   ).finish();
   return bytes;
 }
@@ -172,7 +174,7 @@ function revokeMsgPro(sign, uid, msgId) {
  */
 function readMsgPro(sign, uid) {
   let bytes = MsgRead.encode(
-    MsgRead.create({ sign: sign, toUid: uid })
+    MsgRead.fromObject({ sign: sign, toUid: uid })
   ).finish();
   return bytes;
 }

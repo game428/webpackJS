@@ -174,19 +174,30 @@ function onMessage(evt) {
   }
 }
 
-// 处理Result类型
-function handleResult(result) {
-  let resultPro = Result.toObject(Result.decode(result), {
+// 反编译protobuf
+function decodePro(Pro, result) {
+  return Pro.toObject(Pro.decode(result), {
     defaults: true,
   });
-  const code = resultPro.code;
+}
+
+// 处理回调队列
+function handleCallEvent(resultPro) {
   var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
     callEvent = callEvents[resultPro.sign];
   }
+  return callEvent;
+}
+
+// 处理Result类型
+function handleResult(result) {
+  let resultPro = decodePro(Result, result);
+  const code = resultPro.code;
+  let callEvent = handleCallEvent(resultPro);
   if (callEvent?.type === OPERATION_TYPE.Login && !loginCode.includes(code)) {
-    wsConfig.ws.close();
+    wsConfig.ws?.close();
     return;
   }
   switch (code) {
@@ -196,13 +207,13 @@ function handleResult(result) {
         wsConfig.chatListEvent = callEvent;
         wsConfig.chatFormatList = [];
       } else {
-        callEvent.callSuc({
+        callEvent?.callSuc({
           data: resultPro,
         });
       }
       break;
     case ERROR_CODE.ERROR: // 请求失败（不区分原因）
-      callEvent && callEvent.callErr(resultPro);
+      callEvent?.callErr(resultPro);
       break;
     case ERROR_CODE.TOKEN_NOT_FOUND: // im token 未找到（不存在或失效）
     case ERROR_CODE.KICKED_OUT: // 被踢下线
@@ -212,42 +223,29 @@ function handleResult(result) {
         type: HANDLE_TYPE.ResultError,
         data: resultPro,
       });
-      callEvent && callEvent.callErr(resultPro);
+      callEvent?.callErr(resultPro);
       break;
     case 12: // 用户的会话列表为空
-      callEvent &&
-        callEvent.callSuc({
-          chats: [],
-          hasMore: false,
-        });
+      callEvent?.callSuc({
+        chats: [],
+        hasMore: false,
+      });
       break;
     default:
-      callEvent && callEvent.callErr(resultPro);
+      callEvent?.callErr(resultPro);
       break;
   }
 }
 
 // 处理获取cosKey
 function handleGetCosKey(result) {
-  let resultPro = CosKey.toObject(CosKey.decode(result), {
-    defaults: true,
-  });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    callEvent &&
-      callEvent.callSuc({
-        data: resultPro,
-      });
-  }
+  let resultPro = decodePro(CosKey, result);
+  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
 }
 
 // 处理会话列表
 function handleChatList(result) {
-  let resultPro = ChatList.toObject(ChatList.decode(result), {
-    defaults: true,
-  });
+  let resultPro = decodePro(ChatList, result);
   wsConfig.chatFormatList.push(...resultPro.chatItems);
   if (resultPro.updateTime && wsConfig.chatListEvent) {
     wsConfig.chatListEvent.callSuc({
@@ -261,97 +259,44 @@ function handleChatList(result) {
 
 // 处理消息列表
 function handleMsgList(result) {
-  let resultPro = ChatRBatch.toObject(ChatRBatch.decode(result), {
-    defaults: true,
-  });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    // 如果没有回调事件则不处理
-    callEvent &&
-      callEvent.callSuc({
-        messages: resultPro.msgs,
-      });
-  }
+  let resultPro = decodePro(ChatRBatch, result);
+  handleCallEvent(resultPro)?.callSuc({ messages: resultPro.msgs });
 }
 
 // 处理发送消息成功
 function handleSend(result) {
-  let resultPro = ChatSR.toObject(ChatSR.decode(result), {
-    defaults: true,
-  });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    // 如果没有回调事件则不处理
-    callEvent &&
-      callEvent.callSuc({
-        data: resultPro,
-      });
-  }
+  let resultPro = decodePro(ChatSR, result);
+  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
 }
 
 // 处理接收到消息
 function handleMsg(result) {
-  let resultPro = ChatR.toObject(ChatR.decode(result), {
-    defaults: true,
-  });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    // 如果没有回调事件则不处理
-    if (callEvent) {
-      callEvent.callSuc({
-        data: resultPro,
-      });
-    } else {
-      wsConfig.Global.handleMessage({
-        type: HANDLE_TYPE.ChatR,
-        data: resultPro,
-      });
-    }
+  let resultPro = decodePro(ChatR, result);
+  let callEvent = handleCallEvent(resultPro);
+  if (callEvent) {
+    callEvent?.callSuc({ data: resultPro });
+  } else {
+    wsConfig.Global.handleMessage({
+      type: HANDLE_TYPE.ChatR,
+      data: resultPro,
+    });
   }
 }
 
 // 处理获取指定会话信息
 function handleGetChat(result) {
-  let resultPro = ChatItem.toObject(ChatItem.decode(result), {
-    defaults: true,
-  });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    // 如果没有回调事件则不处理
-    callEvent &&
-      callEvent.callSuc({
-        data: resultPro,
-      });
-  }
+  let resultPro = decodePro(ChatItem, result);
+  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
 }
 
 // 处理会话列表更新
 function handleUpdateChat(result) {
-  let resultPro = ChatItemUpdate.toObject(ChatItemUpdate.decode(result), {
-    defaults: true,
-  });
+  let resultPro = decodePro(ChatItemUpdate, result);
   wsConfig.Global.handleMessage({
     type: HANDLE_TYPE.ChatItemUpdate,
     data: resultPro,
   });
-  var callEvents = wsConfig.Global.callEvents;
-  var callEvent = null;
-  if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
-    // 如果没有回调事件则不处理
-    callEvent &&
-      callEvent.callSuc({
-        data: resultPro,
-      });
-  }
+  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
 }
 
 export { connectWs, closeWs, sendPing, sendWsMsg };

@@ -142,13 +142,10 @@ localDexie.initDB = function(callback) {
 
 // 删除数据库
 localDexie.deleteDB = function() {
-  if (db && db.isOpen()) {
-    Dexie.delete(DBName);
-  } else {
-    window.localStorage.removeItem(storageSdkInfo);
-    window.localStorage.removeItem(storageChatHistory);
-    window.localStorage.removeItem(storageChatList);
-  }
+  Dexie.delete(DBName);
+  window.localStorage.removeItem(storageSdkInfo);
+  window.localStorage.removeItem(storageChatHistory);
+  window.localStorage.removeItem(storageChatList);
 };
 
 // 清空所有数据

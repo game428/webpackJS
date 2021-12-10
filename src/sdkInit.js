@@ -176,11 +176,7 @@ function create() {
     window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
     Global.tabId = tabId;
     let time = new Date().getTime();
-    if (!windowHeartBeat) {
-      window.localStorage.setItem("im_wsCurId", tabId);
-      // 启动全局定时器
-      globalTimer();
-    } else if (windowHeartBeat < time - 3000) {
+    if ((windowHeartBeat || 0) < time - 3000) {
       localNotice.clear();
       closeWs();
       localDexie.deleteDB();
@@ -212,6 +208,7 @@ function onunload() {
   closeWs();
   if (imWsTabs.length === 0) {
     localDexie.deleteDB();
+    window.localStorage.setItem("im_close", "normal");
   } else if (Global.curTab) {
     Global.clearTimer();
     if (Global.loginState === IM_LOGIN_STATE.LOGGED) {
