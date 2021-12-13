@@ -179,6 +179,7 @@ function connClose(Global, wsOptions, err) {
 // 登录服务器
 function loginIm(Global, wsOptions) {
   return new Promise((resolve, reject) => {
+    console.warn("sdk开始登录");
     let callSign = tool.createSign();
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Login,

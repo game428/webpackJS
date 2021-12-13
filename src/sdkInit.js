@@ -165,6 +165,7 @@ function clearData(isClearDB) {
  */
 function create() {
   return new Promise((resolve, reject) => {
+    console.warn("开始初始化");
     if (msim !== null) {
       resolve(msim);
     }
@@ -176,7 +177,7 @@ function create() {
     window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
     Global.tabId = tabId;
     let time = new Date().getTime();
-    if ((windowHeartBeat || 0) < time - 3000) {
+    if ((windowHeartBeat || 0) < time - 500) {
       localNotice.clear();
       closeWs();
       localDexie.deleteDB();

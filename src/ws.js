@@ -207,13 +207,14 @@ function handleResult(result) {
         wsConfig.chatListEvent = callEvent;
         wsConfig.chatFormatList = [];
       } else {
-        callEvent?.callSuc({
-          data: resultPro,
-        });
+        callEvent?.callSuc &&
+          callEvent.callSuc({
+            data: resultPro,
+          });
       }
       break;
     case ERROR_CODE.ERROR: // 请求失败（不区分原因）
-      callEvent?.callErr(resultPro);
+      callEvent?.callErr && callEvent.callErr(resultPro);
       break;
     case ERROR_CODE.TOKEN_NOT_FOUND: // im token 未找到（不存在或失效）
     case ERROR_CODE.KICKED_OUT: // 被踢下线
@@ -223,16 +224,17 @@ function handleResult(result) {
         type: HANDLE_TYPE.ResultError,
         data: resultPro,
       });
-      callEvent?.callErr(resultPro);
+      callEvent?.callErr && callEvent.callErr(resultPro);
       break;
     case 12: // 用户的会话列表为空
-      callEvent?.callSuc({
-        chats: [],
-        hasMore: false,
-      });
+      callEvent?.callSuc &&
+        callEvent.callSuc({
+          chats: [],
+          hasMore: false,
+        });
       break;
     default:
-      callEvent?.callErr(resultPro);
+      callEvent?.callErr && callEvent.callErr(resultPro);
       break;
   }
 }
@@ -240,14 +242,15 @@ function handleResult(result) {
 // 处理获取cosKey
 function handleGetCosKey(result) {
   let resultPro = decodePro(CosKey, result);
-  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理会话列表
 function handleChatList(result) {
   let resultPro = decodePro(ChatList, result);
   wsConfig.chatFormatList.push(...resultPro.chatItems);
-  if (resultPro.updateTime && wsConfig.chatListEvent) {
+  if (resultPro.updateTime && wsConfig.chatListEvent?.callSuc) {
     wsConfig.chatListEvent.callSuc({
       chats: wsConfig.chatFormatList,
       updateTime: resultPro.updateTime,
@@ -260,13 +263,15 @@ function handleChatList(result) {
 // 处理消息列表
 function handleMsgList(result) {
   let resultPro = decodePro(ChatRBatch, result);
-  handleCallEvent(resultPro)?.callSuc({ messages: resultPro.msgs });
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ messages: resultPro.msgs });
 }
 
 // 处理发送消息成功
 function handleSend(result) {
   let resultPro = decodePro(ChatSR, result);
-  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理接收到消息
@@ -274,7 +279,7 @@ function handleMsg(result) {
   let resultPro = decodePro(ChatR, result);
   let callEvent = handleCallEvent(resultPro);
   if (callEvent) {
-    callEvent?.callSuc({ data: resultPro });
+    callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
   } else {
     wsConfig.Global.handleMessage({
       type: HANDLE_TYPE.ChatR,
@@ -286,7 +291,8 @@ function handleMsg(result) {
 // 处理获取指定会话信息
 function handleGetChat(result) {
   let resultPro = decodePro(ChatItem, result);
-  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理会话列表更新
@@ -296,7 +302,8 @@ function handleUpdateChat(result) {
     type: HANDLE_TYPE.ChatItemUpdate,
     data: resultPro,
   });
-  handleCallEvent(resultPro)?.callSuc({ data: resultPro });
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 export { connectWs, closeWs, sendPing, sendWsMsg };
