@@ -12,6 +12,7 @@ import localNotice from "./localNotice";
 function getCosKey(Global) {
   return new Promise((resolve, reject) => {
     let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.GetCosKey,
       callSign: callSign,

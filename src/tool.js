@@ -269,24 +269,24 @@ function formatChat(chat, uid) {
 
 // 注册回调事件
 function createCallEvent(Global, options) {
-  Global.callEvents[options.callSign] = {
+  Global.callEvents.set(options.callSign, {
     tabId: Global.tabId,
     type: options.type,
     timeOut: new Date().getTime() + Global.timeOut,
     callSuc: (res) => {
-      delete Global.callEvents[options.callSign];
+      Global.callEvents.delete(options.callSign);
       options.callSuc && options.callSuc(res);
     },
     callErr: (err) => {
-      delete Global.callEvents[options.callSign];
+      Global.callEvents.delete(options.callSign);
       options.callErr && options.callErr(err);
     },
-  };
+  });
 }
 
 // 公共判断
 function preJudge(Global, reject, operationType) {
-  if (Global.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+  if (Global.sdkState.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
     let errResult = resultErr(
       "Imsdk is not logged",
       operationType,
@@ -296,7 +296,7 @@ function preJudge(Global, reject, operationType) {
     return false;
   } else if (
     Global.curTab &&
-    Global.connState !== WS_STATE.NET_STATE_CONNECTED
+    Global.sdkState.connState !== WS_STATE.NET_STATE_CONNECTED
   ) {
     let errResult = resultErr(
       "disconnected",

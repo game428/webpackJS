@@ -72,6 +72,7 @@ function getMessageList(Global, options) {
 // 从服务器获取消息列表
 function getWsMsgs(Global, defaultOption, resolve, reject, msgs) {
   let callSign = tool.createSign();
+  Global.callEvents.has(callSign) && (callSign += 1);
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
@@ -160,6 +161,7 @@ function setMessageRead(Global, options) {
       return reject(errResult);
     }
     let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Read,
       callSign: callSign,
@@ -385,6 +387,7 @@ function revokeMessage(Global, options) {
       return reject(errResult);
     }
     let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Revoke,
       callSign: callSign,
@@ -450,7 +453,7 @@ function createTextMessage(Global, options) {
       msg: "Parameter 'text' cann't be empty",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.uid);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Text,
     text: options.payload.text,
@@ -485,7 +488,7 @@ function createImageMessage(Global, options) {
       msg: "Parameter 'url' cann't be empty",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.uid);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Img,
     url: options.payload.url,
@@ -528,7 +531,7 @@ function createBusinessMessage(Global, options) {
       msg: "Type can only use 11-30",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.uid);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, options.payload);
   return {
     code: ERROR_CODE.SUCCESS,

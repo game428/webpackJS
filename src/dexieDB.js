@@ -4,7 +4,6 @@ import { WS_STATE, SYNC_CHAT, IM_LOGIN_STATE } from "./sdkTypes";
 const DBName = "imWsDB";
 var db = null;
 let version = 1;
-let sdkKey = "msimSdkInfo";
 let storageSdkInfo = "im_msimSdkInfo";
 let storageChatHistory = "im_chatHistory";
 let storageChatList = "im_chatList";
@@ -58,27 +57,13 @@ let msgKeys = [
 let chatIdKeys = [
   "&conversationID", // 唯一id
 ];
-let sdkInfoKeys = [
-  "&sdkKeys", // 唯一id
-  "chatsSync",
-  "loginState",
-  "connState",
-  "wsUrl",
-  "imToken",
-  "subAppId",
-  "uid",
-];
-
 let schemas = {
   chatList: chatKeys.join(), // 会话表
   msgList: msgKeys.join(), // 消息表
   chatHistory: chatIdKeys.join(), // 以获取过消息的会话表
-  sdkInfo: sdkInfoKeys.join(), // sdk信息表
 };
 
-let localDexie = {
-  isInit: false,
-};
+let localDexie = {};
 
 function toRawType(value) {
   var _toString = Object.prototype.toString;
@@ -160,35 +145,6 @@ localDexie.clear = function() {
     window.localStorage.removeItem(storageSdkInfo);
     window.localStorage.removeItem(storageChatHistory);
     window.localStorage.removeItem(storageChatList);
-  }
-};
-
-/** sdk信息表操作 */
-// 更新信息表
-localDexie.updateInfo = function(info) {
-  if (db?.isOpen && db.isOpen()) {
-    db.sdkInfo.update(sdkKey, info);
-  } else {
-    let sdkInfo = parseJson(storageSdkInfo);
-    setStorage(storageSdkInfo, Object.assign({}, sdkInfo, info));
-  }
-};
-localDexie.getInfo = function() {
-  return db?.isOpen && db.isOpen()
-    ? db.sdkInfo.get(sdkKey)
-    : Promise.resolve(parseJson(storageSdkInfo));
-};
-localDexie.initInfo = function() {
-  let infoBase = {
-    sdkKeys: sdkKey,
-    loginState: IM_LOGIN_STATE.NOT_LOGIN,
-    chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
-    connState: WS_STATE.NET_STATE_DISCONNECTED,
-  };
-  if (db?.isOpen && db.isOpen()) {
-    db.sdkInfo.put(infoBase);
-  } else {
-    setStorage(storageSdkInfo, infoBase);
   }
 };
 

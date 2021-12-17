@@ -48,6 +48,7 @@ function syncChats(Global) {
     state: SYNC_CHAT.SYNC_CHAT_START,
   });
   let callSign = tool.createSign();
+  Global.callEvents.has(callSign) && (callSign += 1);
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetChats,
     callSign: callSign,
@@ -56,7 +57,7 @@ function syncChats(Global) {
         Global.updateTime = res.updateTime;
       }
       if (res.chats.length > 0) {
-        if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+        if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
           syncMsgs(Global, res.chats);
         } else {
           getChatsSuc(Global, res.chats);
@@ -98,13 +99,13 @@ function syncMsgs(Global, chats) {
 function mergeChats(Global, chats, chathistorys) {
   let deleteSet = new Set();
   let newArr = chats.map((chatItem) => {
-    let newChat = tool.formatChat(chatItem, Global.uid);
+    let newChat = tool.formatChat(chatItem, Global.sdkState.uid);
     let conversationID = newChat.conversationID;
     let oldChat = Global.chatKeys[conversationID];
     if (
       chathistorys?.find((history) => history.conversationID === conversationID)
     ) {
-      getSyncMsgs(Global, oldChat.msgEnd, newChat);
+      getSyncMsgs(Global, oldChat?.msgEnd, newChat);
     }
     if (!newChat.deleted) {
       // 如果内存已有该chat，则通过对象合并更新
@@ -141,6 +142,7 @@ function mergeChats(Global, chats, chathistorys) {
 // 获取指定区间的消息
 function getSyncMsgs(Global, msgEnd, chat) {
   let callSign = tool.createSign();
+  Global.callEvents.has(callSign) && (callSign += 1);
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetMsgs,
     callSign: callSign,
@@ -221,23 +223,20 @@ function getConversationList(Global, options) {
       });
       return reject(errResult);
     }
-
-    if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+    if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
       // 已同步，直接从内存获取
       resultChats(Global, options, resolve);
     } else {
       // 注册异步回调
       let callSign = tool.createSign();
-      if (Global.chatCallEvents.hasOwnProperty(callSign)) {
-        callSign += 1;
-      }
-      Global.chatCallEvents[callSign] = {
+      Global.chatCallEvents.has(callSign) && (callSign += 1);
+      Global.chatCallEvents.set(callSign, {
         callSuc: () => {
-          delete Global.chatCallEvents[callSign];
+          Global.chatCallEvents.delete(callSign);
           resultChats(Global, options, resolve);
         },
         callErr: (err) => {
-          delete Global.chatCallEvents[callSign];
+          Global.chatCallEvents.delete(callSign);
           let errResult = tool.resultErr(
             err?.msg || "Failed to get the conversation list",
             OPERATION_TYPE.GetChats,
@@ -245,7 +244,7 @@ function getConversationList(Global, options) {
           );
           reject(errResult);
         },
-      };
+      });
     }
   });
 }
@@ -287,6 +286,7 @@ function deleteConversation(Global, options) {
       return reject(errResult);
     }
     let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.DelChat,
       callSign: callSign,
@@ -335,7 +335,12 @@ function getConversationProvider(Global, options) {
       });
       return reject(errResult);
     }
-    if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        Global.chatKeys,
+        options.conversationID
+      )
+    ) {
       let newChat = Global.chatKeys[options.conversationID];
       let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
       resolve(result);
@@ -354,12 +359,13 @@ function getConversationProvider(Global, options) {
 
 function getWsChat(Global, conversationID, resolve, reject) {
   let callSign = tool.createSign();
+  Global.callEvents.has(callSign) && (callSign += 1);
   tool.createCallEvent(Global, {
     type: OPERATION_TYPE.GetChat,
     callSign: callSign,
     callSuc: (res) => {
       if (res.data) {
-        let newChat = tool.formatChat(res.data, Global.uid);
+        let newChat = tool.formatChat(res.data, Global.sdkState.uid);
         localDexie.updateChat(newChat);
         let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
         resolve(result);
@@ -401,7 +407,12 @@ function updateConversationProvider(Global, options) {
       });
       return reject(errResult);
     }
-    if (Global.chatKeys.hasOwnProperty(options.conversationID)) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        Global.chatKeys,
+        options.conversationID
+      )
+    ) {
       let newChat = Global.chatKeys[options.conversationID];
       Object.assign(newChat, options);
       let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
@@ -431,7 +442,7 @@ function updateConversationProvider(Global, options) {
  */
 function getAllUnreadCount(Global) {
   return new Promise((resolve, reject) => {
-    if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+    if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
       // 已同步，直接从内存获取
       let unread = Global.chatList.reduce((pre, cur) => pre + cur.unread, 0);
       let result = tool.resultSuc(OPERATION_TYPE.GetAllUnread, {
@@ -441,12 +452,10 @@ function getAllUnreadCount(Global) {
     } else {
       // 注册异步回调
       let callSign = tool.createSign();
-      if (Global.chatCallEvents.hasOwnProperty(callSign)) {
-        callSign += 1;
-      }
-      Global.chatCallEvents[callSign] = {
+      Global.chatCallEvents.has(callSign) && (callSign += 1);
+      Global.chatCallEvents.set(callSign, {
         callSuc: () => {
-          delete Global.chatCallEvents[callSign];
+          Global.chatCallEvents.delete(callSign);
           let unread = Global.chatList.reduce(
             (pre, cur) => pre + cur.unread,
             0
@@ -457,7 +466,7 @@ function getAllUnreadCount(Global) {
           resolve(result);
         },
         callErr: () => {
-          delete Global.chatCallEvents[callSign];
+          Global.chatCallEvents.delete(callSign);
           let errResult = tool.resultErr(
             "Failed to get no reading",
             OPERATION_TYPE.GetAllUnread,
@@ -465,7 +474,7 @@ function getAllUnreadCount(Global) {
           );
           reject(errResult);
         },
-      };
+      });
     }
   });
 }

@@ -107,13 +107,12 @@ function initGlobal() {
     msgPageSize: 20,
     maxMsgPageSize: 100,
     heartBeatTimer: null, // 全局定时器
-    loginState: IM_LOGIN_STATE.NOT_LOGIN, // im登录状态
-    chatsSync: SYNC_CHAT.NOT_SYNC_CHAT, // 是否同步会话完成
-    connState: WS_STATE.NET_STATE_DISCONNECTED, // 网络连接状态
-    callEvents: {}, // 异步回调
-    chatCallEvents: {}, // 会话列表异步回调
-    chatList: [],
+    sdkState: {}, // sdk内部状态
+    callEvents: new Map(), // 异步回调
+    chatCallEvents: new Map(), // 会话列表异步回调
+    stateCallEvents: new Map(), // 会话列表异步回调
     chatKeys: {},
+    chatList: [],
     msgHandleList: [], // 消息处理队列
     handleMsgState: false, // 队列处理状态
     updateTime: null, // 会话更新标记
@@ -144,13 +143,16 @@ function clearData(isClearDB) {
   if (isClearDB) localDexie.clear();
   localNotice.clear();
   closeWs();
-  Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
-  Global.chatsSync = SYNC_CHAT.NOT_SYNC_CHAT;
-  Global.connState = WS_STATE.NET_STATE_DISCONNECTED;
-  Global.callEvents = {};
-  Global.chatCallEvents = {};
-  Global.chatList = [];
+  Global.sdkState = {
+    loginState: IM_LOGIN_STATE.NOT_LOGIN,
+    chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
+    connState: WS_STATE.NET_STATE_DISCONNECTED,
+  };
+  Global.callEvents = new Map();
+  Global.chatCallEvents = new Map();
+  Global.stateCallEvents = new Map();
   Global.chatKeys = {};
+  Global.chatList = [];
   Global.msgHandleList = [];
   Global.handleMsgState = false;
   Global.updateTime = null;
@@ -177,7 +179,7 @@ function create() {
     window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
     Global.tabId = tabId;
     let time = new Date().getTime();
-    if ((windowHeartBeat || 0) < time - 500) {
+    if ((windowHeartBeat || 0) < time - 3000) {
       localNotice.clear();
       closeWs();
       localDexie.deleteDB();
@@ -185,9 +187,7 @@ function create() {
       // 启动全局定时器
       globalTimer();
     }
-    window.onunload = () => {
-      onunload();
-    };
+    window.addEventListener("unload", onunload);
     localDexie.initDB(() => {
       msim = initSDK();
       window.addEventListener("storage", (storage) => {
@@ -209,10 +209,9 @@ function onunload() {
   closeWs();
   if (imWsTabs.length === 0) {
     localDexie.deleteDB();
-    window.localStorage.setItem("im_close", "normal");
   } else if (Global.curTab) {
     Global.clearTimer();
-    if (Global.loginState === IM_LOGIN_STATE.LOGGED) {
+    if (Global.sdkState.loginState === IM_LOGIN_STATE.LOGGED) {
       window.localStorage.setItem("im_wsConnTab", imWsTabs[0]);
     } else {
       window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
@@ -232,16 +231,19 @@ function globalTimer() {
     if (count % 20 === 0) {
       sendPing();
     }
-    for (let key in Global.callEvents) {
-      if (Global.callEvents[key].timeOut <= time) {
-        let callEvent = Global.callEvents[key];
-        delete Global.callEvents[key];
+    Global.callEvents.forEach((callEvent, key) => {
+      if (callEvent.timeOut <= time) {
         callEvent.callErr({
           code: ERROR_CODE.TIMEOUT,
           msg: callEvent.type + ": connection timed out",
         });
       }
-    }
+    });
+    Global.stateCallEvents.forEach((callEvent, key) => {
+      if (callEvent.timeOut <= time) {
+        callEvent.callErr();
+      }
+    });
   }, 50);
 }
 
@@ -251,7 +253,12 @@ function initChats() {
     localDexie.getChatList().then((chats) => {
       chats.forEach((chat) => {
         // 如果内存已有该chat，则通过对象合并更新
-        if (Global.chatKeys.hasOwnProperty(chat.conversationID)) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            Global.chatKeys,
+            chat.conversationID
+          )
+        ) {
           let oldChat = Global.chatKeys[chat.conversationID];
           Object.assign(oldChat, chat);
         } else {
@@ -259,10 +266,9 @@ function initChats() {
           Global.chatList.push(chat);
         }
       });
-      Global.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;
-      for (let key in Global.chatCallEvents) {
-        Global.chatCallEvents[key].callSuc();
-      }
+      Global.chatCallEvents.forEach((callEvent, key) => {
+        callEvent.callSuc();
+      });
       resolve();
     });
   });

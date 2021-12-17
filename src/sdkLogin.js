@@ -47,50 +47,66 @@ function login(Global, options) {
   });
 }
 
+function getSdkState(Global) {
+  return new Promise((resolve, reject) => {
+    if (Global.sdkState.loginState === IM_LOGIN_STATE.LOGGED || Global.curTab) {
+      console.warn("本地状态", Global.curTab, Global.sdkState);
+      resolve(Global.sdkState);
+    } else {
+      let callSign = tool.createSign();
+      window.localStorage.setItem("im_getSdkState", Global.tabId);
+      window.localStorage.removeItem("im_getSdkState");
+      Global.stateCallEvents.has(callSign) && (callSign += 1);
+      Global.stateCallEvents.set(callSign, {
+        timeOut: Date.now() + 3000,
+        callSuc: (res) => {
+          Global.stateCallEvents.delete(callSign);
+          console.warn("连接tab的状态", res);
+          resolve(res);
+        },
+        callErr: (err) => {
+          Global.stateCallEvents.delete(callSign);
+          console.warn("超时");
+          resolve({
+            loginState: IM_LOGIN_STATE.NOT_LOGIN,
+            chatsSync: SYNC_CHAT.NOT_SYNC_CHAT,
+            connState: WS_STATE.NET_STATE_DISCONNECTED,
+          });
+        },
+      });
+    }
+  });
+}
+
 function handleLogin(Global, config, resolve, reject) {
-  localDexie
-    .getInfo()
-    .then((info) => {
-      if (!info) {
-        localDexie.initInfo();
-      }
-      if (!info || info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+  getSdkState(Global).then((info) => {
+    if (!info.loginState || info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+      loginWs(Global, config, resolve, reject);
+    } else if (info?.imToken !== config.imToken) {
+      logout(Global).then(() => {
         loginWs(Global, config, resolve, reject);
-      } else if (info?.imToken !== config.imToken) {
-        logout(Global).then(() => {
-          localDexie.initInfo();
-          loginWs(Global, config, resolve, reject);
-        });
-      } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
-        if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-          Global.initChats();
-        } else {
-          Global.chatsSync = info.chatsSync;
-        }
-        Global.connState = info.connState;
-        Global.loginState = info.loginState;
-        Global.uid = info.uid;
-        let result = tool.resultSuc(OPERATION_TYPE.Login, {
-          msg: "Logged in",
-          uid: info.uid,
-        });
-        resolve(result);
+      });
+    } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
+      if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+        delete info.chatsSync;
+        Global.initChats();
       }
-    })
-    .catch((err) => {
-      Global.loginState = IM_LOGIN_STATE.NOT_LOGIN;
-      localDexie.updateInfo({ loginState: Global.loginState });
-      reject(err);
-    });
+      Object.assign(Global.sdkState, info);
+      let result = tool.resultSuc(OPERATION_TYPE.Login, {
+        msg: "Logged in",
+        uid: info.uid,
+      });
+      resolve(result);
+    }
+  });
 }
 
 function loginWs(Global, config, resolve, reject) {
   window.localStorage.setItem("im_wsCurId", Global.tabId);
   // 启动全局定时器
   Global.globalTimer();
-  Global.loginState = IM_LOGIN_STATE.LOGGING;
-  localDexie.updateInfo({
-    loginState: Global.loginState,
+  Object.assign(Global.sdkState, {
+    loginState: IM_LOGIN_STATE.LOGGING,
     wsUrl: config.wsUrl,
     imToken: config.imToken,
     subAppId: config.subAppId,
@@ -111,7 +127,11 @@ function reconnection(Global) {
   window.localStorage.setItem("im_wsCurId", Global.tabId);
   // 启动全局定时器
   Global.globalTimer();
-  localDexie.getInfo().then((info) => {
+  getSdkState(Global).then((info) => {
+    if (!info.wsUrl || !info.imToken) {
+      logout();
+      return;
+    }
     let wsOptions = {
       wsUrl: info.wsUrl,
       imToken: info.imToken,
@@ -134,7 +154,7 @@ function connSuc(Global, wsOptions) {
     .then((res) => {
       if (wsOptions.isReconect !== true) {
         wsOptions.isReconect = true;
-        Global.uid = res.data.uid;
+        Global.sdkState.uid = res.data.uid;
         let result = tool.resultSuc(OPERATION_TYPE.Login, {
           msg: res.data.msg,
           uid: res.data.uid,
@@ -143,13 +163,17 @@ function connSuc(Global, wsOptions) {
         setTimeout(() => {
           Global.handleMessage({
             type: HANDLE_TYPE.ImLogin,
-            data: res.data,
+            data: {
+              uid: res.data.uid,
+              loginState: IM_LOGIN_STATE.LOGGED,
+              wsUrl: wsOptions.wsUrl,
+              imToken: wsOptions.imToken,
+              subAppId: wsOptions.subAppId,
+            },
           });
         }, 0);
       } else {
-        localDexie.updateInfo({
-          uid: res.data.uid,
-        });
+        Global.sdkState.uid = res.data.uid;
       }
       syncChats(Global);
     })
@@ -160,7 +184,7 @@ function connSuc(Global, wsOptions) {
 
 // webSocket连接失败回调
 function connClose(Global, wsOptions, err) {
-  if (Global.connState !== WS_STATE.NET_STATE_DISCONNECTED) {
+  if (Global.sdkState.connState !== WS_STATE.NET_STATE_DISCONNECTED) {
     Global.handleMessage({
       type: HANDLE_TYPE.WsStateChange,
       state: WS_STATE.NET_STATE_DISCONNECTED,
@@ -181,6 +205,7 @@ function loginIm(Global, wsOptions) {
   return new Promise((resolve, reject) => {
     console.warn("sdk开始登录");
     let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Login,
       callSign: callSign,

@@ -81,7 +81,12 @@ function handleChatChange(options) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncChatsChange, options);
   } else if (options.state === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
     options.chats.forEach((chat) => {
-      if (Global.chatKeys.hasOwnProperty(chat.conversationID)) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          Global.chatKeys,
+          chat.conversationID
+        )
+      ) {
         let oldChat = Global.chatKeys[chat.conversationID];
         Object.assign(oldChat, chat);
       } else {
@@ -93,15 +98,15 @@ function handleChatChange(options) {
 
   if (options.state !== SYNC_CHAT.SYNC_CHAT_START) {
     // 处理同步期间收到的会话列表回调
-    for (let key in Global.chatCallEvents) {
+    Global.chatCallEvents.forEach((callEvent, key) => {
       if (options.state === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-        Global.chatCallEvents[key].callSuc();
+        callEvent.callSuc();
       } else if (options.state === SYNC_CHAT.SYNC_CHAT_FAILED) {
-        Global.chatCallEvents[key].callErr(options.err);
+        callEvent.callErr(options.err);
       }
-    }
+    });
     // 增量同步
-    if (Global.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+    if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
       if (msim[EVENT.CONVERSATION_LIST_UPDATED] && options.chats?.length > 0) {
         let result = tool.resultNotice(
           EVENT.CONVERSATION_LIST_UPDATED,
@@ -111,8 +116,7 @@ function handleChatChange(options) {
       }
     } else {
       // 初次同步
-      Global.chatsSync = options.state;
-      localDexie.updateInfo({ chatsSync: options.state });
+      Global.sdkState.chatsSync = options.state;
     }
   }
 
@@ -126,9 +130,8 @@ function handleChatChange(options) {
 
 // 处理网络状态变更
 function handleWsChange(options) {
-  Global.connState = options.state;
+  Global.sdkState.connState = options.state;
   if (Global.curTab) {
-    localDexie.updateInfo({ connState: options.state });
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.WsStateChange, options);
   }
   if (msim[EVENT.CONNECT_CHANGE]) {
@@ -141,25 +144,20 @@ function handleWsChange(options) {
 
 // 处理登录通知
 function handleLogin(options) {
-  Global.loginState = IM_LOGIN_STATE.LOGGED;
+  Object.assign(Global.sdkState, options.data);
   if (Global.curTab) {
     Global.updateTabs = [Global.tabId];
     window.localStorage.setItem("im_wsTabs", JSON.stringify(Global.updateTabs));
-    localDexie.updateInfo({
-      loginState: Global.loginState,
-      uid: options.data.uid,
-    });
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Online, options);
   } else {
     let key = "im_update_tabs_" + Global.tabId;
     window.localStorage.setItem(key, Global.tabId);
     window.localStorage.removeItem(key);
   }
-  Global.uid = options.data.uid;
   if (msim[EVENT.LOGIN]) {
     let result = tool.resultNotice(EVENT.LOGIN, {
-      code: options.data.code,
-      msg: options.data.msg,
+      code: ERROR_CODE.SUCCESS,
+      loginState: options.data.loginState,
       uid: options.data.uid,
     });
     msim[EVENT.LOGIN](result);
@@ -168,7 +166,7 @@ function handleLogin(options) {
 
 // 处理退出通知
 function handleLogout(options) {
-  if (Global.curTab && Global.loginState === IM_LOGIN_STATE.LOGGED) {
+  if (Global.curTab && Global.sdkState.loginState === IM_LOGIN_STATE.LOGGED) {
     let callSign = tool.createSign();
     let msg = proFormat.logoutPro(callSign);
     sendWsMsg(msg, PID.ImLogout);
@@ -228,7 +226,7 @@ function handleMsgStack() {
       let curMsg = Global.msgHandleList.shift();
       let msg = curMsg.data;
       if (!msg.onlyId) {
-        let uid = Global.uid === msg.fromUid ? msg.toUid : msg.fromUid;
+        let uid = Global.sdkState.uid === msg.fromUid ? msg.toUid : msg.fromUid;
         let conversationID = tool.splicingC2CId(uid);
         msg = tool.formatMsg(msg, conversationID);
       }
@@ -299,7 +297,9 @@ function handleRevokeMsg(msg, resolve) {
 
 // 处理取消匹配消息
 function handleUnmatchMsg(msg, resolve) {
-  if (Global.chatKeys.hasOwnProperty(msg.conversationID)) {
+  if (
+    Object.prototype.hasOwnProperty.call(Global.chatKeys, msg.conversationID)
+  ) {
     if (Global.curTab) {
       localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
         type: HANDLE_TYPE.ChatR,
@@ -381,7 +381,7 @@ function handleShowMsg(msg, resolve) {
     } else {
       showMsg = newMsg.content;
     }
-
+    let uid = Global.sdkState.uid;
     let updataChatObj = {
       conversationID: newMsg.conversationID,
       msgEnd: newMsg.msgId,
@@ -389,10 +389,10 @@ function handleShowMsg(msg, resolve) {
       showMsgType: newMsg.type,
       showMsg: showMsg,
       showMsgTime: newMsg.msgTime,
-      myMove: newMsg.fromUid !== Global.uid,
+      myMove: newMsg.fromUid !== uid,
       showMsgFromUid: newMsg.fromUid,
     };
-    if (newMsg.fromUid !== Global.uid) {
+    if (newMsg.fromUid !== uid) {
       updataChatObj.unread = 1;
     }
 
@@ -403,7 +403,7 @@ function handleShowMsg(msg, resolve) {
     if (newMsg.type >= 0 && newMsg.type <= 30) {
       // 目前只有0 - 30,243,247才修改uChatI,iChatU;
       // TODO 243 247
-      if (newMsg.fromUid !== Global.uid) {
+      if (newMsg.fromUid !== uid) {
         updataChatObj.uChatI = true;
       } else {
         updataChatObj.iChatU = true;
@@ -493,7 +493,12 @@ function handleServerUpdate(options, chat) {
     case CHAT_UPDATE_EVENT.Deleted:
       if (options.deleted) {
         newChat.deleted = options.deleted;
-        if (Global.chatKeys.hasOwnProperty(chat.conversationID)) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            Global.chatKeys,
+            chat.conversationID
+          )
+        ) {
           delete Global.chatKeys[chat.conversationID];
           Global.chatList = Global.chatList.filter(
             (chatItem) => chatItem.conversationID != chat.conversationID
@@ -511,7 +516,12 @@ function handleServerUpdate(options, chat) {
 
 // 更新会话通知
 function updateChatNotice(newChat) {
-  if (Global.chatKeys.hasOwnProperty(newChat.conversationID)) {
+  if (
+    Object.prototype.hasOwnProperty.call(
+      Global.chatKeys,
+      newChat.conversationID
+    )
+  ) {
     let oldChat = Global.chatKeys[newChat.conversationID];
     Object.assign(oldChat, newChat);
   } else if (newChat.deleted !== true) {

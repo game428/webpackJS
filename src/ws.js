@@ -64,6 +64,7 @@ function sendWsMsg(msg, pid) {
 // 关闭连接
 function closeWs() {
   if (wsConfig.ws) {
+    console.warn("手动关闭连接");
     wsConfig.closeState = true;
     wsConfig.ws.close();
   }
@@ -111,7 +112,6 @@ function sendPing() {
   if (wsConfig.ws?.readyState !== 1) return;
   let date = new Date().getTime();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
-    console.log("发送ping");
     var msg = proFormat.compress(proFormat.pingPro(), PID.Ping);
     wsConfig.ws.send(msg);
     wsConfig.heartBeatTime = date;
@@ -143,7 +143,6 @@ function onMessage(evt) {
     });
   }
   result = new Uint8Array(result);
-  console.log("接收到消息", pid);
   switch (pid) {
     case PID.Result:
       handleResult(result);
@@ -186,7 +185,7 @@ function handleCallEvent(resultPro) {
   var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
-    callEvent = callEvents[resultPro.sign];
+    callEvent = callEvents.get(resultPro.sign);
   }
   return callEvent;
 }

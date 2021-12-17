@@ -54,6 +54,30 @@ function watchStorage(storage, msim, Global) {
     return;
   }
 
+  // 获取当前sdk状态, 如果是当前tab连接则返回状态
+  if (storage.key === "im_getSdkState" && Global.curTab) {
+    window.localStorage.setItem(
+      "im_setSdkState",
+      JSON.stringify({
+        tabId: storage.newValue,
+        sdkState: Global.sdkState,
+      })
+    );
+  }
+
+  // 收到当前sdk状态，如果是当前tab获取则更新
+  if (storage.key === "im_setSdkState") {
+    let localObj = isJSON(storage.newValue);
+    if (localObj.tabId === Global.tabId) {
+      window.localStorage.removeItem("im_setSdkState");
+
+      Global.stateCallEvents.forEach((callEvent, key) => {
+        callEvent.callSuc(localObj.sdkState);
+      });
+    }
+  }
+
+  // 更新tabs
   if (
     storage.key.indexOf("im_update_tabs_") === 0 &&
     Global.curTab &&
@@ -87,7 +111,7 @@ function watchStorage(storage, msim, Global) {
 // 操作完成回调
 function noticeCall(key, Global, localObj) {
   removeLocal(key);
-  let callEvent = Global.callEvents[localObj.callSign];
+  let callEvent = Global.callEvents.get(localObj.callSign);
   if (localObj.state === LOCAL_OPERATION_STATUS.Fulfilled) {
     callEvent && callEvent.callSuc(localObj);
   } else if (localObj.state === LOCAL_OPERATION_STATUS.Rejected) {
