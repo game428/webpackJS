@@ -193,60 +193,6 @@ function setMessageRead(Global, options) {
   });
 }
 
-// 消息参数判断
-function formatBody(Global, msgObj, reject) {
-  let errResult = null;
-  let body = null;
-  if (!tool.preJudge(Global, reject, OPERATION_TYPE.Send)) {
-    return false;
-  } else if (tool.isNotObject(msgObj, "type", "number")) {
-    errResult = tool.parameterErr({
-      name: OPERATION_TYPE.Send,
-      key: "type",
-    });
-  } else {
-    switch (msgObj.type) {
-      case MSG_TYPE.Text:
-        if (tool.isNotString(msgObj.text)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            key: "text",
-          });
-        }
-        body = msgObj.text;
-        break;
-      case MSG_TYPE.Img:
-        if (tool.isNotHttp(msgObj.url)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            key: "url",
-          });
-        } else if (tool.isNotEmpty(msgObj.height)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            key: "height",
-          });
-        } else if (tool.isNotEmpty(msgObj.width)) {
-          errResult = tool.parameterErr({
-            name: OPERATION_TYPE.Send,
-            key: "width",
-          });
-        }
-        body = msgObj.url;
-        break;
-      default:
-        body = msgObj.content;
-        break;
-    }
-  }
-  if (errResult) {
-    reject(errResult);
-    return false;
-  } else {
-    return body;
-  }
-}
-
 /**
  * 发送消息
  * @memberof SDK
@@ -255,7 +201,7 @@ function formatBody(Global, msgObj, reject) {
  */
 function sendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
-    let body = formatBody(Global, msgObj, reject);
+    let body = tool.formatBody(Global, msgObj, reject);
     if (body === false) return;
     let callSign = tool.createSign(msgObj.showMsgTime);
     Global.callEvents.has(callSign) && (callSign += 1);
@@ -313,7 +259,7 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
  */
 function resendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
-    let body = formatBody(Global, msgObj, reject);
+    let body = tool.formatBody(Global, msgObj, reject);
     if (body === false) return;
     let callSign = tool.createSign(msgObj.showMsgTime);
     Global.callEvents.has(callSign) && (callSign += 1);

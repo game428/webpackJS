@@ -113,7 +113,7 @@ function sendPing() {
   let date = new Date().getTime();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
     var msg = proFormat.compress(proFormat.pingPro(), PID.Ping);
-    wsConfig.ws.send(msg);
+    wsConfig.ws?.send(msg);
     wsConfig.heartBeatTime = date;
   }
 }

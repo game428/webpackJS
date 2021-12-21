@@ -150,31 +150,44 @@ function isJSON(str) {
 
 // 根据操作类型返回对应的方法
 function createPromise(type, msim, localObj) {
+  let promise = null;
   switch (type) {
     case OPERATION_TYPE.Logout:
-      return msim.logout();
+      promise = msim.logout();
+      break;
     case OPERATION_TYPE.GetChat:
-      return msim.getConversationProvider(localObj.options);
+      promise = msim.getConversationProvider(localObj.options);
+      break;
     case OPERATION_TYPE.DelChat:
-      return msim.deleteConversation(localObj.options);
+      promise = msim.deleteConversation(localObj.options);
+      break;
+    case OPERATION_TYPE.GetAllUnread:
+      promise = msim.getAllUnreadCount();
+      break;
     case OPERATION_TYPE.GetMsgs:
       localObj.options.tabId = localObj.tabId;
-      return msim.getMessageList(localObj.options);
+      promise = msim.getMessageList(localObj.options);
+      break;
     case OPERATION_TYPE.Read:
-      return msim.setMessageRead(localObj.options);
+      promise = msim.setMessageRead(localObj.options);
+      break;
     case OPERATION_TYPE.Send:
-      return msim.sendMessage(localObj.options);
+      promise = msim.sendMessage(localObj.options);
+      break;
     case OPERATION_TYPE.Resend:
-      return msim.resendMessage(localObj.options);
+      promise = msim.resendMessage(localObj.options);
+      break;
     case OPERATION_TYPE.Revoke:
-      return msim.revokeMessage(localObj.options);
+      promise = msim.revokeMessage(localObj.options);
+      break;
     case OPERATION_TYPE.GetCosKey:
-      return msim.getCosKey();
-    case OPERATION_TYPE.GetAllUnread:
-      return msim.getAllUnreadCount();
+      promise = msim.getCosKey();
+      break;
     default:
-      return false;
+      promise = false;
+      break;
   }
+  return promise;
 }
 
 // 处理ws请求

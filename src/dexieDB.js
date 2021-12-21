@@ -1,5 +1,4 @@
 import Dexie from "dexie";
-import { WS_STATE, SYNC_CHAT, IM_LOGIN_STATE } from "./sdkTypes";
 
 const DBName = "imWsDB";
 var db = null;

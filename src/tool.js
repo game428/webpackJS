@@ -3,6 +3,7 @@ import {
   MSG_TYPE,
   ERROR_CODE,
   SEND_STATE,
+  OPERATION_TYPE,
   IM_LOGIN_STATE,
 } from "./sdkTypes.js";
 
@@ -309,6 +310,60 @@ function preJudge(Global, reject, operationType) {
   return true;
 }
 
+// 消息参数判断
+function formatBody(Global, msgObj, reject) {
+  let errResult = null;
+  let body = null;
+  if (!preJudge(Global, reject, OPERATION_TYPE.Send)) {
+    return false;
+  } else if (isNotObject(msgObj, "type", "number")) {
+    errResult = parameterErr({
+      name: OPERATION_TYPE.Send,
+      key: "type",
+    });
+  } else {
+    switch (msgObj.type) {
+      case MSG_TYPE.Text:
+        if (isNotString(msgObj.text)) {
+          errResult = parameterErr({
+            name: OPERATION_TYPE.Send,
+            key: "text",
+          });
+        }
+        body = msgObj.text;
+        break;
+      case MSG_TYPE.Img:
+        if (isNotHttp(msgObj.url)) {
+          errResult = parameterErr({
+            name: OPERATION_TYPE.Send,
+            key: "url",
+          });
+        } else if (isNotEmpty(msgObj.height)) {
+          errResult = parameterErr({
+            name: OPERATION_TYPE.Send,
+            key: "height",
+          });
+        } else if (isNotEmpty(msgObj.width)) {
+          errResult = parameterErr({
+            name: OPERATION_TYPE.Send,
+            key: "width",
+          });
+        }
+        body = msgObj.url;
+        break;
+      default:
+        body = msgObj.content;
+        break;
+    }
+  }
+  if (errResult) {
+    reject(errResult);
+    return false;
+  } else {
+    return body;
+  }
+}
+
 export default {
   getPageSize,
   sort,
@@ -335,4 +390,5 @@ export default {
   emptyTip,
   createCallEvent,
   preJudge,
+  formatBody,
 };

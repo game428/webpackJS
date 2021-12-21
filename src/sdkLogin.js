@@ -10,7 +10,6 @@ import {
 } from "./sdkTypes";
 import proFormat from "./proFormat";
 import { connectWs, closeWs, sendWsMsg } from "./ws";
-import localDexie from "./dexieDB";
 import { syncChats } from "./sdkChats";
 
 /**
@@ -152,7 +151,7 @@ function connSuc(Global, wsOptions) {
   });
   loginIm(Global, wsOptions)
     .then((res) => {
-      if (wsOptions.isReconect !== true) {
+      if (wsOptions?.isReconect !== true) {
         wsOptions.isReconect = true;
         Global.sdkState.uid = res.data.uid;
         let result = tool.resultSuc(OPERATION_TYPE.Login, {

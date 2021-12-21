@@ -101,7 +101,6 @@ function initGlobal() {
     timeOut: 20000,
     tabId: Global?.tabId,
     curTab: false, // 是否是当前连接的tab
-    uid: null,
     chatPageSize: 20,
     maxChatPageSize: 100,
     msgPageSize: 20,
