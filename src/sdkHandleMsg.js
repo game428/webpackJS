@@ -201,7 +201,11 @@ function handleError(options) {
       break;
     case ERROR_CODE.TOKEN_NOT_FOUND:
       if (msim[EVENT.TOKEN_NOT_FOUND]) {
-        let result = tool.resultNotice(EVENT.TOKEN_NOT_FOUND, options.data);
+        let result = tool.resultNotice(
+          EVENT.TOKEN_NOT_FOUND,
+          options.data?.msg,
+          options.data.code
+        );
         msim[EVENT.TOKEN_NOT_FOUND](result);
       }
       break;

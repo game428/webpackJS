@@ -258,6 +258,7 @@ function sendMessage(Global, msgObj) {
     let body = formatBody(Global, msgObj, reject);
     if (body === false) return;
     let callSign = tool.createSign(msgObj.showMsgTime);
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Send,
       callSign: callSign,
@@ -315,6 +316,7 @@ function resendMessage(Global, msgObj) {
     let body = formatBody(Global, msgObj, reject);
     if (body === false) return;
     let callSign = tool.createSign(msgObj.showMsgTime);
+    Global.callEvents.has(callSign) && (callSign += 1);
     tool.createCallEvent(Global, {
       type: OPERATION_TYPE.Resend,
       callSign: callSign,

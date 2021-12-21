@@ -184,12 +184,11 @@ function connSuc(Global, wsOptions) {
 
 // webSocket连接失败回调
 function connClose(Global, wsOptions, err) {
-  if (Global.sdkState.connState !== WS_STATE.NET_STATE_DISCONNECTED) {
-    Global.handleMessage({
-      type: HANDLE_TYPE.WsStateChange,
-      state: WS_STATE.NET_STATE_DISCONNECTED,
-    });
-  }
+  Global.handleMessage({
+    type: HANDLE_TYPE.WsStateChange,
+    state: WS_STATE.NET_STATE_DISCONNECTED,
+  });
+  console.warn("连接失败回调");
   if (wsOptions.isReconect !== true && wsOptions.reject) {
     let errResult = tool.resultErr(
       "Failed to establish websocket connection",
