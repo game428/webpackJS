@@ -134,7 +134,7 @@ function mergeChats(Global, chats, chathistorys) {
   Global.handleMessage({
     type: HANDLE_TYPE.SyncChatsChange,
     state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
-    chats: newArr,
+    chats: Global.chatList,
   });
   return newArr;
 }

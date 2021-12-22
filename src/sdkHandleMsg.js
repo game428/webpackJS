@@ -80,19 +80,10 @@ function handleChatChange(options) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncChatsChange, options);
   } else if (options.state === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-    options.chats.forEach((chat) => {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          Global.chatKeys,
-          chat.conversationID
-        )
-      ) {
-        let oldChat = Global.chatKeys[chat.conversationID];
-        Object.assign(oldChat, chat);
-      } else {
-        Global.chatKeys[chat.conversationID] = chat;
-        Global.chatList.push(chat);
-      }
+    Global.chatList = options.chats;
+    Global.chatKeys = {};
+    Global.chatList.forEach((chat) => {
+      Global.chatKeys[chat.conversationID] = chat;
     });
   }
 
