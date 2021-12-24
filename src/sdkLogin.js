@@ -80,6 +80,7 @@ function getSdkState(Global) {
 function handleLogin(Global, config, resolve, reject) {
   getSdkState(Global).then((info) => {
     if (!info.loginState || info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+      Global.clearData(true);
       loginWs(Global, config, resolve, reject);
     } else if (info?.imToken !== config.imToken) {
       logout(Global).then(() => {

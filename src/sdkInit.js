@@ -248,27 +248,20 @@ function globalTimer() {
 
 // 初始化会话列表
 function initChats() {
-  return new Promise((resolve, reject) => {
-    localDexie.getChatList().then((chats) => {
-      chats.forEach((chat) => {
-        // 如果内存已有该chat，则通过对象合并更新
-        if (
-          Object.prototype.hasOwnProperty.call(
-            Global.chatKeys,
-            chat.conversationID
-          )
-        ) {
-          let oldChat = Global.chatKeys[chat.conversationID];
-          Object.assign(oldChat, chat);
-        } else {
-          Global.chatKeys[chat.conversationID] = chat;
-          Global.chatList.push(chat);
-        }
-      });
-      Global.chatCallEvents.forEach((callEvent, key) => {
-        callEvent.callSuc();
-      });
-      resolve();
+  localDexie.getChatList().then((chats) => {
+    chats.forEach((chat) => {
+      // 如果内存已有该chat，则通过对象合并更新
+      let oldChat = Global.chatKeys[chat.conversationID];
+      if (oldChat) {
+        Object.assign(oldChat, chat);
+      } else {
+        Global.chatKeys[chat.conversationID] = chat;
+        Global.chatList.push(chat);
+      }
+    });
+    Global.sdkState.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;
+    Global.chatCallEvents.forEach((callEvent, key) => {
+      callEvent.callSuc();
     });
   });
 }
