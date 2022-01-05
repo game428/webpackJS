@@ -97,44 +97,30 @@ function syncMsgs(Global, chats) {
 
 // 处理会话列表合并
 function mergeChats(Global, chats, chathistorys) {
-  let deleteSet = new Set();
   let newArr = chats.map((chatItem) => {
     let newChat = tool.formatChat(chatItem, Global.sdkState.uid);
     let conversationID = newChat.conversationID;
-    let oldChat = Global.chatKeys[conversationID];
     if (
       chathistorys?.find((history) => history.conversationID === conversationID)
     ) {
+      let oldChat = Global.chatKeys.get(conversationID);
       getSyncMsgs(Global, oldChat?.msgEnd, newChat);
     }
-    if (!newChat.deleted) {
+    if (newChat.deleted) {
       // 如果内存已有该chat，则通过对象合并更新
-      if (!oldChat) {
-        Global.chatKeys[conversationID] = newChat;
-        Global.chatList.push(newChat);
-      } else {
-        Object.assign(oldChat, newChat);
-      }
-    } else if (oldChat) {
-      deleteSet.add(conversationID);
-      delete Global.chatKeys[conversationID];
+      Global.chatKeys.delete(conversationID);
+    } else {
+      Global.chatKeys.set(conversationID, newChat);
     }
     return newChat;
   });
-  // 如果内存有已删除的会话，则过滤掉
-  if (deleteSet.size > 0) {
-    Global.chatList = Global.chatList.filter(
-      (chat) => !deleteSet.has(chat.conversationID)
-    );
-  }
   if (newArr?.length) {
     localDexie.addChatList(newArr);
   }
-
   Global.handleMessage({
     type: HANDLE_TYPE.SyncChatsChange,
     state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
-    chats: Global.chatList,
+    chats: newArr,
   });
   return newArr;
 }
@@ -251,12 +237,13 @@ function getConversationList(Global, options) {
 
 // 返回获取到的消息列表
 function resultChats(Global, options, resolve) {
-  let chats = tool.sort(Global.chatList, "showMsgTime");
+  let chatList = Array.from(Global.chatKeys.values());
+  let chats = tool.sort(chatList, "showMsgTime");
   if (options?.pageSize > 0) {
     chats = tool.getPageSize(
       options?.conversationID,
       "conversationID",
-      Global.chatList,
+      chats,
       options?.pageSize
     );
   }
@@ -335,13 +322,8 @@ function getConversationProvider(Global, options) {
       });
       return reject(errResult);
     }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        Global.chatKeys,
-        options.conversationID
-      )
-    ) {
-      let newChat = Global.chatKeys[options.conversationID];
+    if (Global.chatKeys.has(options.conversationID)) {
+      let newChat = Global.chatKeys.get(options.conversationID);
       let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
       resolve(result);
     } else {
@@ -407,13 +389,8 @@ function updateConversationProvider(Global, options) {
       });
       return reject(errResult);
     }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        Global.chatKeys,
-        options.conversationID
-      )
-    ) {
-      let newChat = Global.chatKeys[options.conversationID];
+    if (Global.chatKeys.has(options.conversationID)) {
+      let newChat = Global.chatKeys.get(options.conversationID);
       Object.assign(newChat, options);
       let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
       resolve(result);
@@ -444,7 +421,8 @@ function getAllUnreadCount(Global) {
   return new Promise((resolve, reject) => {
     if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
       // 已同步，直接从内存获取
-      let unread = Global.chatList.reduce((pre, cur) => pre + cur.unread, 0);
+      let chatList = Array.from(Global.chatKeys.values());
+      let unread = chatList.reduce((pre, cur) => pre + cur.unread, 0);
       let result = tool.resultSuc(OPERATION_TYPE.GetAllUnread, {
         unread: unread || 0,
       });
@@ -456,10 +434,8 @@ function getAllUnreadCount(Global) {
       Global.chatCallEvents.set(callSign, {
         callSuc: () => {
           Global.chatCallEvents.delete(callSign);
-          let unread = Global.chatList.reduce(
-            (pre, cur) => pre + cur.unread,
-            0
-          );
+          let chatList = Array.from(Global.chatKeys.values());
+          let unread = chatList.reduce((pre, cur) => pre + cur.unread, 0);
           let result = tool.resultSuc(OPERATION_TYPE.GetAllUnread, {
             unread: unread,
           });

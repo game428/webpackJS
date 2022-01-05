@@ -80,10 +80,12 @@ function handleChatChange(options) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncChatsChange, options);
   } else if (options.state === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-    Global.chatList = options.chats;
-    Global.chatKeys = {};
-    Global.chatList.forEach((chat) => {
-      Global.chatKeys[chat.conversationID] = chat;
+    options.chats.forEach((chat) => {
+      if (chat.delete) {
+        Global.chatKeys.delete(chat.conversationID);
+      } else {
+        Global.chatKeys.set(chat.conversationID, chat);
+      }
     });
   }
 
@@ -259,10 +261,13 @@ function instructMsg(msg, resolve) {
     case MSG_TYPE.SysDelete:
       handleSysDeleteMsg(msg, resolve);
       break;
+    case MSG_TYPE.ClickView:
+      handleFlashMsg(msg, resolve);
+      break;
   }
 }
 
-// 处理撤回消息
+// 处理撤回指令
 function handleRevokeMsg(msg, resolve) {
   let newMsg = {
     conversationID: msg.conversationID,
@@ -292,9 +297,7 @@ function handleRevokeMsg(msg, resolve) {
 
 // 处理取消匹配消息
 function handleUnmatchMsg(msg, resolve) {
-  if (
-    Object.prototype.hasOwnProperty.call(Global.chatKeys, msg.conversationID)
-  ) {
+  if (Global.chatKeys.has(msg.conversationID)) {
     if (Global.curTab) {
       localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
         type: HANDLE_TYPE.ChatR,
@@ -323,7 +326,7 @@ function handleSysDeleteMsg(msg, resolve) {
       data: msg,
     });
   }
-  let chat = Global.chatKeys[msg.conversationID];
+  let chat = Global.chatKeys.get(msg.conversationID);
   if (msg.content.includes(chat?.showMsgId)) {
     updateChat({
       conversationID: msg.conversationID,
@@ -337,6 +340,28 @@ function handleSysDeleteMsg(msg, resolve) {
       msgIds: msg.content,
     });
     msim[EVENT.MESSAGE_DELETE](result);
+  }
+  resolve();
+}
+
+// 处理闪照查看指令
+function handleFlashMsg(msg, resolve) {
+  let newMsg = {
+    conversationID: msg.conversationID,
+    msgId: parseInt(msg.text),
+    type: MSG_TYPE.ClickView,
+    fromUid: msg.fromUid,
+  };
+  if (msim[EVENT.MESSAGE_READ]) {
+    let result = tool.resultNotice(EVENT.MESSAGE_READ, [newMsg]);
+    msim[EVENT.MESSAGE_READ](result);
+  }
+  if (Global.curTab) {
+    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReadMsg, {
+      type: HANDLE_TYPE.ChatR,
+      data: msg,
+    });
+    localDexie.updateFlashMsg(newMsg);
   }
   resolve();
 }
@@ -488,16 +513,8 @@ function handleServerUpdate(options, chat) {
     case CHAT_UPDATE_EVENT.Deleted:
       if (options.deleted) {
         newChat.deleted = options.deleted;
-        if (
-          Object.prototype.hasOwnProperty.call(
-            Global.chatKeys,
-            chat.conversationID
-          )
-        ) {
-          delete Global.chatKeys[chat.conversationID];
-          Global.chatList = Global.chatList.filter(
-            (chatItem) => chatItem.conversationID != chat.conversationID
-          );
+        if (Global.chatKeys.has(chat.conversationID)) {
+          Global.chatKeys.delete(chat.conversationID);
         }
       }
       break;
@@ -511,17 +528,11 @@ function handleServerUpdate(options, chat) {
 
 // 更新会话通知
 function updateChatNotice(newChat) {
-  if (
-    Object.prototype.hasOwnProperty.call(
-      Global.chatKeys,
-      newChat.conversationID
-    )
-  ) {
-    let oldChat = Global.chatKeys[newChat.conversationID];
+  if (Global.chatKeys.has(newChat.conversationID)) {
+    let oldChat = Global.chatKeys.get(newChat.conversationID);
     Object.assign(oldChat, newChat);
   } else if (newChat.deleted !== true) {
-    Global.chatKeys[newChat.conversationID] = newChat;
-    Global.chatList.unshift(newChat);
+    Global.chatKeys.set(newChat.conversationID, newChat);
   }
   if (msim[EVENT.CONVERSATION_LIST_UPDATED]) {
     let result = tool.resultNotice(EVENT.CONVERSATION_LIST_UPDATED, [newChat]);

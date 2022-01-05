@@ -349,8 +349,13 @@ function revokeMessage(Global, options) {
     });
     if (Global.curTab) {
       let uid = tool.reformatC2CId(options.conversationID);
-      let msg = proFormat.revokeMsgPro(callSign, uid, options.msgId);
-      sendWsMsg(msg, PID.Revoke);
+      let msg = proFormat.directiveMsgPro({
+        sign: callSign,
+        toUid: uid,
+        type: MSG_TYPE.Recall,
+        msgId: options.msgId,
+      });
+      sendWsMsg(msg, PID.ChatAction);
     } else {
       localNotice.onWebSocketNotice(OPERATION_TYPE.Revoke, {
         callSign: callSign,
@@ -375,6 +380,81 @@ function revokeMsgSuc(Global, options, res, resolve) {
     conversationID: options.conversationID,
     msgId: options.msgId,
     type: MSG_TYPE.Revoked,
+  });
+  resolve(result);
+}
+
+/**
+ * 设置已查看闪照
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话用户id
+ * @param {number} options.msgId - 消息id
+ * @returns {Promise}
+ */
+function readFlashMessage(Global, options) {
+  return new Promise((resolve, reject) => {
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.ReadFlash)) {
+      return;
+    } else if (tool.isNotObject(options, "conversationID", "string")) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.ReadFlash,
+        key: "conversationID",
+      });
+      return reject(errResult);
+    } else if (tool.isNotNumer(options.msgId, true)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.ReadFlash,
+        key: "msgId",
+      });
+      return reject(errResult);
+    }
+    let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
+    tool.createCallEvent(Global, {
+      type: OPERATION_TYPE.ReadFlash,
+      callSign: callSign,
+      callSuc: (res) => {
+        readFlashMsgSuc(Global, options, res, resolve);
+      },
+      callErr: (err) => {
+        let errResult = tool.serverErr(err, OPERATION_TYPE.ReadFlash);
+        reject(errResult);
+      },
+    });
+    if (Global.curTab) {
+      let uid = tool.reformatC2CId(options.conversationID);
+      let msg = proFormat.directiveMsgPro({
+        sign: callSign,
+        toUid: uid,
+        type: MSG_TYPE.ClickView,
+        msgId: options.msgId,
+      });
+      sendWsMsg(msg, PID.ChatAction);
+    } else {
+      localNotice.onWebSocketNotice(OPERATION_TYPE.ReadFlash, {
+        callSign: callSign,
+        tabId: Global.tabId,
+        options: options,
+        state: LOCAL_OPERATION_STATUS.Pending,
+      });
+    }
+  });
+}
+// 测回消息成功回调
+function readFlashMsgSuc(Global, options, res, resolve) {
+  if (Global.curTab) {
+    Global.handleMessage({
+      type: HANDLE_TYPE.ChatR,
+      shift: true,
+      data: res.data,
+    });
+  }
+  let result = tool.resultSuc(OPERATION_TYPE.ReadFlash, {
+    conversationID: options.conversationID,
+    msgId: options.msgId,
+    type: MSG_TYPE.ClickView,
+    fromUid: res.data.fromUid,
   });
   resolve(result);
 }
@@ -442,6 +522,45 @@ function createImageMessage(Global, options) {
     url: options.payload.url,
     width: options.payload.width, //图片的宽度
     height: options.payload.height, //图片的高度
+  });
+  return {
+    code: ERROR_CODE.SUCCESS,
+    message: newMsg,
+  };
+}
+
+/**
+ * 创建闪照消息
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {number} options.to - 接收方用户id
+ * @param {Object} options.payload - 消息内容的容器
+ * @param {string} options.payload.url - 图片网络地址
+ * @param {string} options.payload.width - 图片宽度
+ * @param {string} options.payload.height - 图片高度
+ * @returns {{code: number, message?:Message, msg: string}}}
+ */
+function createFlashMessage(Global, options) {
+  if (!options?.to) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'to' cann't be empty",
+    };
+  }
+  if (!options.payload?.url) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'url' cann't be empty",
+    };
+  }
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
+  Object.assign(newMsg, {
+    type: MSG_TYPE.Flash,
+    url: options.payload.url,
+    width: options.payload.width, //图片的宽度
+    height: options.payload.height, //图片的高度
+    iSee: false,
+    oppositeSee: false,
   });
   return {
     code: ERROR_CODE.SUCCESS,
@@ -521,7 +640,9 @@ export {
   sendMessage,
   resendMessage,
   revokeMessage,
+  readFlashMessage,
   createTextMessage,
   createImageMessage,
+  createFlashMessage,
   createBusinessMessage,
 };

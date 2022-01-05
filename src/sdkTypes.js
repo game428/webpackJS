@@ -27,6 +27,7 @@ const PID = {
   GetCosKey: 21,
   CosKey: 22,
   UpdatePushToken: 23,
+  ChatAction: 39, // 发送指令消息
   ProfileOnline: 50, //50  for demo: 通知客户端用户上线事件
   UsrOffline: 52, //52 for demo：通知客户端用户下线事件
   Signup: 53, //53 for demo：注册新用户
@@ -59,8 +60,9 @@ const LOCAL_MESSAGE_TYPE = {
   Offline: "offline",
   UpdateChat: "updateChat",
   ReceivedMsg: "receivedMessage",
-  NotificationMsg: "notificationMsg",
   DeleteMsg: "deleteMsg",
+  ReadMsg: "readMsg",
+  NotificationMsg: "notificationMsg",
   ErrorType: "errorType",
   SyncChatsChange: "syncChatsChange",
   SyncMsgs: "syncMsgs",
@@ -78,14 +80,25 @@ const LOCAL_OPERATION_TYPE = {
 
 /***
  * 业务操作类型
- * @enum
+ * @param Login - 登录im
+ * @param Logout - 退出im
+ * @param GetChats - 获取会话列表
+ * @param GetChat - 获取指定会话
+ * @param UpdateLocalChat - 更新本地会话信息
+ * @param DelChat - 删除会话
+ * @param GetMsgs - 获取历史消息
+ * @param Read - 设置消息已读
+ * @param Send - 发送消息
+ * @param Resend - 重新发送消息
+ * @param Revoke - 撤回消息
+ * @param GetCosKey - 获取cosKey
+ * @param GetAllUnread - 获取会话未读消息总数
  */
 const OPERATION_TYPE = {
   Login: "login",
   Logout: "logout",
   GetChats: "getConversationList",
   GetChat: "getConversationProvider",
-  GetProfiles: "getProfileList",
   UpdateLocalChat: "updateConversationProvider",
   DelChat: "deleteConversation",
   GetMsgs: "getMessageList",
@@ -93,6 +106,7 @@ const OPERATION_TYPE = {
   Send: "sendMessage",
   Resend: "resendMessage",
   Revoke: "revokeMessage",
+  ReadFlash: "ReadFlashMessage",
   GetCosKey: "getCosKey",
   GetAllUnread: "getAllUnreadCount",
 };
@@ -218,10 +232,12 @@ const ERROR_CODE = {
  * @property {number} Video - 视频
  * @property {number} Location - 地理位置
  * @property {number} Card - 用户名片
+ * @property {number} Flash - 闪照
  * @property {number} Revoked - 已撤回的消息
  * @property {number} Matched - 匹配
  * @property {number} Recall - 撤回指令
  * @property {number} Unmatch - 取消匹配指令
+ * @property {number} ClickView - 闪照点击查看
  * @property {number} Notification - 通知
  */
 const MSG_TYPE = {
@@ -231,12 +247,14 @@ const MSG_TYPE = {
   Video: 3,
   Location: 4,
   Card: 5,
+  Flash: 7,
   Revoked: 31,
   Matched: 33,
   Recall: 64,
   Unmatch: 65,
   SysDelete: 66,
   Deleted: 67,
+  ClickView: 69,
   Notification: 100,
 };
 
@@ -265,6 +283,7 @@ const CHAT_UPDATE_EVENT = {
  * @property {string} MESSAGE_REVOKED - 撤回消息
  * @property {string} MESSAGE_NOTIFICATION - 通知消息
  * @property {string} MESSAGE_DELETE - 删除消息
+ * @property {string} MESSAGE_READ - 已读消息
  * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
  * @property {string} KICKED_OUT - 被踢下线
  * @property {string} TOKEN_NOT_FOUND - token未找到或过期
@@ -278,6 +297,7 @@ const EVENT = {
   MESSAGE_REVOKED: "onRevokedMessage",
   MESSAGE_NOTIFICATION: "onNotificationMessage",
   MESSAGE_DELETE: "onDeleteMessage",
+  MESSAGE_READ: "onReadMessage",
   CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
   KICKED_OUT: "onKickedOut",
   TOKEN_NOT_FOUND: "onTokenNotFound",
@@ -285,17 +305,24 @@ const EVENT = {
 
 /***
  * 处理消息的枚举类型
- * @enum
+ * @param WsStateChange - ws状态变化
+ * @param SyncChatsChange - 同步会话状态变化
+ * @param SyncMsgs - 同步消息处理
+ * @param ImLogin - 登录
+ * @param ImLogout - 退出
+ * @param ChatItemUpdate - 更新会话
+ * @param ResultError - 接收到特殊错误code
+ * @param ChatR - 新消息处理
  */
 const HANDLE_TYPE = {
-  WsStateChange: "WsStateChange", // ws状态变化
-  SyncChatsChange: "SyncChatsChange", // 同步会话状态变化
-  SyncMsgs: "SyncMsgs", // 同步消息处理
-  ImLogin: "ImLogin", // 登录
-  ImLogout: "ImLogout", // 退出
-  ChatItemUpdate: "ChatItemUpdate", // 更新会话
-  ResultError: "ResultError", // 接收到特殊错误code
-  ChatR: "ChatR", // 新消息处理
+  WsStateChange: "WsStateChange",
+  SyncChatsChange: "SyncChatsChange",
+  SyncMsgs: "SyncMsgs",
+  ImLogin: "ImLogin",
+  ImLogout: "ImLogout",
+  ChatItemUpdate: "ChatItemUpdate",
+  ResultError: "ResultError",
+  ChatR: "ChatR",
 };
 
 export {

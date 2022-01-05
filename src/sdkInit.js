@@ -30,8 +30,10 @@ import {
   sendMessage,
   resendMessage,
   revokeMessage,
+  readFlashMessage,
   createTextMessage,
   createImageMessage,
+  createFlashMessage,
   createBusinessMessage,
 } from "./sdkMessages";
 import { on, off, getCosKey } from "./sdkUnits";
@@ -73,6 +75,7 @@ function initSDK() {
     resendMessage: (options) => resendMessage(Global, options),
     revokeMessage: (options) => revokeMessage(Global, options),
     getMessageList: (options) => getMessageList(Global, options),
+    readFlashMessage: (options) => readFlashMessage(Global, options),
     setMessageRead: (options) => setMessageRead(Global, options),
     getConversationList: (options) => getConversationList(Global, options),
     getConversationProvider: (options) =>
@@ -82,6 +85,7 @@ function initSDK() {
     deleteConversation: (options) => deleteConversation(Global, options),
     createTextMessage: (options) => createTextMessage(Global, options),
     createImageMessage: (options) => createImageMessage(Global, options),
+    createFlashMessage: (options) => createFlashMessage(Global, options),
     createBusinessMessage: (options) => createBusinessMessage(Global, options),
     getCosKey: () => getCosKey(Global),
     getAllUnreadCount: () => getAllUnreadCount(Global),
@@ -110,11 +114,11 @@ function initGlobal() {
     callEvents: new Map(), // 异步回调
     chatCallEvents: new Map(), // 会话列表异步回调
     stateCallEvents: new Map(), // 会话列表异步回调
-    chatKeys: {},
-    chatList: [],
+    chatKeys: new Map(), // 本地可显示会话列表
     msgHandleList: [], // 消息处理队列
     handleMsgState: false, // 队列处理状态
     updateTime: null, // 会话更新标记
+    updateTabs: null, // 登录后更新的会话列表
     clearTimer: () => {
       Global.curTab = false;
       if (Global?.heartBeatTimer) clearInterval(Global.heartBeatTimer);
@@ -150,11 +154,11 @@ function clearData(isClearDB) {
   Global.callEvents = new Map();
   Global.chatCallEvents = new Map();
   Global.stateCallEvents = new Map();
-  Global.chatKeys = {};
-  Global.chatList = [];
+  Global.chatKeys = new Map();
   Global.msgHandleList = [];
   Global.handleMsgState = false;
   Global.updateTime = null;
+  Global.updateTabs = null;
 }
 
 /**
@@ -251,12 +255,11 @@ function initChats() {
   localDexie.getChatList().then((chats) => {
     chats.forEach((chat) => {
       // 如果内存已有该chat，则通过对象合并更新
-      let oldChat = Global.chatKeys[chat.conversationID];
+      let oldChat = Global.chatKeys.get(chat.conversationID);
       if (oldChat) {
         Object.assign(oldChat, chat);
       } else {
-        Global.chatKeys[chat.conversationID] = chat;
-        Global.chatList.push(chat);
+        Global.chatKeys.set(chat.conversationID, chat);
       }
     });
     Global.sdkState.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;

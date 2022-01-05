@@ -115,8 +115,8 @@ function emptyTip(key) {
 }
 
 // 生成onlyId
-function createOnlyId(conversationID, sign) {
-  return `${conversationID}_${sign}`;
+function createOnlyId(conversationID, fromUid, sign) {
+  return `${conversationID}_${fromUid}_${sign}`;
 }
 
 // 生成sign
@@ -174,7 +174,7 @@ function msgBase(toUid, fromUid) {
   let time = new Date().getTime();
   let sign = createSign(time);
   let conversationID = splicingC2CId(toUid);
-  let onlyId = createOnlyId(conversationID, sign);
+  let onlyId = createOnlyId(conversationID, fromUid, sign);
   return {
     onlyId: onlyId,
     conversationID: conversationID,
@@ -193,7 +193,7 @@ function splicingC2CId(uid) {
 
 // 反格式化单聊conversationID
 function reformatC2CId(conversationID) {
-  return conversationID.slice(4);
+  return parseInt(conversationID.slice(4));
 }
 
 // 把消息转为本地格式
@@ -209,15 +209,10 @@ function formatMsg(msg, conversationID) {
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   };
   newMsg.onlyId =
-    msg.onlyId || createOnlyId(conversationID, msg.sign || msg.msgTime);
+    msg.onlyId ||
+    createOnlyId(conversationID, msg.fromUid, msg.sign || msg.msgTime);
   newMsg.showMsgTime = parseInt(msg.msgTime / 1000) || msg.showMsgTime;
   switch (newMsg.type) {
-    case MSG_TYPE.Recall:
-      newMsg.text = msg.body;
-      break;
-    case MSG_TYPE.Revoked:
-      newMsg.text = msg.body;
-      break;
     case MSG_TYPE.Text:
       newMsg.text = msg.body;
       break;
@@ -242,6 +237,25 @@ function formatMsg(msg, conversationID) {
       newMsg.lat = msg.lat;
       newMsg.lng = msg.lng;
       newMsg.zoom = msg.zoom;
+      break;
+    case MSG_TYPE.Flash:
+      newMsg.url = msg.body;
+      newMsg.height = msg.height;
+      newMsg.width = msg.width;
+      if (msg.lat || msg.lng) {
+        newMsg.fromRead = msg.lat === msg.fromUid || msg.lng === msg.fromUid;
+        newMsg.toRead = msg.lat === msg.toUid || msg.lng === msg.toUid;
+      } else {
+        newMsg.toRead = false;
+        newMsg.fromRead = false;
+      }
+      break;
+    case MSG_TYPE.Revoked:
+      newMsg.text = msg.body;
+      break;
+    case MSG_TYPE.Recall:
+    case MSG_TYPE.ClickView:
+      newMsg.text = msg.body;
       break;
     default:
       newMsg.content = msg.body;
@@ -333,6 +347,7 @@ function formatBody(Global, msgObj, reject) {
         body = msgObj.text;
         break;
       case MSG_TYPE.Img:
+      case MSG_TYPE.Flash:
         if (isNotHttp(msgObj.url)) {
           errResult = parameterErr({
             name: OPERATION_TYPE.Send,

@@ -3410,4 +3410,253 @@ $root.UpdatePushToken = (function() {
     return UpdatePushToken;
 })();
 
+$root.ChatAction = (function() {
+
+    function ChatAction(properties) {
+        this.uids = [];
+        this.msgs = [];
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    ChatAction.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ChatAction.prototype.type = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ChatAction.prototype.toUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ChatAction.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ChatAction.prototype.uids = $util.emptyArray;
+    ChatAction.prototype.msgs = $util.emptyArray;
+    ChatAction.prototype.data = "";
+
+    ChatAction.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+            writer.uint32(16).int64(message.type);
+        if (message.toUid != null && Object.hasOwnProperty.call(message, "toUid"))
+            writer.uint32(24).int64(message.toUid);
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(32).int64(message.msgId);
+        if (message.uids != null && message.uids.length) {
+            writer.uint32(42).fork();
+            for (var i = 0; i < message.uids.length; ++i)
+                writer.int64(message.uids[i]);
+            writer.ldelim();
+        }
+        if (message.msgs != null && message.msgs.length) {
+            writer.uint32(50).fork();
+            for (var i = 0; i < message.msgs.length; ++i)
+                writer.int64(message.msgs[i]);
+            writer.ldelim();
+        }
+        if (message.data != null && Object.hasOwnProperty.call(message, "data"))
+            writer.uint32(58).string(message.data);
+        return writer;
+    };
+
+    ChatAction.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ChatAction();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                message.type = reader.int64();
+                break;
+            case 3:
+                message.toUid = reader.int64();
+                break;
+            case 4:
+                message.msgId = reader.int64();
+                break;
+            case 5:
+                if (!(message.uids && message.uids.length))
+                    message.uids = [];
+                if ((tag & 7) === 2) {
+                    var end2 = reader.uint32() + reader.pos;
+                    while (reader.pos < end2)
+                        message.uids.push(reader.int64());
+                } else
+                    message.uids.push(reader.int64());
+                break;
+            case 6:
+                if (!(message.msgs && message.msgs.length))
+                    message.msgs = [];
+                if ((tag & 7) === 2) {
+                    var end2 = reader.uint32() + reader.pos;
+                    while (reader.pos < end2)
+                        message.msgs.push(reader.int64());
+                } else
+                    message.msgs.push(reader.int64());
+                break;
+            case 7:
+                message.data = reader.string();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    ChatAction.fromObject = function fromObject(object) {
+        if (object instanceof $root.ChatAction)
+            return object;
+        var message = new $root.ChatAction();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.type != null)
+            if ($util.Long)
+                (message.type = $util.Long.fromValue(object.type)).unsigned = false;
+            else if (typeof object.type === "string")
+                message.type = parseInt(object.type, 10);
+            else if (typeof object.type === "number")
+                message.type = object.type;
+            else if (typeof object.type === "object")
+                message.type = new $util.LongBits(object.type.low >>> 0, object.type.high >>> 0).toNumber();
+        if (object.toUid != null)
+            if ($util.Long)
+                (message.toUid = $util.Long.fromValue(object.toUid)).unsigned = false;
+            else if (typeof object.toUid === "string")
+                message.toUid = parseInt(object.toUid, 10);
+            else if (typeof object.toUid === "number")
+                message.toUid = object.toUid;
+            else if (typeof object.toUid === "object")
+                message.toUid = new $util.LongBits(object.toUid.low >>> 0, object.toUid.high >>> 0).toNumber();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.uids) {
+            if (!Array.isArray(object.uids))
+                throw TypeError(".ChatAction.uids: array expected");
+            message.uids = [];
+            for (var i = 0; i < object.uids.length; ++i)
+                if ($util.Long)
+                    (message.uids[i] = $util.Long.fromValue(object.uids[i])).unsigned = false;
+                else if (typeof object.uids[i] === "string")
+                    message.uids[i] = parseInt(object.uids[i], 10);
+                else if (typeof object.uids[i] === "number")
+                    message.uids[i] = object.uids[i];
+                else if (typeof object.uids[i] === "object")
+                    message.uids[i] = new $util.LongBits(object.uids[i].low >>> 0, object.uids[i].high >>> 0).toNumber();
+        }
+        if (object.msgs) {
+            if (!Array.isArray(object.msgs))
+                throw TypeError(".ChatAction.msgs: array expected");
+            message.msgs = [];
+            for (var i = 0; i < object.msgs.length; ++i)
+                if ($util.Long)
+                    (message.msgs[i] = $util.Long.fromValue(object.msgs[i])).unsigned = false;
+                else if (typeof object.msgs[i] === "string")
+                    message.msgs[i] = parseInt(object.msgs[i], 10);
+                else if (typeof object.msgs[i] === "number")
+                    message.msgs[i] = object.msgs[i];
+                else if (typeof object.msgs[i] === "object")
+                    message.msgs[i] = new $util.LongBits(object.msgs[i].low >>> 0, object.msgs[i].high >>> 0).toNumber();
+        }
+        if (object.data != null)
+            message.data = String(object.data);
+        return message;
+    };
+
+    ChatAction.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.arrays || options.defaults) {
+            object.uids = [];
+            object.msgs = [];
+        }
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.type = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.type = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.toUid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.toUid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.data = "";
+        }
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.type != null && message.hasOwnProperty("type"))
+            if (typeof message.type === "number")
+                object.type = options.longs === String ? String(message.type) : message.type;
+            else
+                object.type = options.longs === String ? $util.Long.prototype.toString.call(message.type) : options.longs === Number ? new $util.LongBits(message.type.low >>> 0, message.type.high >>> 0).toNumber() : message.type;
+        if (message.toUid != null && message.hasOwnProperty("toUid"))
+            if (typeof message.toUid === "number")
+                object.toUid = options.longs === String ? String(message.toUid) : message.toUid;
+            else
+                object.toUid = options.longs === String ? $util.Long.prototype.toString.call(message.toUid) : options.longs === Number ? new $util.LongBits(message.toUid.low >>> 0, message.toUid.high >>> 0).toNumber() : message.toUid;
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.uids && message.uids.length) {
+            object.uids = [];
+            for (var j = 0; j < message.uids.length; ++j)
+                if (typeof message.uids[j] === "number")
+                    object.uids[j] = options.longs === String ? String(message.uids[j]) : message.uids[j];
+                else
+                    object.uids[j] = options.longs === String ? $util.Long.prototype.toString.call(message.uids[j]) : options.longs === Number ? new $util.LongBits(message.uids[j].low >>> 0, message.uids[j].high >>> 0).toNumber() : message.uids[j];
+        }
+        if (message.msgs && message.msgs.length) {
+            object.msgs = [];
+            for (var j = 0; j < message.msgs.length; ++j)
+                if (typeof message.msgs[j] === "number")
+                    object.msgs[j] = options.longs === String ? String(message.msgs[j]) : message.msgs[j];
+                else
+                    object.msgs[j] = options.longs === String ? $util.Long.prototype.toString.call(message.msgs[j]) : options.longs === Number ? new $util.LongBits(message.msgs[j].low >>> 0, message.msgs[j].high >>> 0).toNumber() : message.msgs[j];
+        }
+        if (message.data != null && message.hasOwnProperty("data"))
+            object.data = message.data;
+        return object;
+    };
+
+    ChatAction.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return ChatAction;
+})();
+
 module.exports = $root;

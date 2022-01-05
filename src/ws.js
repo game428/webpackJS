@@ -142,6 +142,7 @@ function onMessage(evt) {
       to: "Uint8Array",
     });
   }
+  // console.log(pid, "收到");
   result = new Uint8Array(result);
   switch (pid) {
     case PID.Result:

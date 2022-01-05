@@ -188,7 +188,7 @@ function connClose(Global, wsOptions, err) {
     type: HANDLE_TYPE.WsStateChange,
     state: WS_STATE.NET_STATE_DISCONNECTED,
   });
-  console.warn("连接失败回调");
+  console.warn("连接失败回调", JSON.stringify(Global.sdkState));
   if (wsOptions.isReconect !== true && wsOptions.reject) {
     let errResult = tool.resultErr(
       "Failed to establish websocket connection",

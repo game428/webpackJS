@@ -70,7 +70,6 @@ function watchStorage(storage, msim, Global) {
     let localObj = isJSON(storage.newValue);
     if (localObj.tabId === Global.tabId) {
       window.localStorage.removeItem("im_setSdkState");
-
       Global.stateCallEvents.forEach((callEvent, key) => {
         callEvent.callSuc(localObj.sdkState);
       });

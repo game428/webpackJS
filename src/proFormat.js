@@ -7,8 +7,8 @@ import {
   GetChat,
   DelChat,
   GetHistory,
+  ChatAction,
   ChatS,
-  Revoke,
   MsgRead,
 } from "./proto.js";
 import pako from "pako";
@@ -153,20 +153,6 @@ function sendMsgPro(options) {
 }
 
 /***
- * 撤回消息
- * @param {number} sign
- * @param {number} uid 会话id
- * @param {number} [msgId] 撤回的消息id
- * @returns {Uint8Array} 二进制数据
- */
-function revokeMsgPro(sign, uid, msgId) {
-  let bytes = Revoke.encode(
-    Revoke.fromObject({ sign: sign, toUid: uid, msgId: msgId })
-  ).finish();
-  return bytes;
-}
-
-/***
  * 设置已读
  * @param {number} sign
  * @param {number} uid 会话id
@@ -179,6 +165,20 @@ function readMsgPro(sign, uid) {
   return bytes;
 }
 
+/***
+ * 发送指令消息
+ * @param {Object} options
+ * @param {number} options.sign
+ * @param {number} options.type 指令的类型
+ * @param {number} options.toUid 消息接收方id
+ * @param {number} options.msgId 撤回的消息id
+ * @returns {Uint8Array} 二进制数据
+ */
+function directiveMsgPro(options) {
+  let bytes = ChatAction.encode(ChatAction.fromObject(options)).finish();
+  return bytes;
+}
+
 let proFormat = {
   compress,
   loginPro,
@@ -188,10 +188,10 @@ let proFormat = {
   pingPro,
   getMsgPro,
   sendMsgPro,
-  revokeMsgPro,
   readMsgPro,
   chatPro,
   cosPro,
+  directiveMsgPro,
 };
 
 export default proFormat;

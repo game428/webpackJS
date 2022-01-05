@@ -3,7 +3,6 @@ import Dexie from "dexie";
 const DBName = "imWsDB";
 var db = null;
 let version = 1;
-let storageSdkInfo = "im_msimSdkInfo";
 let storageChatHistory = "im_chatHistory";
 let storageChatList = "im_chatList";
 let chatKeys = [
@@ -49,6 +48,8 @@ let msgKeys = [
   "lat", // 纬度
   "lng", // 经度
   "zoom", // 地图缩放层级
+  "toRead", // 接收方是否已查看
+  "fromRead", // 发送方是否已查看
   "content", // 未定义type，传输的body
   "sput", // sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
   "newMsg", //是否显示 new message
@@ -70,11 +71,6 @@ function toRawType(value) {
 }
 function defaultStorage(key, storage) {
   switch (key) {
-    case storageSdkInfo:
-      if (toRawType(storage) !== "Object") {
-        storage = null;
-      }
-      break;
     case storageChatHistory:
     case storageChatList:
       if (toRawType(storage) !== "Array") {
@@ -127,7 +123,6 @@ localDexie.initDB = function(callback) {
 // 删除数据库
 localDexie.deleteDB = function() {
   Dexie.delete(DBName);
-  window.localStorage.removeItem(storageSdkInfo);
   window.localStorage.removeItem(storageChatHistory);
   window.localStorage.removeItem(storageChatList);
 };
@@ -141,7 +136,6 @@ localDexie.clear = function() {
       });
     });
   } else {
-    window.localStorage.removeItem(storageSdkInfo);
     window.localStorage.removeItem(storageChatHistory);
     window.localStorage.removeItem(storageChatList);
   }
@@ -277,6 +271,26 @@ localDexie.updateMsg = function(msg) {
       msgId: msg.msgId,
     })
     .modify(msg);
+};
+// 闪照状态更改
+localDexie.updateFlashMsg = (options) => {
+  if (db?.isOpen && db.isOpen()) {
+    db.msgList
+      .get({
+        conversationID: options.conversationID,
+        msgId: options.msgId,
+      })
+      .then((msg) => {
+        if (!msg) return;
+        let updateData = {};
+        if (msg.fromUid === options.fromUid) {
+          updateData.fromRead = true;
+        } else if (msg.toUid === options.fromUid) {
+          updateData.toRead = true;
+        }
+        db.msgList.update(msg.onlyId, updateData);
+      });
+  }
 };
 
 // 删除
