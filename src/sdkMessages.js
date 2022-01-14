@@ -32,7 +32,11 @@ function getMessageList(Global, options) {
         key: "conversationID",
       });
       return reject(errResult);
-    } else if (options.pageSize && options.pageSize > Global.maxMsgPageSize) {
+    } else if (
+      options.pageSize &&
+      (options.pageSize > Global.maxMsgPageSize ||
+        tool.isNotNumer(options?.pageSize))
+    ) {
       let errResult = tool.parameterErr({
         name: OPERATION_TYPE.GetMsgs,
         msg: `The maximum number of entries cannot exceed ${Global.maxMsgPageSize}`,
@@ -244,64 +248,6 @@ function sendMsgSuc(Global, msgObj, res, resolve) {
     });
   }
   let result = tool.resultSuc(OPERATION_TYPE.Send, {
-    conversationID: msgObj.conversationID,
-    msgId: res.data.msgId,
-    sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
-  });
-  resolve(result);
-}
-
-/**
- * 重发消息
- * @memberof SDK
- * @param {Msg} msgObj - 消息对象
- * @returns {Promise}
- */
-function resendMessage(Global, msgObj) {
-  return new Promise((resolve, reject) => {
-    let body = tool.formatBody(Global, msgObj, reject);
-    if (body === false) return;
-    let callSign = tool.createSign(msgObj.showMsgTime);
-    Global.callEvents.has(callSign) && (callSign += 1);
-    tool.createCallEvent(Global, {
-      type: OPERATION_TYPE.Resend,
-      callSign: callSign,
-      callSuc: (res) => {
-        resendMsgSuc(Global, msgObj, res, resolve);
-      },
-      callErr: (err) => {
-        let errResult = tool.serverErr(err, OPERATION_TYPE.Resend);
-        reject(errResult);
-      },
-    });
-    if (Global.curTab) {
-      let msg = proFormat.sendMsgPro({ ...msgObj, sign: callSign, body });
-      sendWsMsg(msg, PID.ChatS);
-    } else {
-      localNotice.onWebSocketNotice(OPERATION_TYPE.Resend, {
-        callSign: callSign,
-        tabId: Global.tabId,
-        options: msgObj,
-        state: LOCAL_OPERATION_STATUS.Pending,
-      });
-    }
-  });
-}
-
-// 重发消息成功回调
-function resendMsgSuc(Global, msgObj, res, resolve) {
-  if (Global.curTab) {
-    let newMsg = JSON.parse(JSON.stringify(msgObj));
-    newMsg.msgId = res.data.msgId;
-    newMsg.msgTime = res.data.msgTime;
-    newMsg.sendStatus = SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
-    Global.handleMessage({
-      type: HANDLE_TYPE.ChatR,
-      shift: true,
-      data: newMsg,
-    });
-  }
-  let result = tool.resultSuc(OPERATION_TYPE.Resend, {
     conversationID: msgObj.conversationID,
     msgId: res.data.msgId,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
@@ -638,7 +584,6 @@ export {
   getMessageList,
   setMessageRead,
   sendMessage,
-  resendMessage,
   revokeMessage,
   readFlashMessage,
   createTextMessage,

@@ -213,7 +213,10 @@ function loginIm(Global, wsOptions) {
       },
       callErr: (err) => {
         // 可能出现code 9 11
-        closeWs();
+        console.log("login err", err);
+        if (!wsOptions.isReconect) {
+          closeWs();
+        }
         if (wsOptions.isReconect && err?.code === ERROR_CODE.NO_REGISTER) {
           wsConfig.Global.handleMessage({
             type: HANDLE_TYPE.ResultError,

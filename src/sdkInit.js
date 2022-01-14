@@ -28,7 +28,6 @@ import {
   getMessageList,
   setMessageRead,
   sendMessage,
-  resendMessage,
   revokeMessage,
   readFlashMessage,
   createTextMessage,
@@ -71,8 +70,11 @@ function initSDK() {
   let msimSdk = {
     login: (options) => login(Global, options),
     logout: () => logout(Global),
+    createTextMessage: (options) => createTextMessage(Global, options),
+    createImageMessage: (options) => createImageMessage(Global, options),
+    createFlashMessage: (options) => createFlashMessage(Global, options),
+    createBusinessMessage: (options) => createBusinessMessage(Global, options),
     sendMessage: (options) => sendMessage(Global, options),
-    resendMessage: (options) => resendMessage(Global, options),
     revokeMessage: (options) => revokeMessage(Global, options),
     getMessageList: (options) => getMessageList(Global, options),
     readFlashMessage: (options) => readFlashMessage(Global, options),
@@ -83,12 +85,8 @@ function initSDK() {
     updateConversationProvider: (options) =>
       updateConversationProvider(Global, options),
     deleteConversation: (options) => deleteConversation(Global, options),
-    createTextMessage: (options) => createTextMessage(Global, options),
-    createImageMessage: (options) => createImageMessage(Global, options),
-    createFlashMessage: (options) => createFlashMessage(Global, options),
-    createBusinessMessage: (options) => createBusinessMessage(Global, options),
-    getCosKey: () => getCosKey(Global),
     getAllUnreadCount: () => getAllUnreadCount(Global),
+    getCosKey: () => getCosKey(Global),
     on: (eventName, callback) => on(msimSdk, eventName, callback),
     off: (eventName) => off(msimSdk, eventName),
   };
@@ -102,7 +100,7 @@ let Global = null;
 // 初始化Global
 function initGlobal() {
   Global = {
-    timeOut: 20000,
+    timeOut: 30000,
     tabId: Global?.tabId,
     curTab: false, // 是否是当前连接的tab
     chatPageSize: 20,

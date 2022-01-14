@@ -173,9 +173,6 @@ function createPromise(type, msim, localObj) {
     case OPERATION_TYPE.Send:
       promise = msim.sendMessage(localObj.options);
       break;
-    case OPERATION_TYPE.Resend:
-      promise = msim.resendMessage(localObj.options);
-      break;
     case OPERATION_TYPE.Revoke:
       promise = msim.revokeMessage(localObj.options);
       break;

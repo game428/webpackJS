@@ -89,7 +89,6 @@ const LOCAL_OPERATION_TYPE = {
  * @param GetMsgs - 获取历史消息
  * @param Read - 设置消息已读
  * @param Send - 发送消息
- * @param Resend - 重新发送消息
  * @param Revoke - 撤回消息
  * @param GetCosKey - 获取cosKey
  * @param GetAllUnread - 获取会话未读消息总数
@@ -104,7 +103,6 @@ const OPERATION_TYPE = {
   GetMsgs: "getMessageList",
   Read: "setMessageRead",
   Send: "sendMessage",
-  Resend: "resendMessage",
   Revoke: "revokeMessage",
   ReadFlash: "ReadFlashMessage",
   GetCosKey: "getCosKey",
@@ -237,7 +235,9 @@ const ERROR_CODE = {
  * @property {number} Matched - 匹配
  * @property {number} Recall - 撤回指令
  * @property {number} Unmatch - 取消匹配指令
- * @property {number} ClickView - 闪照点击查看
+ * @property {number} Deleted - 已删除的消息
+ * @property {number} SysDelete - 删除指令
+ * @property {number} ClickView - 闪照点击查看指令
  * @property {number} Notification - 通知
  */
 const MSG_TYPE = {
@@ -281,9 +281,9 @@ const CHAT_UPDATE_EVENT = {
  * @property {string} SYNC_CHATS_CHANGE - 同步会话状态通知
  * @property {string} MESSAGE_RECEIVED - 接收消息监听
  * @property {string} MESSAGE_REVOKED - 撤回消息
- * @property {string} MESSAGE_NOTIFICATION - 通知消息
  * @property {string} MESSAGE_DELETE - 删除消息
  * @property {string} MESSAGE_READ - 已读消息
+ * @property {string} MESSAGE_NOTIFICATION - 通知消息
  * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
  * @property {string} KICKED_OUT - 被踢下线
  * @property {string} TOKEN_NOT_FOUND - token未找到或过期
@@ -295,9 +295,9 @@ const EVENT = {
   SYNC_CHATS_CHANGE: "onSyncChatsChange",
   MESSAGE_RECEIVED: "onReceivedMessage",
   MESSAGE_REVOKED: "onRevokedMessage",
-  MESSAGE_NOTIFICATION: "onNotificationMessage",
   MESSAGE_DELETE: "onDeleteMessage",
   MESSAGE_READ: "onReadMessage",
+  MESSAGE_NOTIFICATION: "onNotificationMessage",
   CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
   KICKED_OUT: "onKickedOut",
   TOKEN_NOT_FOUND: "onTokenNotFound",

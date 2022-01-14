@@ -15,6 +15,7 @@ let wsConfig = {
   ws: null,
   Global: null,
   heartRate: 30000, // 心跳检查时间
+  maxReconnectTime: 15000, // 最大重连间隔时间
   heartBeatTime: null, // 上次发送消息时间
   reconnectNum: 0, // 重连间隔时间
   closeState: false, // 关闭重连
@@ -125,8 +126,10 @@ function reconnect(wsOptions) {
   wsConfig.reconnectTimer = setTimeout(function() {
     if (wsConfig.reconnectNum === 0) {
       wsConfig.reconnectNum = 250;
-    } else {
+    } else if (wsConfig.reconnectNum <= wsConfig.maxReconnectTime / 2) {
       wsConfig.reconnectNum *= 2;
+    } else {
+      wsConfig.reconnectNum = wsConfig.maxReconnectTime;
     }
     createWs(wsOptions);
     wsConfig.wsStatus = false;
