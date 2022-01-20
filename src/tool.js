@@ -3,8 +3,9 @@ import {
   MSG_TYPE,
   ERROR_CODE,
   SEND_STATE,
-  OPERATION_TYPE,
+  GROUP_TYPE,
   IM_LOGIN_STATE,
+  OPERATION_TYPE,
 } from "./sdkTypes.js";
 
 // 按时间排序
@@ -170,20 +171,27 @@ function resultNotice(name, data, code) {
 }
 
 // 创建消息基础属性
-function msgBase(toUid, fromUid) {
-  let time = new Date().getTime();
-  let sign = createSign(time);
-  let conversationID = splicingC2CId(toUid);
-  let onlyId = createOnlyId(conversationID, fromUid, sign);
-  return {
-    onlyId: onlyId,
-    conversationID: conversationID,
-    toUid: toUid,
+function msgBase(toUid, fromUid, gtype) {
+  let time = Date.now();
+  let msg = {
     fromUid: fromUid,
     msgId: 0,
+    toUid: toUid,
+    gtype: gtype,
     showMsgTime: time,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SENDING,
   };
+  switch (gtype) {
+    case GROUP_TYPE.ChatRoom:
+      msg.conversationID = splicingGroupId(toUid);
+      break;
+    default:
+      msg.conversationID = splicingC2CId(toUid);
+      break;
+  }
+  let sign = createSign(time);
+  msg.onlyId = createOnlyId(msg.conversationID, fromUid, sign);
+  return msg;
 }
 
 // 拼接单聊conversationID
@@ -193,7 +201,12 @@ function splicingC2CId(uid) {
 
 // 反格式化单聊conversationID
 function reformatC2CId(conversationID) {
-  return parseInt(conversationID.slice(4));
+  return conversationID.slice(4);
+}
+
+// 拼接群聊conversationID
+function splicingGroupId(groupId) {
+  return "GROUP_" + groupId;
 }
 
 // 把消息转为本地格式
@@ -201,18 +214,31 @@ function formatMsg(msg, conversationID) {
   let newMsg = {
     conversationID: conversationID,
     fromUid: msg.fromUid,
-    toUid: msg.toUid,
+    toUid: msg.toUid || msg.id,
     type: msg.type,
     msgId: msg.msgId,
-    newMsg: msg.newMsg,
     msgTime: msg.msgTime,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   };
+  if (msg.hasOwnProperty("gtype")) {
+    newMsg.gtype = msg.gtype;
+  }
   newMsg.onlyId =
     msg.onlyId ||
     createOnlyId(conversationID, msg.fromUid, msg.sign || msg.msgTime);
   newMsg.showMsgTime = parseInt(msg.msgTime / 1000) || msg.showMsgTime;
-  switch (newMsg.type) {
+  addMsgContent(msg, newMsg);
+  return newMsg;
+}
+
+function addMsgContent(msg, newMsg) {
+  switch (msg.type) {
+    case MSG_TYPE.Recall:
+      newMsg.text = msg.body;
+      break;
+    case MSG_TYPE.Revoked:
+      newMsg.text = msg.body;
+      break;
     case MSG_TYPE.Text:
       newMsg.text = msg.body;
       break;
@@ -238,25 +264,6 @@ function formatMsg(msg, conversationID) {
       newMsg.lng = msg.lng;
       newMsg.zoom = msg.zoom;
       break;
-    case MSG_TYPE.Flash:
-      newMsg.url = msg.body;
-      newMsg.height = msg.height;
-      newMsg.width = msg.width;
-      if (msg.lat || msg.lng) {
-        newMsg.fromRead = msg.lat === msg.fromUid || msg.lng === msg.fromUid;
-        newMsg.toRead = msg.lat === msg.toUid || msg.lng === msg.toUid;
-      } else {
-        newMsg.toRead = false;
-        newMsg.fromRead = false;
-      }
-      break;
-    case MSG_TYPE.Revoked:
-      newMsg.text = msg.body;
-      break;
-    case MSG_TYPE.Recall:
-    case MSG_TYPE.ClickView:
-      newMsg.text = msg.body;
-      break;
     default:
       newMsg.content = msg.body;
       newMsg.title = msg.title;
@@ -269,7 +276,6 @@ function formatMsg(msg, conversationID) {
       newMsg.duration = msg.duration;
       break;
   }
-  return newMsg;
 }
 
 // 把会话转为本地格式
@@ -347,7 +353,6 @@ function formatBody(Global, msgObj, reject) {
         body = msgObj.text;
         break;
       case MSG_TYPE.Img:
-      case MSG_TYPE.Flash:
         if (isNotHttp(msgObj.url)) {
           errResult = parameterErr({
             name: OPERATION_TYPE.Send,
@@ -378,7 +383,6 @@ function formatBody(Global, msgObj, reject) {
     return body;
   }
 }
-
 export default {
   getPageSize,
   sort,
@@ -400,6 +404,7 @@ export default {
   msgBase,
   splicingC2CId,
   reformatC2CId,
+  splicingGroupId,
   formatMsg,
   formatChat,
   emptyTip,

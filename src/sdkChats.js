@@ -8,7 +8,7 @@ import {
   OPERATION_TYPE,
   LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
-import proFormat from "./proFormat";
+import proFormat from "./google/proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
@@ -107,7 +107,6 @@ function mergeChats(Global, chats, chathistorys) {
       getSyncMsgs(Global, oldChat?.msgEnd, newChat);
     }
     if (newChat.deleted) {
-      // 如果内存已有该chat，则通过对象合并更新
       Global.chatKeys.delete(conversationID);
     } else {
       Global.chatKeys.set(conversationID, newChat);
@@ -237,8 +236,7 @@ function getConversationList(Global, options) {
 
 // 返回获取到的消息列表
 function resultChats(Global, options, resolve) {
-  let chatList = Array.from(Global.chatKeys.values());
-  let chats = tool.sort(chatList, "showMsgTime");
+  let chats = tool.sort(Array.from(Global.chatKeys.values()), "showMsgTime");
   if (options?.pageSize > 0) {
     chats = tool.getPageSize(
       options?.conversationID,

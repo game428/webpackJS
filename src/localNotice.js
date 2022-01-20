@@ -78,7 +78,7 @@ function watchStorage(storage, msim, Global) {
 
   // 更新tabs
   if (
-    storage.key.indexOf("im_update_tabs_") === 0 &&
+    storage.key.startsWith("im_update_tabs_") &&
     Global.curTab &&
     Global.updateTabs
   ) {
@@ -94,14 +94,14 @@ function watchStorage(storage, msim, Global) {
   }
 
   // 处理onMessage通知
-  if (storage.key.indexOf(LOCAL_OPERATION_TYPE.Message) === 0) {
+  if (storage.key.startsWith(LOCAL_OPERATION_TYPE.Message)) {
     let localObj = JSON.parse(storage.newValue);
     Global.handleMessage(localObj);
     return;
   }
 
   // 接收到ws操作通知
-  if (storage.key.indexOf(LOCAL_OPERATION_TYPE.WS) === 0) {
+  if (storage.key.startsWith(LOCAL_OPERATION_TYPE.WS)) {
     handleWSNotice(storage, msim, Global);
     return;
   }
@@ -112,9 +112,9 @@ function noticeCall(key, Global, localObj) {
   removeLocal(key);
   let callEvent = Global.callEvents.get(localObj.callSign);
   if (localObj.state === LOCAL_OPERATION_STATUS.Fulfilled) {
-    callEvent && callEvent.callSuc(localObj);
+    callEvent?.callSuc && callEvent.callSuc(localObj);
   } else if (localObj.state === LOCAL_OPERATION_STATUS.Rejected) {
-    callEvent && callEvent.callErr(localObj.err);
+    callEvent?.callErr && callEvent.callErr(localObj.err);
   }
 }
 
@@ -171,13 +171,37 @@ function createPromise(type, msim, localObj) {
       promise = msim.setMessageRead(localObj.options);
       break;
     case OPERATION_TYPE.Send:
-      promise = msim.sendMessage(localObj.options);
+      promise = msim.sendMessage(localObj.msgObj, localObj.options);
       break;
     case OPERATION_TYPE.Revoke:
       promise = msim.revokeMessage(localObj.options);
       break;
     case OPERATION_TYPE.GetCosKey:
       promise = msim.getCosKey();
+      break;
+    case OPERATION_TYPE.JoinChatRoom:
+      promise = msim.joinChatRoom(localObj.options);
+      break;
+    case OPERATION_TYPE.GetRoomMsgs:
+      promise = msim.getRoomMsgs(localObj.options);
+      break;
+    case OPERATION_TYPE.LeaveChatRoom:
+      promise = msim.leaveChatRoom(localObj.options);
+      break;
+    case OPERATION_TYPE.ChatRoomTod:
+      promise = msim.editChatRoomTOD(localObj.options);
+      break;
+    case OPERATION_TYPE.MuteMembers:
+      promise = msim.muteMembers(localObj.options);
+      break;
+    case OPERATION_TYPE.MuteChatRoom:
+      promise = msim.muteChatRoom(localObj.options);
+      break;
+    case OPERATION_TYPE.EditManager:
+      promise = msim.editChatRoomManagerAccess(localObj.options);
+      break;
+    case OPERATION_TYPE.DeleteChatRoomMsgs:
+      promise = msim.deleteChatRoomMsgs(localObj.options);
       break;
     default:
       promise = false;

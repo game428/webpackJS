@@ -8,9 +8,10 @@ import {
   OPERATION_TYPE,
   IM_LOGIN_STATE,
 } from "./sdkTypes";
-import proFormat from "./proFormat";
+import proFormat from "./google/proFormat";
 import { connectWs, closeWs, sendWsMsg } from "./ws";
 import { syncChats } from "./sdkChats";
+import { reconnectionChatRoom } from "./sdkChatRoom";
 
 /**
  * 登录
@@ -79,7 +80,7 @@ function getSdkState(Global) {
 
 function handleLogin(Global, config, resolve, reject) {
   getSdkState(Global).then((info) => {
-    if (!info.loginState || info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
+    if (info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
       Global.clearData(true);
       loginWs(Global, config, resolve, reject);
     } else if (info?.imToken !== config.imToken) {
@@ -173,6 +174,7 @@ function connSuc(Global, wsOptions) {
           });
         }, 0);
       } else {
+        if (Global.chatRoomInfo) reconnectionChatRoom(Global);
         Global.sdkState.uid = res.data.uid;
       }
       syncChats(Global);
@@ -188,7 +190,7 @@ function connClose(Global, wsOptions, err) {
     type: HANDLE_TYPE.WsStateChange,
     state: WS_STATE.NET_STATE_DISCONNECTED,
   });
-  console.warn("连接失败回调", JSON.stringify(Global.sdkState));
+  console.warn("连接失败回调");
   if (wsOptions.isReconect !== true && wsOptions.reject) {
     let errResult = tool.resultErr(
       "Failed to establish websocket connection",
@@ -213,7 +215,6 @@ function loginIm(Global, wsOptions) {
       },
       callErr: (err) => {
         // 可能出现code 9 11
-        console.log("login err", err);
         if (!wsOptions.isReconect) {
           closeWs();
         }
