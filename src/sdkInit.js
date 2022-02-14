@@ -6,7 +6,6 @@ import {
   WS_STATE,
   MSG_TYPE,
   SYNC_CHAT,
-  GROUP_TYPE,
   ERROR_CODE,
   SEND_STATE,
   HANDLE_TYPE,
@@ -30,20 +29,12 @@ import {
   setMessageRead,
   sendMessage,
   revokeMessage,
+  readFlashMessage,
   createTextMessage,
   createImageMessage,
+  createFlashMessage,
   createBusinessMessage,
 } from "./sdkMessages";
-import {
-  joinChatRoom,
-  leaveChatRoom,
-  getRoomMsgs,
-  editChatRoomTOD,
-  muteMembers,
-  muteChatRoom,
-  editChatRoomManagerAccess,
-  deleteChatRoomMsgs,
-} from "./sdkChatRoom";
 import { on, off, getCosKey } from "./sdkUnits";
 
 const TYPES = {
@@ -53,7 +44,6 @@ const TYPES = {
   ERROR_CODE: ERROR_CODE,
   MSG_TYPE: MSG_TYPE,
   IM_LOGIN_STATE: IM_LOGIN_STATE,
-  GROUP_TYPE: GROUP_TYPE,
 };
 
 // 导出对象
@@ -81,13 +71,15 @@ function initSDK() {
     login: (options) => login(Global, options),
     logout: () => logout(Global),
     // 消息相关
-    sendMessage: (msgObj, options) => sendMessage(Global, msgObj, options),
-    revokeMessage: (options) => revokeMessage(Global, options),
-    getMessageList: (options) => getMessageList(Global, options),
-    setMessageRead: (options) => setMessageRead(Global, options),
     createTextMessage: (options) => createTextMessage(Global, options),
     createImageMessage: (options) => createImageMessage(Global, options),
+    createFlashMessage: (options) => createFlashMessage(Global, options),
     createBusinessMessage: (options) => createBusinessMessage(Global, options),
+    sendMessage: (options) => sendMessage(Global, options),
+    revokeMessage: (options) => revokeMessage(Global, options),
+    getMessageList: (options) => getMessageList(Global, options),
+    readFlashMessage: (options) => readFlashMessage(Global, options),
+    setMessageRead: (options) => setMessageRead(Global, options),
     // 会话相关
     getConversationList: (options) => getConversationList(Global, options),
     getConversationProvider: (options) =>
@@ -96,16 +88,6 @@ function initSDK() {
       updateConversationProvider(Global, options),
     deleteConversation: (options) => deleteConversation(Global, options),
     getAllUnreadCount: () => getAllUnreadCount(Global),
-    // 聊天室相关
-    joinChatRoom: (options) => joinChatRoom(Global, options),
-    leaveChatRoom: (options) => leaveChatRoom(Global, options),
-    getRoomMsgs: (options) => getRoomMsgs(Global, options),
-    editChatRoomTOD: (options) => editChatRoomTOD(Global, options),
-    muteMembers: (options) => muteMembers(Global, options),
-    muteChatRoom: (options) => muteChatRoom(Global, options),
-    editChatRoomManagerAccess: (options) =>
-      editChatRoomManagerAccess(Global, options),
-    deleteChatRoomMsgs: (options) => deleteChatRoomMsgs(Global, options),
     // 工具方法
     getCosKey: () => getCosKey(Global),
     on: (eventName, callback) => on(msimSdk, eventName, callback),
@@ -121,9 +103,11 @@ let Global = null;
 // 初始化Global
 function initGlobal() {
   Global = {
-    timeOut: 20000,
+    timeOut: 30000,
     tabId: Global?.tabId,
     curTab: false, // 是否是当前连接的tab
+    chatPageSize: 20,
+    maxChatPageSize: 100,
     msgPageSize: 20,
     maxMsgPageSize: 100,
     heartBeatTimer: null, // 全局定时器
@@ -136,9 +120,7 @@ function initGlobal() {
     chatCallEvents: new Map(), // 会话列表异步回调
     stateCallEvents: new Map(), // sdk状态异步回调
     chatKeys: new Map(), // 本地所有可显示会话
-    chatRoomInfo: null, // 聊天室信息
-    lastMsgId: null, // 聊天室最后一条消息id
-    chatRoomMsgs: [], // 临时缓存的聊天室消息列表
+    msgList: new Map(), // 本地所有消息历史
     msgHandleList: [], // 消息处理队列
     handleMsgState: false, // 队列处理状态
     updateTime: null, // 会话更新标记
@@ -175,9 +157,7 @@ function clearData(isClearDB) {
   Global.chatCallEvents = new Map();
   Global.stateCallEvents = new Map();
   Global.chatKeys = new Map();
-  Global.chatRoomInfo = null;
-  Global.lastMsgId = null;
-  Global.chatRoomMsgs = [];
+  Global.msgList = new Map();
   Global.msgHandleList = [];
   Global.handleMsgState = false;
   Global.updateTime = null;

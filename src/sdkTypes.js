@@ -24,24 +24,10 @@ const PID = {
   Profile: 18,
   ProfileList: 19,
   GetChat: 20,
-  UpdatePushToken: 21,
-  GetCosKey: 22,
-  CosKey: 23,
-  GetAgoraToken: 24,
-  AgoraToken: 25,
-  JoinGroup: 26,
-  LeaveGroup: 27,
-  GroupMember: 28,
-  GroupInfo: 29,
-  GroupEvent: 30,
-  GroupChatS: 31,
-  GroupChatSR: 32,
-  GroupChatR: 33,
-  GroupChatRBatch: 34,
-  GetGroupProfiles: 35,
-  GroupAction: 36,
-  GroupRevoke: 37,
-  GroupTipEvent: 38,
+  GetCosKey: 21,
+  CosKey: 22,
+  UpdatePushToken: 23,
+  ChatAction: 39, // 发送指令消息
   ProfileOnline: 50, //50  for demo: 通知客户端用户上线事件
   UsrOffline: 52, //52 for demo：通知客户端用户下线事件
   Signup: 53, //53 for demo：注册新用户
@@ -77,14 +63,10 @@ const LOCAL_MESSAGE_TYPE = {
   Offline: "offline",
   UpdateChat: "updateChat",
   SyncMsgs: "syncMsgs",
+  ReadMsg: "readMsg",
   DeleteMsg: "deleteMsg",
   ReceivedMsg: "receivedMessage",
   NotificationMsg: "notificationMsg",
-  JoinChatRoom: "joinChatRoom",
-  LeaveChatRoom: "leaveChatRoom",
-  GroupReceivedMsg: "groupReceivedMessage",
-  GroupOfflineMsg: "groupOfflineMsg",
-  GroupDeleteMsg: "groupDeleteMsg",
 };
 
 /***
@@ -110,13 +92,6 @@ const LOCAL_OPERATION_TYPE = {
  * @param Revoke - 撤回消息
  * @param GetCosKey - 获取cosKey
  * @param GetAllUnread - 获取会话未读消息总数
- * @param JoinChatRoom - 加入聊天室
- * @param LeaveChatRoom - 离开聊天室
- * @param DeleteChatRoomMsgs - 删除聊天室消息
- * @param ChatRoomTod - 修改公告
- * @param MuteMembers - 管理群成员
- * @param MuteChatRoom - 管理聊天室
- * @param EditManager - 管理员设置
  */
 const OPERATION_TYPE = {
   Login: "login",
@@ -129,16 +104,9 @@ const OPERATION_TYPE = {
   Read: "setMessageRead",
   Send: "sendMessage",
   Revoke: "revokeMessage",
+  ReadFlash: "ReadFlashMessage",
   GetCosKey: "getCosKey",
   GetAllUnread: "getAllUnreadCount",
-  JoinChatRoom: "joinChatRoom",
-  LeaveChatRoom: "leaveChatRoom",
-  DeleteChatRoomMsgs: "deleteChatRoomMsgs",
-  GetRoomMsgs: "getRoomMsgs",
-  ChatRoomTod: "chatRoomTod",
-  MuteMembers: "muteMembers",
-  MuteChatRoom: "muteChatRoom",
-  EditManager: "editManager",
 };
 
 /**
@@ -262,11 +230,14 @@ const ERROR_CODE = {
  * @property {number} Video - 视频
  * @property {number} Location - 地理位置
  * @property {number} Card - 用户名片
+ * @property {number} Flash - 闪照
  * @property {number} Revoked - 已撤回的消息
  * @property {number} Matched - 匹配
  * @property {number} Recall - 撤回指令
  * @property {number} Unmatch - 取消匹配指令
- * @property {number} Tod - 取消匹配指令
+ * @property {number} Deleted - 已删除的消息
+ * @property {number} SysDelete - 删除指令
+ * @property {number} ClickView - 闪照点击查看指令
  * @property {number} Notification - 通知
  */
 const MSG_TYPE = {
@@ -276,11 +247,14 @@ const MSG_TYPE = {
   Video: 3,
   Location: 4,
   Card: 5,
+  Flash: 7,
   Revoked: 31,
+  Matched: 33,
   Recall: 64,
+  Unmatch: 65,
   SysDelete: 66,
   Deleted: 67,
-  Tod: 68,
+  ClickView: 69,
   Notification: 100,
 };
 
@@ -305,22 +279,12 @@ const CHAT_UPDATE_EVENT = {
  * @property {string} LOGIN - 登录成功
  * @property {string} LOGOUT - 退出成功
  * @property {string} SYNC_CHATS_CHANGE - 同步会话状态通知
- * 单聊消息通知
  * @property {string} MESSAGE_RECEIVED - 接收消息监听
  * @property {string} MESSAGE_REVOKED - 撤回消息
  * @property {string} MESSAGE_DELETE - 删除消息
+ * @property {string} MESSAGE_READ - 已读消息
  * @property {string} MESSAGE_NOTIFICATION - 通知消息
  * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
- * 聊天室相关
- * @property {string} JOIN_CHAT_ROOM - 加入聊天室成功
- * @property {string} LEAVE_CHAT_ROOM - 退出聊天室成功
- * @property {string} MESSAGE_GROUP_RECEIVED - 收到群消息
- * @property {string} MESSAGE_GROUP_REVOKED - 收到群撤回消息
- * @property {string} MESSAGE_GROUP_DELETE - 收到群删除消息
- * @property {string} GROUP_DESTROY - 群销毁
- * @property {string} UPDATE_GROUP_INFO - 群信息更新
- * @property {string} UPDATE_GROUP_TOD - 群公告更新
- *
  * @property {string} KICKED_OUT - 被踢下线
  * @property {string} TOKEN_NOT_FOUND - token未找到或过期
  */
@@ -332,16 +296,9 @@ const EVENT = {
   MESSAGE_RECEIVED: "onReceivedMessage",
   MESSAGE_REVOKED: "onRevokedMessage",
   MESSAGE_DELETE: "onDeleteMessage",
+  MESSAGE_READ: "onReadMessage",
   MESSAGE_NOTIFICATION: "onNotificationMessage",
   CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
-  JOIN_CHAT_ROOM: "onJoinChatRoom",
-  LEAVE_CHAT_ROOM: "onLeaveChatRoom",
-  MESSAGE_GROUP_RECEIVED: "onGroupReceivedMessage",
-  MESSAGE_GROUP_REVOKED: "onGroupRevokedMessage",
-  MESSAGE_GROUP_DELETE: "onGroupDeleteMessage",
-  GROUP_DESTROY: "onGroupDestroy",
-  UPDATE_GROUP_INFO: "onUpdateGroupInfo",
-  UPDATE_GROUP_TOD: "onNewChatRoomTipsOfDay",
   KICKED_OUT: "onKickedOut",
   TOKEN_NOT_FOUND: "onTokenNotFound",
 };
@@ -356,11 +313,6 @@ const EVENT = {
  * @param ChatItemUpdate - 更新会话
  * @param ResultError - 接收到特殊错误code
  * @param ChatR - 新消息处理
- * @param GroupJoin - 加入聊天室成功
- * @param GroupLeave - 退出聊天室成功
- * @param GroupChatR - 群新消息处理
- * @param GroupOfflineMsg - 群离线消息处理
- * @param GroupEvent - 群事件
  */
 const HANDLE_TYPE = {
   WsStateChange: "WsStateChange",
@@ -371,48 +323,6 @@ const HANDLE_TYPE = {
   ChatItemUpdate: "ChatItemUpdate",
   ResultError: "ResultError",
   ChatR: "ChatR",
-  GroupJoin: "GroupJoin",
-  GroupLeave: "GroupLeave",
-  GroupChatR: "GroupChatR",
-  GroupOfflineMsg: "GroupOfflineMsg",
-  GroupEvent: "GroupEvent",
-};
-
-/***
- * 群的枚举类型
- * @enum
- */
-const GROUP_TYPE = {
-  ChatRoom: 0, // 聊天室
-};
-
-/***
- * 群操作的枚举类型
- * @enum
- * @property {number} EditTod - 修改公告
- */
-const GROUP_ACTION = {
-  EditTod: 0,
-  MuteMembers: 1,
-  MuteChatRoom: 2,
-  ResumeChatRoom: 3,
-  DeleteMsgs: 4,
-  EditManager: 5,
-};
-
-/***
- * 群事件的枚举类型
- * @enum
- * @property {number} DeleteRoom - 销毁聊天室
- * @property {number} UpdateRoomInfo - 更新聊天室信息
- * @property {number} UpdateRoomUserInfo - 更新聊天室成员信息
- * @property {number} AuthorityChange - 权限变更
- */
-const GROUP_EVENT = {
-  DeleteRoom: 0,
-  UpdateRoomInfo: 1,
-  UpdateRoomUserInfo: 2,
-  AuthorityChange: 3,
 };
 
 export {
@@ -424,10 +334,7 @@ export {
   ERROR_CODE,
   SEND_STATE,
   READ_STATE,
-  GROUP_TYPE,
   HANDLE_TYPE,
-  GROUP_EVENT,
-  GROUP_ACTION,
   OPERATION_TYPE,
   IM_LOGIN_STATE,
   CHAT_UPDATE_EVENT,

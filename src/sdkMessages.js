@@ -2,14 +2,13 @@ import tool from "./tool";
 import {
   PID,
   MSG_TYPE,
-  GROUP_TYPE,
   ERROR_CODE,
   SEND_STATE,
   HANDLE_TYPE,
   OPERATION_TYPE,
   LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
-import proFormat from "./google/proFormat";
+import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
@@ -57,19 +56,17 @@ function getMessageList(Global, options) {
       pageSize: Global.msgPageSize,
       ...options,
     };
-
-    if (defaultOption.tabId !== Global.tabId) {
-      getWsMsgs(Global, defaultOption, resolve, reject);
+    localDexie.addChatKey(defaultOption.conversationID);
+    let data = tool.getMsgList(
+      Global,
+      defaultOption.conversationID,
+      defaultOption.msgEnd
+    );
+    if (data.length >= defaultOption.pageSize || data[0]?.msgId === 1) {
+      // 如果本地有msgId等于1的消息,或大于一页则直接返回
+      resultMsgs(defaultOption, resolve, data);
     } else {
-      localDexie.addChatKey(defaultOption.conversationID);
-      localDexie.getMsgList(defaultOption).then((data) => {
-        if (data.length >= defaultOption.pageSize || data[0]?.msgId === 1) {
-          // 如果本地有msgId等于1的消息,或大于一页则直接返回
-          resultMsgs(defaultOption, resolve, data);
-        } else {
-          getWsMsgs(Global, defaultOption, resolve, reject, data);
-        }
-      });
+      getWsMsgs(Global, defaultOption, resolve, reject, data);
     }
   });
 }
@@ -122,13 +119,16 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
       }
     });
     if (newMsgs.length > 0) {
-      localDexie.addMsgList(newMsgs);
+      tool.addMsgList(Global, defaultOption.conversationID, newMsgs);
     }
     if (msgs?.length) {
       newMsgs.push(...msgs);
     }
     resultMsgs(defaultOption, resolve, newMsgs);
   } else {
+    if (res.messages.length > 0) {
+      tool.addMsgList(Global, defaultOption.conversationID, res.messages);
+    }
     resultMsgs(defaultOption, resolve, res.messages);
   }
 }
@@ -202,11 +202,9 @@ function setMessageRead(Global, options) {
  * 发送消息
  * @memberof SDK
  * @param {Msg} msgObj - 消息对象
- * @param {Object} [options] - 配置对象
- * @param {Number | undefined | null} options.gtype - 会话类型,不存在则为单聊
  * @returns {Promise}
  */
-function sendMessage(Global, msgObj, options) {
+function sendMessage(Global, msgObj) {
   return new Promise((resolve, reject) => {
     let body = tool.formatBody(Global, msgObj, reject);
     if (body === false) return;
@@ -216,7 +214,7 @@ function sendMessage(Global, msgObj, options) {
       type: OPERATION_TYPE.Send,
       callSign: callSign,
       callSuc: (res) => {
-        sendMsgSuc(Global, msgObj, res, resolve, options);
+        sendMsgSuc(Global, msgObj, res, resolve);
       },
       callErr: (err) => {
         let errResult = tool.serverErr(err, OPERATION_TYPE.Send);
@@ -224,25 +222,13 @@ function sendMessage(Global, msgObj, options) {
       },
     });
     if (Global.curTab) {
-      if (options?.gtype === GROUP_TYPE.ChatRoom) {
-        let msg = proFormat.sendGroupMsgPro({
-          ...msgObj,
-          sign: callSign,
-          id: msgObj.toUid,
-          gtype: options.gtype,
-          body,
-        });
-        sendWsMsg(msg, PID.GroupChatS);
-      } else {
-        let msg = proFormat.sendMsgPro({ ...msgObj, sign: callSign, body });
-        sendWsMsg(msg, PID.ChatS);
-      }
+      let msg = proFormat.sendMsgPro({ ...msgObj, sign: callSign, body });
+      sendWsMsg(msg, PID.ChatS);
     } else {
       localNotice.onWebSocketNotice(OPERATION_TYPE.Send, {
         callSign: callSign,
         tabId: Global.tabId,
-        msgObj: msgObj,
-        options: options,
+        options: msgObj,
         state: LOCAL_OPERATION_STATUS.Pending,
       });
     }
@@ -250,24 +236,17 @@ function sendMessage(Global, msgObj, options) {
 }
 
 // 发送消息成功回调
-function sendMsgSuc(Global, msgObj, res, resolve, options) {
+function sendMsgSuc(Global, msgObj, res, resolve) {
   if (Global.curTab) {
     let newMsg = { ...msgObj };
     newMsg.msgId = res.data.msgId;
     newMsg.msgTime = res.data.msgTime;
     newMsg.sendStatus = SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC;
-    if (options?.gtype === GROUP_TYPE.ChatRoom) {
-      Global.handleMessage({
-        type: HANDLE_TYPE.GroupChatR,
-        data: newMsg,
-      });
-    } else {
-      Global.handleMessage({
-        type: HANDLE_TYPE.ChatR,
-        shift: true,
-        data: newMsg,
-      });
-    }
+    Global.handleMessage({
+      type: HANDLE_TYPE.ChatR,
+      shift: true,
+      data: newMsg,
+    });
   }
   let result = tool.resultSuc(OPERATION_TYPE.Send, {
     conversationID: msgObj.conversationID,
@@ -283,8 +262,6 @@ function sendMsgSuc(Global, msgObj, res, resolve, options) {
  * @param {Object} options - 接口参数
  * @param {string} options.conversationID - 会话用户id
  * @param {number} options.msgId - 消息id
- * @param {Number | undefined | null} options.gtype - 会话类型,不存在则为单聊
- * @param {number} options.id 群id
  * @returns {Promise}
  */
 function revokeMessage(Global, options) {
@@ -303,15 +280,6 @@ function revokeMessage(Global, options) {
         key: "msgId",
       });
       return reject(errResult);
-    } else if (
-      options?.gtype === GROUP_TYPE.ChatRoom &&
-      tool.isNotNumer(options.id, true)
-    ) {
-      let errResult = tool.parameterErr({
-        name: OPERATION_TYPE.Revoke,
-        key: "id",
-      });
-      return reject(errResult);
     }
     let callSign = tool.createSign();
     Global.callEvents.has(callSign) && (callSign += 1);
@@ -327,19 +295,14 @@ function revokeMessage(Global, options) {
       },
     });
     if (Global.curTab) {
-      if (options?.gtype === GROUP_TYPE.ChatRoom) {
-        let msg = proFormat.groupRevokePro({
-          sign: callSign,
-          gtype: options.gtype,
-          id: options.id,
-          msgId: options.msgId,
-        });
-        sendWsMsg(msg, PID.GroupRevoke);
-      } else {
-        let uid = tool.reformatC2CId(options.conversationID);
-        let msg = proFormat.revokeMsgPro(callSign, uid, options.msgId);
-        sendWsMsg(msg, PID.Revoke);
-      }
+      let uid = tool.reformatC2CId(options.conversationID);
+      let msg = proFormat.directiveMsgPro({
+        sign: callSign,
+        toUid: uid,
+        type: MSG_TYPE.Recall,
+        msgId: options.msgId,
+      });
+      sendWsMsg(msg, PID.ChatAction);
     } else {
       localNotice.onWebSocketNotice(OPERATION_TYPE.Revoke, {
         callSign: callSign,
@@ -354,18 +317,11 @@ function revokeMessage(Global, options) {
 // 测回消息成功回调
 function revokeMsgSuc(Global, options, res, resolve) {
   if (Global.curTab) {
-    if (options?.gtype === GROUP_TYPE.ChatRoom) {
-      Global.handleMessage({
-        type: HANDLE_TYPE.GroupChatR,
-        data: res.data,
-      });
-    } else {
-      Global.handleMessage({
-        type: HANDLE_TYPE.ChatR,
-        shift: true,
-        data: res.data,
-      });
-    }
+    Global.handleMessage({
+      type: HANDLE_TYPE.ChatR,
+      shift: true,
+      data: res.data,
+    });
   }
   let result = tool.resultSuc(OPERATION_TYPE.Revoke, {
     conversationID: options.conversationID,
@@ -376,11 +332,85 @@ function revokeMsgSuc(Global, options, res, resolve) {
 }
 
 /**
+ * 设置已查看闪照
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {string} options.conversationID - 会话用户id
+ * @param {number} options.msgId - 消息id
+ * @returns {Promise}
+ */
+function readFlashMessage(Global, options) {
+  return new Promise((resolve, reject) => {
+    if (!tool.preJudge(Global, reject, OPERATION_TYPE.ReadFlash)) {
+      return;
+    } else if (tool.isNotObject(options, "conversationID", "string")) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.ReadFlash,
+        key: "conversationID",
+      });
+      return reject(errResult);
+    } else if (tool.isNotNumer(options.msgId, true)) {
+      let errResult = tool.parameterErr({
+        name: OPERATION_TYPE.ReadFlash,
+        key: "msgId",
+      });
+      return reject(errResult);
+    }
+    let callSign = tool.createSign();
+    Global.callEvents.has(callSign) && (callSign += 1);
+    tool.createCallEvent(Global, {
+      type: OPERATION_TYPE.ReadFlash,
+      callSign: callSign,
+      callSuc: (res) => {
+        readFlashMsgSuc(Global, options, res, resolve);
+      },
+      callErr: (err) => {
+        let errResult = tool.serverErr(err, OPERATION_TYPE.ReadFlash);
+        reject(errResult);
+      },
+    });
+    if (Global.curTab) {
+      let uid = tool.reformatC2CId(options.conversationID);
+      let msg = proFormat.directiveMsgPro({
+        sign: callSign,
+        toUid: uid,
+        type: MSG_TYPE.ClickView,
+        msgId: options.msgId,
+      });
+      sendWsMsg(msg, PID.ChatAction);
+    } else {
+      localNotice.onWebSocketNotice(OPERATION_TYPE.ReadFlash, {
+        callSign: callSign,
+        tabId: Global.tabId,
+        options: options,
+        state: LOCAL_OPERATION_STATUS.Pending,
+      });
+    }
+  });
+}
+// 测回消息成功回调
+function readFlashMsgSuc(Global, options, res, resolve) {
+  if (Global.curTab) {
+    Global.handleMessage({
+      type: HANDLE_TYPE.ChatR,
+      shift: true,
+      data: res.data,
+    });
+  }
+  let result = tool.resultSuc(OPERATION_TYPE.ReadFlash, {
+    conversationID: options.conversationID,
+    msgId: options.msgId,
+    type: MSG_TYPE.ClickView,
+    fromUid: res.data.fromUid,
+  });
+  resolve(result);
+}
+
+/**
  * 创建文本消息
  * @memberof SDK
  * @param {Object} options - 接口参数
  * @param {number} options.to - 接收方用户id
- * @param {number} options.gtype - 会话类型不传则为单聊
  * @param {Object} options.payload - 消息内容的容器
  * @param {string} options.payload.text - 消息文本内容
  * @returns {{code: number, message?:Message, msg: string}}}
@@ -398,7 +428,7 @@ function createTextMessage(Global, options) {
       msg: "Parameter 'text' cann't be empty",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.sdkState.uid, options.gtype);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Text,
     text: options.payload.text,
@@ -414,7 +444,6 @@ function createTextMessage(Global, options) {
  * @memberof SDK
  * @param {Object} options - 接口参数
  * @param {number} options.to - 接收方用户id
- * @param {number} options.gtype - 会话类型不传则为单聊
  * @param {Object} options.payload - 消息内容的容器
  * @param {string} options.payload.url - 图片网络地址
  * @param {string} options.payload.width - 图片宽度
@@ -434,7 +463,7 @@ function createImageMessage(Global, options) {
       msg: "Parameter 'url' cann't be empty",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.sdkState.uid, options.gtype);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, {
     type: MSG_TYPE.Img,
     url: options.payload.url,
@@ -448,10 +477,49 @@ function createImageMessage(Global, options) {
 }
 
 /**
+ * 创建闪照消息
+ * @memberof SDK
+ * @param {Object} options - 接口参数
+ * @param {number} options.to - 接收方用户id
+ * @param {Object} options.payload - 消息内容的容器
+ * @param {string} options.payload.url - 图片网络地址
+ * @param {string} options.payload.width - 图片宽度
+ * @param {string} options.payload.height - 图片高度
+ * @returns {{code: number, message?:Message, msg: string}}}
+ */
+function createFlashMessage(Global, options) {
+  if (!options?.to) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'to' cann't be empty",
+    };
+  }
+  if (!options.payload?.url) {
+    return {
+      code: ERROR_CODE.PARAMETER,
+      msg: "Parameter 'url' cann't be empty",
+    };
+  }
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
+  Object.assign(newMsg, {
+    type: MSG_TYPE.Flash,
+    url: options.payload.url,
+    width: options.payload.width, //图片的宽度
+    height: options.payload.height, //图片的高度
+    toRead: false,
+    fromRead: false,
+    oppositeSee: false,
+  });
+  return {
+    code: ERROR_CODE.SUCCESS,
+    message: newMsg,
+  };
+}
+
+/**
  * 创建业务自定义消息
  * @param {Object} options - 接口参数
  * @param {number} options.to - 接收方用户id
- * @param {number} options.gtype - 会话类型不传则为单聊
  * @param {Object} options.payload - 消息内容的容器
  * @param {string} options.payload.type - 消息类型11-30
  * @param {string} options.payload.content - 消息内容
@@ -478,7 +546,7 @@ function createBusinessMessage(Global, options) {
       msg: "Type can only use 11-30",
     };
   }
-  let newMsg = tool.msgBase(options.to, Global.sdkState.uid, options.gtype);
+  let newMsg = tool.msgBase(options.to, Global.sdkState.uid);
   Object.assign(newMsg, options.payload);
   return {
     code: ERROR_CODE.SUCCESS,
@@ -519,7 +587,9 @@ export {
   setMessageRead,
   sendMessage,
   revokeMessage,
+  readFlashMessage,
   createTextMessage,
   createImageMessage,
+  createFlashMessage,
   createBusinessMessage,
 };

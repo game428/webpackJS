@@ -39,7 +39,6 @@ let msgKeys = [
   "sendStatus", // 消息发送状态
   "text", // 文本消息，消息内容
   "url", // 图片消息，图片路径
-  "gtype", // 所属会话的类型
   "type", // 消息类型
   "thumb", // 封面图
   "width", // 封面图的宽度
@@ -49,6 +48,8 @@ let msgKeys = [
   "lat", // 纬度
   "lng", // 经度
   "zoom", // 地图缩放层级
+  "toRead", // 接收方是否已查看
+  "fromRead", // 发送方是否已查看
   "content", // 未定义type，传输的body
   "sput", // sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
   "newMsg", //是否显示 new message
@@ -270,6 +271,26 @@ localDexie.updateMsg = function(msg) {
       msgId: msg.msgId,
     })
     .modify(msg);
+};
+// 闪照状态更改
+localDexie.updateFlashMsg = (options) => {
+  if (db?.isOpen && db.isOpen()) {
+    db.msgList
+      .get({
+        conversationID: options.conversationID,
+        msgId: options.msgId,
+      })
+      .then((msg) => {
+        if (!msg) return;
+        let updateData = {};
+        if (msg.fromUid === options.fromUid) {
+          updateData.fromRead = true;
+        } else if (msg.toUid === options.fromUid) {
+          updateData.toRead = true;
+        }
+        db.msgList.update(msg.onlyId, updateData);
+      });
+  }
 };
 
 // 删除

@@ -8,10 +8,9 @@ import {
   OPERATION_TYPE,
   IM_LOGIN_STATE,
 } from "./sdkTypes";
-import proFormat from "./google/proFormat";
+import proFormat from "./proFormat";
 import { connectWs, closeWs, sendWsMsg } from "./ws";
 import { syncChats } from "./sdkChats";
-import { reconnectionChatRoom } from "./sdkChatRoom";
 
 /**
  * 登录
@@ -174,7 +173,6 @@ function connSuc(Global, wsOptions) {
           });
         }, 0);
       } else {
-        if (Global.chatRoomInfo) reconnectionChatRoom(Global);
         Global.sdkState.uid = res.data.uid;
       }
       syncChats(Global);
@@ -190,7 +188,7 @@ function connClose(Global, wsOptions, err) {
     type: HANDLE_TYPE.WsStateChange,
     state: WS_STATE.NET_STATE_DISCONNECTED,
   });
-  console.warn("连接失败回调");
+  console.warn("连接失败回调", JSON.stringify(Global.sdkState));
   if (wsOptions.isReconect !== true && wsOptions.reject) {
     let errResult = tool.resultErr(
       "Failed to establish websocket connection",

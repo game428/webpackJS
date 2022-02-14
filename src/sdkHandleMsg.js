@@ -5,7 +5,6 @@ import {
   MSG_TYPE,
   SYNC_CHAT,
   ERROR_CODE,
-  GROUP_EVENT,
   HANDLE_TYPE,
   IM_LOGIN_STATE,
   CHAT_UPDATE_EVENT,
@@ -13,7 +12,7 @@ import {
 } from "./sdkTypes";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
-import proFormat from "./google/proFormat";
+import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import { getConversationProvider } from "./sdkChats";
 
@@ -48,21 +47,6 @@ function handleMessage(GlobalObj, msimObj, options) {
     case HANDLE_TYPE.ChatR:
       handleMsg(options);
       break;
-    case HANDLE_TYPE.GroupJoin:
-      handleJoinChatRoom(options);
-      break;
-    case HANDLE_TYPE.GroupLeave:
-      handleLeaveChatRoom(options);
-      break;
-    case HANDLE_TYPE.GroupChatR:
-      handleGroupMsg(options);
-      break;
-    case HANDLE_TYPE.GroupOfflineMsg:
-      handleGroupOfflineMsgs(options);
-      break;
-    case HANDLE_TYPE.GroupEvent:
-      handleGroupEvent(options);
-      break;
   }
 }
 
@@ -71,23 +55,35 @@ function handleSyncMsgs(options) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncMsgs, options);
   }
-  if (options.msgList.length > 0 && msim[EVENT.MESSAGE_RECEIVED]) {
-    let msgList = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
-    msim[EVENT.MESSAGE_RECEIVED](msgList);
+  if (options.isDeleteMsgsHistory) {
+    tool.deleteMsgs(Global, options.conversationID);
   }
-  if (options.deleteMsgIds.length > 0 && msim[EVENT.MESSAGE_DELETE]) {
-    let deleteList = tool.resultNotice(EVENT.MESSAGE_DELETE, {
-      conversationID: options.conversationID,
-      msgIds: options.deleteMsgIds,
-    });
-    msim[EVENT.MESSAGE_DELETE](deleteList);
+  if (options.msgList.length > 0) {
+    tool.addMsgList(Global, options.conversationID, options.msgList);
+    if (msim[EVENT.MESSAGE_RECEIVED]) {
+      let msgList = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
+      msim[EVENT.MESSAGE_RECEIVED](msgList);
+    }
+  }
+  if (options.deleteMsgIds.length > 0) {
+    tool.deleteMsgs(Global, options.conversationID, options.deleteMsgIds);
+    if (msim[EVENT.MESSAGE_DELETE]) {
+      let deleteList = tool.resultNotice(EVENT.MESSAGE_DELETE, {
+        conversationID: options.conversationID,
+        msgIds: options.deleteMsgIds,
+      });
+      msim[EVENT.MESSAGE_DELETE](deleteList);
+    }
   }
   if (options.revokeList.length > 0 && msim[EVENT.MESSAGE_REVOKED]) {
-    let revokeList = tool.resultNotice(
-      EVENT.MESSAGE_REVOKED,
-      options.revokeList
-    );
-    msim[EVENT.MESSAGE_REVOKED](revokeList);
+    tool.updateMsgs(Global, options.conversationID, options.revokeList);
+    if (msim[EVENT.MESSAGE_REVOKED]) {
+      let revokeList = tool.resultNotice(
+        EVENT.MESSAGE_REVOKED,
+        options.revokeList
+      );
+      msim[EVENT.MESSAGE_REVOKED](revokeList);
+    }
   }
 }
 
@@ -277,16 +273,20 @@ function instructMsg(msg, resolve) {
     case MSG_TYPE.SysDelete:
       handleSysDeleteMsg(msg, resolve);
       break;
+    case MSG_TYPE.ClickView:
+      handleFlashMsg(msg, resolve);
+      break;
   }
 }
 
-// 处理撤回消息
+// 处理撤回指令
 function handleRevokeMsg(msg, resolve) {
   let newMsg = {
     conversationID: msg.conversationID,
     msgId: parseInt(msg.text),
     type: MSG_TYPE.Revoked,
   };
+  tool.updateMsgs(Global, msg.conversationID, [newMsg]);
   if (msim[EVENT.MESSAGE_REVOKED]) {
     let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
     msim[EVENT.MESSAGE_REVOKED](result);
@@ -296,7 +296,6 @@ function handleRevokeMsg(msg, resolve) {
       type: HANDLE_TYPE.ChatR,
       data: msg,
     });
-    localDexie.updateMsg(newMsg);
     updateChat({
       conversationID: msg.conversationID,
       msgEnd: msg.msgId,
@@ -331,13 +330,13 @@ function handleUnmatchMsg(msg, resolve) {
 function handleSysDeleteMsg(msg, resolve) {
   if (Global.curTab) {
     let msgIds = msg.content.split(",").map(Number);
-    localDexie.deleteMsgs(msg.conversationID, msgIds);
     msg.content = msgIds;
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.DeleteMsg, {
       type: HANDLE_TYPE.ChatR,
       data: msg,
     });
   }
+  tool.deleteMsgs(Global, msg.conversationID, msg.content);
   let chat = Global.chatKeys.get(msg.conversationID);
   if (msg.content.includes(chat?.showMsgId)) {
     updateChat({
@@ -352,6 +351,28 @@ function handleSysDeleteMsg(msg, resolve) {
       msgIds: msg.content,
     });
     msim[EVENT.MESSAGE_DELETE](result);
+  }
+  resolve();
+}
+
+// 处理闪照查看指令
+function handleFlashMsg(msg, resolve) {
+  let newMsg = {
+    conversationID: msg.conversationID,
+    msgId: parseInt(msg.text),
+    type: MSG_TYPE.ClickView,
+    fromUid: msg.fromUid,
+  };
+  tool.updateFlashMsg(Global, newMsg);
+  if (msim[EVENT.MESSAGE_READ]) {
+    let result = tool.resultNotice(EVENT.MESSAGE_READ, [newMsg]);
+    msim[EVENT.MESSAGE_READ](result);
+  }
+  if (Global.curTab) {
+    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReadMsg, {
+      type: HANDLE_TYPE.ChatR,
+      data: msg,
+    });
   }
   resolve();
 }
@@ -378,12 +399,12 @@ function handleShowMsg(msg, resolve) {
     let result = tool.resultNotice(EVENT.MESSAGE_RECEIVED, [newMsg]);
     msim[EVENT.MESSAGE_RECEIVED](result);
   }
+  tool.addMsgList(Global, newMsg.conversationID, [newMsg]);
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
       type: HANDLE_TYPE.ChatR,
       data: newMsg,
     });
-    localDexie.addMsg(newMsg);
     // 根据type返回，text返回body，业务自定义消息由发送方进行透传
     let showMsg;
     if (newMsg.type === MSG_TYPE.Text) {
@@ -535,283 +556,6 @@ function updateChatNotice(newChat) {
     });
     localDexie.updateChat(newChat);
   }
-}
-
-// 处理加入聊天室
-function handleJoinChatRoom(options) {
-  if (Global.curTab) {
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.JoinChatRoom, options);
-  }
-  Global.chatRoomInfo = options.data;
-  if (msim[EVENT.JOIN_CHAT_ROOM]) {
-    let result = tool.resultNotice(EVENT.JOIN_CHAT_ROOM, options.data);
-    msim[EVENT.JOIN_CHAT_ROOM](result);
-  }
-}
-
-// 处理离开聊天室
-function handleLeaveChatRoom(options) {
-  if (Global.curTab) {
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.LeaveChatRoom, options);
-  }
-  Global.chatRoomInfo = null;
-  Global.chatRoomMsgs = [];
-  if (msim[EVENT.LEAVE_CHAT_ROOM]) {
-    let result = tool.resultNotice(EVENT.LEAVE_CHAT_ROOM, options.data);
-    msim[EVENT.LEAVE_CHAT_ROOM](result);
-  }
-}
-
-// 处理收到的离线消息
-function handleGroupOfflineMsgs(options) {
-  if (!options.data?.length) return;
-  let msgs = options.data;
-  if (Global.curTab) {
-    msgs = [];
-    let groupId = tool.splicingGroupId(options.data[0]?.id);
-    options.data.forEach((msg) => {
-      let newMsg = tool.formatMsg(msg, groupId);
-      if (msg.type !== MSG_TYPE.Tod) {
-        msgs.unshift(newMsg);
-        Global.lastMsgId = newMsg.msgId;
-      } else {
-        handleGroupTodMsg(newMsg);
-      }
-    });
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupOfflineMsg, {
-      type: HANDLE_TYPE.GroupOfflineMsg,
-      data: msgs,
-    });
-  }
-  Global.chatRoomMsgs = Global.chatRoomMsgs.concat(msgs);
-  if (msim[EVENT.MESSAGE_GROUP_RECEIVED]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_GROUP_RECEIVED, msgs);
-    msim[EVENT.MESSAGE_GROUP_RECEIVED](result);
-  }
-}
-
-// 处理收到的群消息
-function handleGroupMsg(options) {
-  let msg = options.data;
-  if (!msg.conversationID) {
-    let groupId = tool.splicingGroupId(options.data.id);
-    msg = tool.formatMsg(msg, groupId);
-  }
-  Global.lastMsgId = msg.msgId;
-  switch (msg.type) {
-    case MSG_TYPE.Recall:
-    case MSG_TYPE.Revoked:
-      handleGroupRevokeMsg(msg);
-      break;
-    case MSG_TYPE.SysDelete:
-      handleGroupDeleteMsg(msg);
-      break;
-    case MSG_TYPE.Tod:
-      handleGroupTodMsg(msg);
-      break;
-    default:
-      handleGroupShowMsg(msg);
-      break;
-  }
-}
-
-// 处理显示消息
-function handleGroupShowMsg(msg) {
-  if (Global.curTab) {
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupReceivedMsg, {
-      type: HANDLE_TYPE.GroupChatR,
-      data: msg,
-    });
-  }
-  Global.chatRoomMsgs.push(msg);
-  if (msim[EVENT.MESSAGE_GROUP_RECEIVED]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_GROUP_RECEIVED, [msg]);
-    msim[EVENT.MESSAGE_GROUP_RECEIVED](result);
-  }
-}
-
-// 处理群撤回消息
-function handleGroupRevokeMsg(msg) {
-  let newMsg = msg;
-  if (Global.curTab) {
-    newMsg = {
-      conversationID: msg.conversationID,
-      gtype: msg.gtype,
-      msgId: parseInt(msg.text),
-      type: MSG_TYPE.Revoked,
-    };
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupReceivedMsg, {
-      type: HANDLE_TYPE.GroupChatR,
-      data: newMsg,
-    });
-  }
-  let oldMsg = Global.chatRoomMsgs.find(
-    (msgItem) => msgItem.msgId === newMsg.msgId
-  );
-  if (oldMsg) {
-    oldMsg.type = MSG_TYPE.Revoked;
-  }
-  if (msim[EVENT.MESSAGE_GROUP_REVOKED]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_GROUP_REVOKED, [newMsg]);
-    msim[EVENT.MESSAGE_GROUP_REVOKED](result);
-  }
-}
-
-// 处理群删除消息
-function handleGroupDeleteMsg(msg) {
-  if (Global.curTab) {
-    let msgIds = msg.content.split(",").map(Number);
-    msg.content = msgIds;
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupDeleteMsg, {
-      type: HANDLE_TYPE.GroupChatR,
-      data: msg,
-    });
-  }
-  Global.chatRoomMsgs = Global.chatRoomMsgs.filter(
-    (msgItem) => !msg.content.includes(msgItem.msgId)
-  );
-  if (msim[EVENT.MESSAGE_GROUP_DELETE]) {
-    let result = tool.resultNotice(EVENT.MESSAGE_GROUP_DELETE, {
-      conversationID: msg.conversationID,
-      msgIds: msg.content,
-    });
-    msim[EVENT.MESSAGE_GROUP_DELETE](result);
-  }
-}
-
-// 处理群公告消息
-function handleGroupTodMsg(msg) {
-  if (Global.curTab) {
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupReceivedMsg, {
-      type: HANDLE_TYPE.GroupChatR,
-      data: msg,
-    });
-  }
-  if (Global.chatRoomInfo.id === msg.toUid) {
-    Global.chatRoomInfo.tod = msg.content;
-    if (msim[EVENT.UPDATE_GROUP_TOD]) {
-      let result = tool.resultNotice(EVENT.UPDATE_GROUP_TOD, {
-        id: msg.toUid,
-        gtype: msg.gtype,
-        tod: msg.content,
-      });
-      msim[EVENT.UPDATE_GROUP_TOD](result);
-    }
-  }
-}
-
-// 处理群事件通知
-function handleGroupEvent(options) {
-  console.log("群事件", options);
-  if (
-    Global.chatRoomInfo === null ||
-    Global.chatRoomInfo.id !== options.data.id
-  )
-    return;
-  let chatRoomInfo = formatGroupEvent(options);
-  if (Global.curTab) {
-    localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.GroupReceivedMsg, {
-      type: options.type,
-      etype: options.etype,
-      tip: options.tip,
-      data: chatRoomInfo,
-    });
-  }
-  switch (options.etype) {
-    case GROUP_EVENT.DeleteRoom:
-      if (msim[EVENT.GROUP_DESTROY]) {
-        let result = tool.resultNotice(EVENT.GROUP_DESTROY, chatRoomInfo);
-        msim[EVENT.GROUP_DESTROY](result);
-      }
-      break;
-    case GROUP_EVENT.UpdateRoomInfo:
-    case GROUP_EVENT.AuthorityChange:
-    case GROUP_EVENT.UpdateRoomUserInfo:
-      if (msim[EVENT.UPDATE_GROUP_INFO]) {
-        let result = tool.resultNotice(EVENT.UPDATE_GROUP_INFO, {
-          tip: options.tip,
-          chatRoomInfo: chatRoomInfo,
-        });
-        msim[EVENT.UPDATE_GROUP_INFO](result);
-      }
-      break;
-  }
-}
-
-function formatGroupEvent(options) {
-  let chatRoomInfo = options.data;
-  switch (options.etype) {
-    case GROUP_EVENT.DeleteRoom:
-      if (Global.curTab) {
-        chatRoomInfo = {
-          id: options.data.id,
-          gtype: options.data.gtype,
-          tip: options.tip,
-        };
-      }
-      Global.chatRoomInfo = null;
-      Global.lastMsgId = null;
-      Global.chatRoomMsgs = [];
-      break;
-    case GROUP_EVENT.UpdateRoomInfo:
-      if (Global.curTab) {
-        chatRoomInfo = {
-          id: options.data.id,
-          gtype: options.data.gtype,
-          name: options.data.name,
-          maxCount: options.data.maxCount,
-          isMute: options.data.isMute,
-        };
-      }
-      Object.assign(Global.chatRoomInfo, chatRoomInfo);
-      break;
-    case GROUP_EVENT.UpdateRoomUserInfo:
-      if (Global.curTab) {
-        let offlineMemeberUids = [];
-        options.data.members.forEach((member) => {
-          if (member.uid > 0) {
-            let oldMember = Global.chatRoomInfo.members.find(
-              (memberItem) => memberItem.uid === member.uid
-            );
-            if (oldMember) {
-              Object.assign(oldMember, member);
-            } else {
-              Global.chatRoomInfo.members.push(member);
-            }
-          } else {
-            offlineMemeberUids.push(Math.abs(member.uid));
-          }
-        });
-        if (offlineMemeberUids.length > 0) {
-          Global.chatRoomInfo.members = Global.chatRoomInfo.members.filter(
-            (member) => !offlineMemeberUids.includes(member.uid)
-          );
-        }
-        chatRoomInfo = {
-          id: options.data.id,
-          gtype: options.data.gtype,
-          members: Global.chatRoomInfo.members,
-        };
-      } else {
-        Object.assign(Global.chatRoomInfo, chatRoomInfo);
-      }
-      break;
-    case GROUP_EVENT.AuthorityChange:
-      if (Global.curTab) {
-        chatRoomInfo = {
-          id: options.data.id,
-          gtype: options.data.gtype,
-          actionTod: options.data.actionTod,
-          actionTod: options.data.actionTod,
-          actionMuteAll: options.data.actionMuteAll,
-          actionDelMsg: options.data.actionDelMsg,
-          actionAssign: options.data.actionAssign,
-        };
-      }
-      Object.assign(Global.chatRoomInfo, chatRoomInfo);
-      break;
-  }
-  return chatRoomInfo;
 }
 
 export default handleMessage;

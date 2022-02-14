@@ -171,37 +171,16 @@ function createPromise(type, msim, localObj) {
       promise = msim.setMessageRead(localObj.options);
       break;
     case OPERATION_TYPE.Send:
-      promise = msim.sendMessage(localObj.msgObj, localObj.options);
+      promise = msim.sendMessage(localObj.options);
       break;
     case OPERATION_TYPE.Revoke:
       promise = msim.revokeMessage(localObj.options);
       break;
+    case OPERATION_TYPE.ReadFlash:
+      promise = msim.readFlashMessage(localObj.options);
+      break;
     case OPERATION_TYPE.GetCosKey:
       promise = msim.getCosKey();
-      break;
-    case OPERATION_TYPE.JoinChatRoom:
-      promise = msim.joinChatRoom(localObj.options);
-      break;
-    case OPERATION_TYPE.GetRoomMsgs:
-      promise = msim.getRoomMsgs(localObj.options);
-      break;
-    case OPERATION_TYPE.LeaveChatRoom:
-      promise = msim.leaveChatRoom(localObj.options);
-      break;
-    case OPERATION_TYPE.ChatRoomTod:
-      promise = msim.editChatRoomTOD(localObj.options);
-      break;
-    case OPERATION_TYPE.MuteMembers:
-      promise = msim.muteMembers(localObj.options);
-      break;
-    case OPERATION_TYPE.MuteChatRoom:
-      promise = msim.muteChatRoom(localObj.options);
-      break;
-    case OPERATION_TYPE.EditManager:
-      promise = msim.editChatRoomManagerAccess(localObj.options);
-      break;
-    case OPERATION_TYPE.DeleteChatRoomMsgs:
-      promise = msim.deleteChatRoomMsgs(localObj.options);
       break;
     default:
       promise = false;

@@ -7,15 +7,10 @@ import {
   ChatR,
   ChatItem,
   ChatItemUpdate,
-  GroupInfo,
-  GroupChatR,
-  GroupChatSR,
-  GroupChatRBatch,
-  GroupEvent,
-} from "./google/proto";
-import proFormat from "./google/proFormat";
-import { PID, ERROR_CODE, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
+} from "./proto";
 import pako from "pako";
+import proFormat from "./proFormat";
+import { PID, ERROR_CODE, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
 let wsConfig = {
   ws: null,
   Global: null,
@@ -74,6 +69,7 @@ function closeWs() {
     wsConfig.closeState = true;
     wsConfig.ws.close();
   }
+  reset();
 }
 
 function reset() {
@@ -114,10 +110,9 @@ function createWs(wsOptions) {
 
 // 发送心跳消息
 function sendPing() {
-  if (wsConfig?.ws?.readyState !== 1) return;
+  if (wsConfig.ws?.readyState !== 1) return;
   let date = new Date().getTime();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
-    console.log("发送ping");
     var msg = proFormat.compress(proFormat.pingPro(), PID.Ping);
     wsConfig.ws.send(msg);
     wsConfig.heartBeatTime = date;
@@ -151,11 +146,11 @@ function handleCallEvent(resultPro) {
   return callEvent;
 }
 
-// 反序列化protobuf
-function decodePro(result, pro) {
-  // TODO decode
-  // return pro.toObject(pro.decode(result), { defaults: true });
-  return pro.deserializeBinary(result).toObject();
+// 反编译protobuf
+function decodePro(Pro, result) {
+  return Pro.toObject(Pro.decode(result), {
+    defaults: true,
+  });
 }
 
 // 收到消息
@@ -167,8 +162,8 @@ function onMessage(evt) {
       to: "Uint8Array",
     });
   }
-  result = new Uint8Array(result);
   console.log("接收到消息", pid);
+  result = new Uint8Array(result);
   switch (pid) {
     case PID.Result:
       handleResult(result);
@@ -194,21 +189,6 @@ function onMessage(evt) {
     case PID.CosKey:
       handleGetCosKey(result);
       break;
-    case PID.GroupInfo:
-      handleJoinGroup(result);
-      break;
-    case PID.GroupChatSR:
-      handleSendGroupMsg(result);
-      break;
-    case PID.GroupChatR:
-      handleGroupMsg(result);
-      break;
-    case PID.GroupChatRBatch:
-      handleGroupOfflineMsg(result);
-      break;
-    case PID.GroupEvent:
-      handleGroupEvent(result);
-      break;
     default:
       break;
   }
@@ -216,7 +196,7 @@ function onMessage(evt) {
 
 // 处理Result类型
 function handleResult(result) {
-  let resultPro = decodePro(result, Result);
+  let resultPro = decodePro(Result, result);
   const code = resultPro.code;
   let callEvent = handleCallEvent(resultPro);
   if (callEvent?.type === OPERATION_TYPE.Login && !loginCode.includes(code)) {
@@ -263,17 +243,16 @@ function handleResult(result) {
 
 // 处理获取cosKey
 function handleGetCosKey(result) {
-  let resultPro = decodePro(result, CosKey);
+  let resultPro = decodePro(CosKey, result);
   let callEvent = handleCallEvent(resultPro);
   callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理会话列表
 function handleChatList(result) {
-  let resultPro = decodePro(result, ChatList);
-  // wsConfig.chatFormatList.push(...resultPro.chatItems);
-  wsConfig.chatFormatList.push(...resultPro.chatItemsList);
-  if (resultPro.updateTime && wsConfig.chatListEvent) {
+  let resultPro = decodePro(ChatList, result);
+  wsConfig.chatFormatList.push(...resultPro.chatItems);
+  if (resultPro.updateTime && wsConfig.chatListEvent?.callSuc) {
     wsConfig.chatListEvent.callSuc({
       chats: wsConfig.chatFormatList,
       updateTime: resultPro.updateTime,
@@ -285,25 +264,21 @@ function handleChatList(result) {
 
 // 处理消息列表
 function handleMsgList(result) {
-  let resultPro = decodePro(result, ChatRBatch);
+  let resultPro = decodePro(ChatRBatch, result);
   let callEvent = handleCallEvent(resultPro);
-  callEvent?.callSuc &&
-    callEvent.callSuc({
-      messages: resultPro.msgsList,
-    });
-  // callEvent.callSuc(resultPro, { messages: resultPro.msgs });
+  callEvent?.callSuc && callEvent.callSuc({ messages: resultPro.msgs });
 }
 
 // 处理发送消息成功
 function handleSend(result) {
-  let resultPro = decodePro(result, ChatSR);
+  let resultPro = decodePro(ChatSR, result);
   let callEvent = handleCallEvent(resultPro);
   callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理接收到消息
 function handleMsg(result) {
-  let resultPro = decodePro(result, ChatR);
+  let resultPro = decodePro(ChatR, result);
   let callEvent = handleCallEvent(resultPro);
   if (callEvent?.callSuc) {
     callEvent.callSuc({ data: resultPro });
@@ -317,74 +292,16 @@ function handleMsg(result) {
 
 // 处理获取指定会话信息
 function handleGetChat(result) {
-  let resultPro = decodePro(result, ChatItem);
+  let resultPro = decodePro(ChatItem, result);
   let callEvent = handleCallEvent(resultPro);
   callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
 // 处理会话列表更新
 function handleUpdateChat(result) {
-  let resultPro = decodePro(result, ChatItemUpdate);
+  let resultPro = decodePro(ChatItemUpdate, result);
   wsConfig.Global.handleMessage({
     type: HANDLE_TYPE.ChatItemUpdate,
-    data: resultPro,
-  });
-  let callEvent = handleCallEvent(resultPro);
-  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
-}
-
-// 处理加入群
-function handleJoinGroup(result) {
-  let resultPro = decodePro(result, GroupInfo);
-  let callEvent = handleCallEvent(resultPro);
-  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
-}
-
-// 发送群消息
-function handleSendGroupMsg(result) {
-  let resultPro = decodePro(result, GroupChatSR);
-  let callEvent = handleCallEvent(resultPro);
-  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
-}
-
-// 收到群消息
-function handleGroupMsg(result) {
-  let resultPro = decodePro(result, GroupChatR);
-  let callEvent = handleCallEvent(resultPro);
-  if (callEvent?.callSuc) {
-    callEvent.callSuc({ data: resultPro });
-  } else {
-    wsConfig.Global.handleMessage({
-      type: HANDLE_TYPE.GroupChatR,
-      data: resultPro,
-    });
-  }
-}
-
-// 收到群离线消息
-function handleGroupOfflineMsg(result) {
-  let resultPro = decodePro(result, GroupChatRBatch);
-  wsConfig.Global.handleMessage({
-    type: HANDLE_TYPE.GroupOfflineMsg,
-    data: resultPro.msgsList,
-  });
-}
-
-// 收到群事件
-function handleGroupEvent(result) {
-  let resultPro = decodePro(result, GroupEvent);
-  resultPro.members = resultPro.membersList;
-  delete resultPro.membersList;
-  if (resultPro.tip) {
-    resultPro.tip = {
-      event: resultPro.tip.event,
-      uids: resultPro.tip.uidsList,
-    };
-  }
-  wsConfig.Global.handleMessage({
-    type: HANDLE_TYPE.GroupEvent,
-    etype: resultPro.etype,
-    tip: resultPro.tip,
     data: resultPro,
   });
   let callEvent = handleCallEvent(resultPro);

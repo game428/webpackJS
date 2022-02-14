@@ -1,6 +1,6 @@
 import tool from "./tool";
 import { PID, OPERATION_TYPE, LOCAL_OPERATION_STATUS } from "./sdkTypes";
-import proFormat from "./google/proFormat";
+import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 

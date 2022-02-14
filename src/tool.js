@@ -3,9 +3,8 @@ import {
   MSG_TYPE,
   ERROR_CODE,
   SEND_STATE,
-  GROUP_TYPE,
-  IM_LOGIN_STATE,
   OPERATION_TYPE,
+  IM_LOGIN_STATE,
 } from "./sdkTypes.js";
 
 // 按时间排序
@@ -14,18 +13,6 @@ function sort(array, key) {
     return next[key] - pre[key];
   });
   return newArr;
-}
-
-// 获取分页
-function getPageSize(val, key, arr, pageSize) {
-  if (!val) return arr;
-  if (!arr?.length) return [];
-  let index = arr.findIndex((item) => item[key] === val);
-  if (index !== -1 && index !== arr.length - 1) {
-    return arr.slice(index + 1, index + 1 + pageSize);
-  } else {
-    return [];
-  }
 }
 
 // 生成uuid
@@ -171,24 +158,16 @@ function resultNotice(name, data, code) {
 }
 
 // 创建消息基础属性
-function msgBase(toUid, fromUid, gtype) {
+function msgBase(toUid, fromUid) {
   let time = Date.now();
   let msg = {
     fromUid: fromUid,
     msgId: 0,
     toUid: toUid,
-    gtype: gtype,
     showMsgTime: time,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SENDING,
   };
-  switch (gtype) {
-    case GROUP_TYPE.ChatRoom:
-      msg.conversationID = splicingGroupId(toUid);
-      break;
-    default:
-      msg.conversationID = splicingC2CId(toUid);
-      break;
-  }
+  msg.conversationID = splicingC2CId(toUid);
   let sign = createSign(time);
   msg.onlyId = createOnlyId(msg.conversationID, fromUid, sign);
   return msg;
@@ -201,12 +180,7 @@ function splicingC2CId(uid) {
 
 // 反格式化单聊conversationID
 function reformatC2CId(conversationID) {
-  return conversationID.slice(4);
-}
-
-// 拼接群聊conversationID
-function splicingGroupId(groupId) {
-  return "GROUP_" + groupId;
+  return parseInt(conversationID.slice(4));
 }
 
 // 把消息转为本地格式
@@ -214,15 +188,13 @@ function formatMsg(msg, conversationID) {
   let newMsg = {
     conversationID: conversationID,
     fromUid: msg.fromUid,
-    toUid: msg.toUid || msg.id,
+    toUid: msg.toUid,
     type: msg.type,
     msgId: msg.msgId,
+    newMsg: msg.newMsg,
     msgTime: msg.msgTime,
     sendStatus: SEND_STATE.BFIM_MSG_STATUS_SEND_SUCC,
   };
-  if (msg.hasOwnProperty("gtype")) {
-    newMsg.gtype = msg.gtype;
-  }
   newMsg.onlyId =
     msg.onlyId ||
     createOnlyId(conversationID, msg.fromUid, msg.sign || msg.msgTime);
@@ -233,12 +205,6 @@ function formatMsg(msg, conversationID) {
 
 function addMsgContent(msg, newMsg) {
   switch (msg.type) {
-    case MSG_TYPE.Recall:
-      newMsg.text = msg.body;
-      break;
-    case MSG_TYPE.Revoked:
-      newMsg.text = msg.body;
-      break;
     case MSG_TYPE.Text:
       newMsg.text = msg.body;
       break;
@@ -263,6 +229,25 @@ function addMsgContent(msg, newMsg) {
       newMsg.lat = msg.lat;
       newMsg.lng = msg.lng;
       newMsg.zoom = msg.zoom;
+      break;
+    case MSG_TYPE.Flash:
+      newMsg.url = msg.body;
+      newMsg.height = msg.height;
+      newMsg.width = msg.width;
+      if (msg.lat || msg.lng) {
+        newMsg.fromRead = msg.lat === msg.fromUid || msg.lng === msg.fromUid;
+        newMsg.toRead = msg.lat === msg.toUid || msg.lng === msg.toUid;
+      } else {
+        newMsg.toRead = false;
+        newMsg.fromRead = false;
+      }
+      break;
+    case MSG_TYPE.Revoked:
+      newMsg.text = msg.body;
+      break;
+    case MSG_TYPE.Recall:
+    case MSG_TYPE.ClickView:
+      newMsg.text = msg.body;
       break;
     default:
       newMsg.content = msg.body;
@@ -353,6 +338,7 @@ function formatBody(Global, msgObj, reject) {
         body = msgObj.text;
         break;
       case MSG_TYPE.Img:
+      case MSG_TYPE.Flash:
         if (isNotHttp(msgObj.url)) {
           errResult = parameterErr({
             name: OPERATION_TYPE.Send,
@@ -383,8 +369,77 @@ function formatBody(Global, msgObj, reject) {
     return body;
   }
 }
+
+/**
+ * 消息工具类
+ */
+
+// 添加消息列表
+function addMsgList(Global, conversationID, msgs) {
+  let msgList = Global.msgList.get(conversationID);
+  if (msgList && msgList.length > 0) {
+    msgList = [...msgs, ...msgList];
+  } else {
+    msgList = [...msgs];
+  }
+  Global.msgList.set(conversationID, msgList);
+}
+
+// 获取消息列表
+function getMsgList(Global, conversationID, msgEnd) {
+  let msgList = Global.msgList.get(conversationID);
+  if (msgList && msgList.length > 0) {
+    if (msgEnd) {
+      msgList = msgList.filter((msg) => msg.msgId < msgEnd);
+    }
+    return msgList.sort((a, b) => a.msgId - b.msgId);
+  } else {
+    return [];
+  }
+}
+
+// 更新指定消息
+function updateMsgs(Global, conversationID, msgs) {
+  let msgList = Global.msgList.get(conversationID);
+  if (msgList && msgList.length > 0) {
+    msgs.forEach((msg) => {
+      let oldMsg = msgList.find((msgItem) => msgItem.msgId === msg.msgId);
+      if (oldMsg) {
+        Object.assign(oldMsg, msg);
+      }
+    });
+  }
+}
+
+// 闪照消息状态更新
+function updateFlashMsg(Global, msg) {
+  let msgList = Global.msgList.get(msg.conversationID);
+  if (msgList && msgList.length > 0) {
+    let oldMsg = msgList.find((msgItem) => msgItem.msgId === msg.msgId);
+    if (!oldMsg) return;
+    let updateData = {};
+    if (oldMsg.fromUid === msg.fromUid) {
+      updateData.fromRead = true;
+    } else if (oldMsg.toUid === msg.fromUid) {
+      updateData.toRead = true;
+    }
+    Object.assign(oldMsg, updateData);
+  }
+}
+
+// 删除指定消息
+function deleteMsgs(Global, conversationID, msgIds) {
+  if (!msgIds) {
+    return Global.msgList.delete(conversationID);
+  }
+  let msgList = Global.msgList.get(conversationID);
+  if (msgList && msgList.length > 0) {
+    msgList = msgList.filter((msgItem) => !msgIds.includes(msgItem.msgId));
+    Global.msgList.set(conversationID, msgList);
+  }
+}
+
 export default {
-  getPageSize,
   sort,
   uuid,
   isNotString,
@@ -404,11 +459,16 @@ export default {
   msgBase,
   splicingC2CId,
   reformatC2CId,
-  splicingGroupId,
+  formatBody,
   formatMsg,
   formatChat,
   emptyTip,
   createCallEvent,
   preJudge,
-  formatBody,
+  // 消息工具类
+  addMsgList,
+  getMsgList,
+  updateMsgs,
+  updateFlashMsg,
+  deleteMsgs,
 };

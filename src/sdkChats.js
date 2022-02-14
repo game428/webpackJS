@@ -8,7 +8,7 @@ import {
   OPERATION_TYPE,
   LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
-import proFormat from "./google/proFormat";
+import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
@@ -134,9 +134,11 @@ function getSyncMsgs(Global, msgEnd, chat) {
     callSuc: async (res) => {
       if (!res?.messages?.length) return;
       let i = res.messages.length - 1;
+      let isDeleteMsgsHistory = false;
       if (res.messages[i].msgId > msgEnd + 1) {
         //删除本地数据库
-        localDexie.deleteMsgs(chat.conversationID);
+        // TODO  如果为true 删除历史
+        isDeleteMsgsHistory = true;
       }
       let revokeList = [];
       let msgList = [];
@@ -150,7 +152,6 @@ function getSyncMsgs(Global, msgEnd, chat) {
             type: MSG_TYPE.Revoked,
           };
           revokeList.push(newMsg);
-          localDexie.updateMsg(newMsg);
         } else if (msg.type === MSG_TYPE.SysDelete) {
           msg.content.split(",").forEach((id) => {
             deleteMsgIds.push(Number(id));
@@ -161,13 +162,6 @@ function getSyncMsgs(Global, msgEnd, chat) {
         }
       }
 
-      if (deleteMsgIds.length > 0) {
-        localDexie.deleteMsgs(chat.conversationID, deleteMsgIds);
-      }
-
-      let localMsg = revokeList.concat(msgList);
-      localDexie.addMsgList(localMsg);
-
       if (chat.deleted !== true) {
         Global.handleMessage({
           type: HANDLE_TYPE.SyncMsgs,
@@ -175,6 +169,7 @@ function getSyncMsgs(Global, msgEnd, chat) {
           revokeList: revokeList,
           msgList: msgList,
           deleteMsgIds: deleteMsgIds,
+          isDeleteMsgsHistory: isDeleteMsgsHistory,
         });
       }
     },
@@ -237,17 +232,26 @@ function getConversationList(Global, options) {
 // 返回获取到的消息列表
 function resultChats(Global, options, resolve) {
   let chats = tool.sort(Array.from(Global.chatKeys.values()), "showMsgTime");
+  let hasMore = false;
   if (options?.pageSize > 0) {
-    chats = tool.getPageSize(
-      options?.conversationID,
-      "conversationID",
-      chats,
-      options?.pageSize
-    );
+    if (options?.conversationID) {
+      let index = chats.findIndex(
+        (item) => item.conversationID === options.conversationID
+      );
+      if (index === -1 || index === chats.length - 1) {
+        chats = [];
+      } else {
+        hasMore = chats.length > index + 1 + options.pageSize;
+        chats = chats.slice(index + 1, index + 1 + options.pageSize);
+      }
+    } else {
+      hasMore = chats.length > options.pageSize;
+      chats = chats.slice(0, options.pageSize);
+    }
   }
   let result = tool.resultSuc(OPERATION_TYPE.GetChats, {
     chats: chats,
-    hasMore: options?.pageSize > 0 && chats.length > options?.pageSize,
+    hasMore: hasMore,
   });
   resolve(result);
 }
