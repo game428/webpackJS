@@ -8,6 +8,7 @@ import {
   SYNC_CHAT,
   ERROR_CODE,
   SEND_STATE,
+  DEMO_EVENT,
   HANDLE_TYPE,
   IM_LOGIN_STATE,
 } from "./sdkTypes";
@@ -36,6 +37,8 @@ import {
   createBusinessMessage,
 } from "./sdkMessages";
 import { on, off, getCosKey } from "./sdkUnits";
+// TODO Demo 相关 打包屏蔽
+import { getProfile, getProfileList, getSpark } from "./demo/demoUnits";
 
 const TYPES = {
   WS_STATE: WS_STATE,
@@ -45,7 +48,7 @@ const TYPES = {
   MSG_TYPE: MSG_TYPE,
   IM_LOGIN_STATE: IM_LOGIN_STATE,
 };
-
+// TODO 打包SDK时屏蔽掉demo 相关api
 // 导出对象
 /**
  * MSIM 是 IM Web SDK 的命名空间，提供了创建 SDK 实例的静态方法 create() ，以及事件常量 EVENT，类型常量 TYPES
@@ -56,6 +59,8 @@ const IM = {
   TYPES: TYPES,
   EVENT: EVENT,
   create,
+  // TODO Demo 相关 打包屏蔽
+  DEMO_EVENT: DEMO_EVENT,
 };
 
 /**
@@ -92,6 +97,10 @@ function initSDK() {
     getCosKey: () => getCosKey(Global),
     on: (eventName, callback) => on(msimSdk, eventName, callback),
     off: (eventName) => off(msimSdk, eventName),
+    // TODO Demo 相关 打包屏蔽
+    getProfile: (options) => getProfile(Global, options),
+    getProfileList: (options) => getProfileList(Global, options),
+    getSpark: () => getSpark(Global),
   };
   return msimSdk;
 }
@@ -173,7 +182,6 @@ function clearData(isClearDB) {
  */
 function create() {
   return new Promise((resolve, reject) => {
-    console.warn("开始初始化");
     if (msim !== null) {
       resolve(msim);
     }
@@ -184,7 +192,7 @@ function create() {
     imWsTabs.push(tabId);
     window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
     Global.tabId = tabId;
-    let time = new Date().getTime();
+    let time = Date.now();
     if ((windowHeartBeat || 0) < time - 3000) {
       localNotice.clear();
       closeWs();
@@ -231,7 +239,7 @@ function globalTimer() {
   let count = 0;
   if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
   Global.heartBeatTimer = setInterval(() => {
-    let time = new Date().getTime();
+    let time = Date.now();
     window.localStorage.setItem("im_windowHeartBeat", time);
     count += 1;
     if (count % 20 === 0) {

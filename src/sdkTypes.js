@@ -29,6 +29,7 @@ const PID = {
   UpdatePushToken: 23,
   ChatAction: 39, // 发送指令消息
   ProfileOnline: 50, //50  for demo: 通知客户端用户上线事件
+  UsrOnline: 51, //50  for demo: 通知客户端用户上线事件
   UsrOffline: 52, //52 for demo：通知客户端用户下线事件
   Signup: 53, //53 for demo：注册新用户
   FetchSpark: 54, //54 for demo: 获取spark
@@ -67,6 +68,10 @@ const LOCAL_MESSAGE_TYPE = {
   DeleteMsg: "deleteMsg",
   ReceivedMsg: "receivedMessage",
   NotificationMsg: "notificationMsg",
+  // TODO Demo 相关 打包屏蔽
+  DemoUpdateProfile: "updateProfile",
+  DemoUsrOnline: "usrOnline",
+  DemoUsrOffline: "usrOffline",
 };
 
 /***
@@ -107,6 +112,10 @@ const OPERATION_TYPE = {
   ReadFlash: "ReadFlashMessage",
   GetCosKey: "getCosKey",
   GetAllUnread: "getAllUnreadCount",
+  // TODO Demo 相关 打包屏蔽
+  GetProfile: "getProfile",
+  GetProfileList: "getProfileList",
+  GetSpark: "getSpark",
 };
 
 /**
@@ -209,6 +218,7 @@ const ERROR_CODE = {
   TOKEN_NOT_FOUND: 4,
   NO_REGISTER: 9,
   SIGNED: 11,
+  SUBAPP_NOT_EXIST: 1016,
   KICKED_OUT: 2008,
   TIMEOUT: 3000,
   DISCONNECT: 3001,
@@ -270,37 +280,52 @@ const CHAT_UPDATE_EVENT = {
 };
 
 /**
- * @module EVENT
- */
-/**
  * 监听事件名称
  * @enum
  * @property {string} CONNECT_CHANGE - 连接状态通知
  * @property {string} LOGIN - 登录成功
  * @property {string} LOGOUT - 退出成功
  * @property {string} SYNC_CHATS_CHANGE - 同步会话状态通知
+ * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
+ *
  * @property {string} MESSAGE_RECEIVED - 接收消息监听
  * @property {string} MESSAGE_REVOKED - 撤回消息
  * @property {string} MESSAGE_DELETE - 删除消息
  * @property {string} MESSAGE_READ - 已读消息
  * @property {string} MESSAGE_NOTIFICATION - 通知消息
- * @property {string} CONVERSATION_LIST_UPDATED - 会话列表更新
+ *
  * @property {string} KICKED_OUT - 被踢下线
  * @property {string} TOKEN_NOT_FOUND - token未找到或过期
+ * @property {string} LOGIN_FAILED - 尝试重连登录失败
  */
 const EVENT = {
   CONNECT_CHANGE: "onConnectChange",
   LOGIN: "onLogin",
   LOGOUT: "onLogout",
   SYNC_CHATS_CHANGE: "onSyncChatsChange",
+  CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
+  // 消息相关
   MESSAGE_RECEIVED: "onReceivedMessage",
   MESSAGE_REVOKED: "onRevokedMessage",
   MESSAGE_DELETE: "onDeleteMessage",
   MESSAGE_READ: "onReadMessage",
   MESSAGE_NOTIFICATION: "onNotificationMessage",
-  CONVERSATION_LIST_UPDATED: "onConversationListUpdated",
+  // 退出相关
   KICKED_OUT: "onKickedOut",
   TOKEN_NOT_FOUND: "onTokenNotFound",
+  LOGIN_FAILED: "onLoginFailed",
+};
+
+/**
+ * DEMO专用监听事件名称
+ * @property {string} PROFILE_UPDATE - 更新用户信息事件
+ * @property {string} USR_ONLINE - 用户上线
+ * @property {string} USR_OFFFLINE - 用户下线
+ */
+const DEMO_EVENT = {
+  PROFILE_UPDATE: "onProfileUpdate",
+  USR_ONLINE: "onUsrOnline",
+  USR_OFFFLINE: "onUsrOffline",
 };
 
 /***
@@ -323,6 +348,10 @@ const HANDLE_TYPE = {
   ChatItemUpdate: "ChatItemUpdate",
   ResultError: "ResultError",
   ChatR: "ChatR",
+  // demo 相关
+  DemoUpdateProfile: "UpdateProfile",
+  DemoUsrOnline: "UsrOnline",
+  DemoUsrOffline: "UsrOffline",
 };
 
 export {
@@ -334,6 +363,7 @@ export {
   ERROR_CODE,
   SEND_STATE,
   READ_STATE,
+  DEMO_EVENT,
   HANDLE_TYPE,
   OPERATION_TYPE,
   IM_LOGIN_STATE,

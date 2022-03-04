@@ -22,7 +22,7 @@ import pako from "pako";
 function compress(bytes, pid) {
   let compressBytes = bytes;
   let isCompress = 0;
-  if (bytes.length > 10) {
+  if (bytes.length > 10 * 1024) {
     isCompress = 1;
     compressBytes = pako.deflate(bytes, {
       level: 5,

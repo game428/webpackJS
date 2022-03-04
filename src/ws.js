@@ -7,6 +7,11 @@ import {
   ChatR,
   ChatItem,
   ChatItemUpdate,
+  Sparks,
+  ProfileOnline,
+  UsrOffline,
+  ProfileList,
+  Profile,
 } from "./proto";
 import pako from "pako";
 import proFormat from "./proFormat";
@@ -17,25 +22,25 @@ let wsConfig = {
   heartRate: 30000, // 心跳检查时间
   maxReconnectTime: 15000, // 最大重连间隔时间
   heartBeatTime: null, // 上次发送消息时间
-  reconnectNum: 0, // 重连间隔时间
-  closeState: false, // 关闭重连
+  closeReconnect: false, // 关闭重连
   reconnectTimer: null, // 重连定时器
-  wsStatus: false, // 当前连接状态
+  reconnectNum: 0, // 重连间隔时间
+  reconnectSpace: false, // 重连冷却状态
   chatListEvent: null, // 获取会话sign
   chatFormatList: [], // 会话列表
 };
 
 let loginCode = [
-  ERROR_CODE.SUCCESS,
-  ERROR_CODE.TOKEN_NOT_FOUND,
-  ERROR_CODE.KICKED_OUT,
+  14, //业务服务器未启动
+  505, //server busy, try later
+  506, //server reach max capacity, try later
 ];
 
 // 连接ws
 function connectWs(Global, wsOptions) {
   reset();
-  wsConfig.closeState = true;
   wsConfig.Global = Global;
+  wsConfig.closeReconnect = false;
   createWs(wsOptions);
   window.removeEventListener("online", online(wsOptions));
   window.addEventListener("online", online(wsOptions));
@@ -46,8 +51,8 @@ function connectWs(Global, wsOptions) {
 
 // 上线重连
 function online(wsOptions) {
-  if (wsConfig.closeState || wsConfig.ws.readyState === 1) return;
-  wsConfig.wsStatus = false;
+  if (wsConfig.closeReconnect || wsConfig.ws.readyState === 1) return;
+  wsConfig.reconnectSpace = false;
   wsConfig.reconnectNum = 0;
   if (wsConfig.ws) {
     wsConfig.ws.close();
@@ -58,29 +63,33 @@ function online(wsOptions) {
 
 // 发送消息
 function sendWsMsg(msg, pid) {
-  wsConfig.heartBeatTime = new Date().getTime();
+  wsConfig.heartBeatTime = Date.now();
   let sendMsg = proFormat.compress(msg, pid);
   wsConfig.ws?.send(sendMsg);
 }
 
 // 关闭连接
 function closeWs() {
+  reset();
   if (wsConfig.ws) {
-    wsConfig.closeState = true;
     wsConfig.ws.close();
   }
-  reset();
 }
 
 function reset() {
   if (wsConfig.reconnectTimer) clearTimeout(wsConfig.reconnectTimer);
-  wsConfig.reconnectTimer = null;
   wsConfig.ws = null;
   wsConfig.Global = null;
   wsConfig.heartBeatTime = null;
+  wsConfig.reconnectSpace = false;
+  wsConfig.closeReconnect = true;
+  wsConfig.reconnectTimer = null;
+  wsConfig.reconnectNum = 0;
   wsConfig.chatListEvent = null;
-  wsConfig.wsStatus = false;
   wsConfig.chatFormatList = [];
+}
+
+function resetReconnectNum() {
   wsConfig.reconnectNum = 0;
 }
 
@@ -90,9 +99,7 @@ function createWs(wsOptions) {
   let ws = new WebSocket(wsOptions.wsUrl);
   ws.binaryType = "arraybuffer";
   ws.onopen = (evt) => {
-    wsConfig.reconnectNum = 0;
-    wsConfig.closeState = false;
-    wsConfig.heartBeatTime = new Date().getTime();
+    wsConfig.heartBeatTime = Date.now();
     wsOptions.connSuc(wsOptions);
   };
   ws.onmessage = onMessage;
@@ -111,7 +118,7 @@ function createWs(wsOptions) {
 // 发送心跳消息
 function sendPing() {
   if (wsConfig.ws?.readyState !== 1) return;
-  let date = new Date().getTime();
+  let date = Date.now();
   if (wsConfig.heartBeatTime + wsConfig.heartRate <= date) {
     var msg = proFormat.compress(proFormat.pingPro(), PID.Ping);
     wsConfig.ws.send(msg);
@@ -121,9 +128,9 @@ function sendPing() {
 
 // 重连
 function reconnect(wsOptions) {
-  if (wsConfig.wsStatus || wsConfig.closeState) return;
-  wsConfig.wsStatus = true;
-  wsConfig.reconnectTimer = setTimeout(function() {
+  if (wsConfig.reconnectSpace || wsConfig.closeReconnect) return;
+  wsConfig.reconnectSpace = true;
+  wsConfig.reconnectTimer = setTimeout(function () {
     if (wsConfig.reconnectNum === 0) {
       wsConfig.reconnectNum = 250;
     } else if (wsConfig.reconnectNum <= wsConfig.maxReconnectTime / 2) {
@@ -132,7 +139,7 @@ function reconnect(wsOptions) {
       wsConfig.reconnectNum = wsConfig.maxReconnectTime;
     }
     createWs(wsOptions);
-    wsConfig.wsStatus = false;
+    wsConfig.reconnectSpace = false;
   }, wsConfig.reconnectNum);
 }
 
@@ -162,7 +169,6 @@ function onMessage(evt) {
       to: "Uint8Array",
     });
   }
-  console.log("接收到消息", pid);
   result = new Uint8Array(result);
   switch (pid) {
     case PID.Result:
@@ -189,17 +195,78 @@ function onMessage(evt) {
     case PID.CosKey:
       handleGetCosKey(result);
       break;
+    // TODO Demo 相关 打包屏蔽
+    case PID.Profile:
+      handleDemoProfile(result);
+      break;
+    case PID.ProfileList:
+      handleDemoProfiles(result);
+      break;
+    case PID.Sparks:
+      handleDemoSparks(result);
+      break;
+    case PID.ProfileOnline:
+      handleOnline(result);
+      break;
+    case PID.UsrOffline:
+      handleOffline(result);
+      break;
     default:
       break;
   }
 }
+
+// TODO Demo 相关 打包屏蔽
+/**
+ * SDK
+ */
+// 批量处理获取用户信息
+function handleDemoProfile(result) {
+  let resultPro = decodePro(Profile, result);
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
+}
+// 处理获取用户信息
+function handleDemoProfiles(result) {
+  let resultPro = decodePro(ProfileList, result);
+  wsConfig.Global.handleMessage({
+    type: HANDLE_TYPE.DemoUpdateProfile,
+    data: resultPro,
+  });
+}
+// 处理获取spark
+function handleDemoSparks(result) {
+  let resultPro = decodePro(Sparks, result);
+  let callEvent = handleCallEvent(resultPro);
+  callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
+}
+// 处理上线通知
+function handleOnline(result) {
+  let resultPro = decodePro(ProfileOnline, result);
+  wsConfig.Global.handleMessage({
+    type: HANDLE_TYPE.DemoUsrOnline,
+    data: resultPro,
+  });
+}
+// 处理下线线通知
+function handleOffline(result) {
+  let resultPro = decodePro(UsrOffline, result);
+  wsConfig.Global.handleMessage({
+    type: HANDLE_TYPE.DemoUsrOffline,
+    data: resultPro,
+  });
+}
+
+/**
+ * SDK 发布相关
+ */
 
 // 处理Result类型
 function handleResult(result) {
   let resultPro = decodePro(Result, result);
   const code = resultPro.code;
   let callEvent = handleCallEvent(resultPro);
-  if (callEvent?.type === OPERATION_TYPE.Login && !loginCode.includes(code)) {
+  if (callEvent?.type === OPERATION_TYPE.Login && loginCode.includes(code)) {
     wsConfig.ws?.close();
     return;
   }
@@ -220,7 +287,8 @@ function handleResult(result) {
       break;
     case ERROR_CODE.TOKEN_NOT_FOUND: // im token 未找到（不存在或失效）
     case ERROR_CODE.KICKED_OUT: // 被踢下线
-      wsConfig.closeState = true;
+    case ERROR_CODE.SUBAPP_NOT_EXIST: // TODO 子app不存在时不要一直登录
+      wsConfig.closeReconnect = true;
       wsConfig.ws.close();
       wsConfig.Global.handleMessage({
         type: HANDLE_TYPE.ResultError,
@@ -308,4 +376,4 @@ function handleUpdateChat(result) {
   callEvent?.callSuc && callEvent.callSuc({ data: resultPro });
 }
 
-export { connectWs, closeWs, sendPing, sendWsMsg };
+export { connectWs, closeWs, sendPing, sendWsMsg, resetReconnectNum };

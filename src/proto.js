@@ -2907,6 +2907,528 @@ $root.ChatList = (function() {
     return ChatList;
 })();
 
+$root.GetProfile = (function() {
+
+    function GetProfile(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    GetProfile.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    GetProfile.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    GetProfile.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    GetProfile.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(16).int64(message.uid);
+        if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
+            writer.uint32(24).int64(message.updateTime);
+        return writer;
+    };
+
+    GetProfile.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.GetProfile();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                message.uid = reader.int64();
+                break;
+            case 3:
+                message.updateTime = reader.int64();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    GetProfile.fromObject = function fromObject(object) {
+        if (object instanceof $root.GetProfile)
+            return object;
+        var message = new $root.GetProfile();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        if (object.updateTime != null)
+            if ($util.Long)
+                (message.updateTime = $util.Long.fromValue(object.updateTime)).unsigned = false;
+            else if (typeof object.updateTime === "string")
+                message.updateTime = parseInt(object.updateTime, 10);
+            else if (typeof object.updateTime === "number")
+                message.updateTime = object.updateTime;
+            else if (typeof object.updateTime === "object")
+                message.updateTime = new $util.LongBits(object.updateTime.low >>> 0, object.updateTime.high >>> 0).toNumber();
+        return message;
+    };
+
+    GetProfile.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.updateTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.updateTime = options.longs === String ? "0" : 0;
+        }
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
+            if (typeof message.updateTime === "number")
+                object.updateTime = options.longs === String ? String(message.updateTime) : message.updateTime;
+            else
+                object.updateTime = options.longs === String ? $util.Long.prototype.toString.call(message.updateTime) : options.longs === Number ? new $util.LongBits(message.updateTime.low >>> 0, message.updateTime.high >>> 0).toNumber() : message.updateTime;
+        return object;
+    };
+
+    GetProfile.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return GetProfile;
+})();
+
+$root.GetProfiles = (function() {
+
+    function GetProfiles(properties) {
+        this.getProfiles = [];
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    GetProfiles.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    GetProfiles.prototype.getProfiles = $util.emptyArray;
+
+    GetProfiles.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        if (message.getProfiles != null && message.getProfiles.length)
+            for (var i = 0; i < message.getProfiles.length; ++i)
+                $root.GetProfile.encode(message.getProfiles[i], writer.uint32(18).fork()).ldelim();
+        return writer;
+    };
+
+    GetProfiles.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.GetProfiles();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                if (!(message.getProfiles && message.getProfiles.length))
+                    message.getProfiles = [];
+                message.getProfiles.push($root.GetProfile.decode(reader, reader.uint32()));
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    GetProfiles.fromObject = function fromObject(object) {
+        if (object instanceof $root.GetProfiles)
+            return object;
+        var message = new $root.GetProfiles();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.getProfiles) {
+            if (!Array.isArray(object.getProfiles))
+                throw TypeError(".GetProfiles.getProfiles: array expected");
+            message.getProfiles = [];
+            for (var i = 0; i < object.getProfiles.length; ++i) {
+                if (typeof object.getProfiles[i] !== "object")
+                    throw TypeError(".GetProfiles.getProfiles: object expected");
+                message.getProfiles[i] = $root.GetProfile.fromObject(object.getProfiles[i]);
+            }
+        }
+        return message;
+    };
+
+    GetProfiles.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.arrays || options.defaults)
+            object.getProfiles = [];
+        if (options.defaults)
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.getProfiles && message.getProfiles.length) {
+            object.getProfiles = [];
+            for (var j = 0; j < message.getProfiles.length; ++j)
+                object.getProfiles[j] = $root.GetProfile.toObject(message.getProfiles[j], options);
+        }
+        return object;
+    };
+
+    GetProfiles.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return GetProfiles;
+})();
+
+$root.Profile = (function() {
+
+    function Profile(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    Profile.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Profile.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Profile.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Profile.prototype.nickName = "";
+    Profile.prototype.avatar = "";
+    Profile.prototype.gender = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Profile.prototype.gold = false;
+    Profile.prototype.verified = false;
+    Profile.prototype.hidden = false;
+
+    Profile.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(16).int64(message.uid);
+        if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
+            writer.uint32(24).int64(message.updateTime);
+        if (message.nickName != null && Object.hasOwnProperty.call(message, "nickName"))
+            writer.uint32(34).string(message.nickName);
+        if (message.avatar != null && Object.hasOwnProperty.call(message, "avatar"))
+            writer.uint32(42).string(message.avatar);
+        if (message.gender != null && Object.hasOwnProperty.call(message, "gender"))
+            writer.uint32(48).int64(message.gender);
+        if (message.gold != null && Object.hasOwnProperty.call(message, "gold"))
+            writer.uint32(56).bool(message.gold);
+        if (message.verified != null && Object.hasOwnProperty.call(message, "verified"))
+            writer.uint32(64).bool(message.verified);
+        if (message.hidden != null && Object.hasOwnProperty.call(message, "hidden"))
+            writer.uint32(72).bool(message.hidden);
+        return writer;
+    };
+
+    Profile.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.Profile();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                message.uid = reader.int64();
+                break;
+            case 3:
+                message.updateTime = reader.int64();
+                break;
+            case 4:
+                message.nickName = reader.string();
+                break;
+            case 5:
+                message.avatar = reader.string();
+                break;
+            case 6:
+                message.gender = reader.int64();
+                break;
+            case 7:
+                message.gold = reader.bool();
+                break;
+            case 8:
+                message.verified = reader.bool();
+                break;
+            case 9:
+                message.hidden = reader.bool();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    Profile.fromObject = function fromObject(object) {
+        if (object instanceof $root.Profile)
+            return object;
+        var message = new $root.Profile();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        if (object.updateTime != null)
+            if ($util.Long)
+                (message.updateTime = $util.Long.fromValue(object.updateTime)).unsigned = false;
+            else if (typeof object.updateTime === "string")
+                message.updateTime = parseInt(object.updateTime, 10);
+            else if (typeof object.updateTime === "number")
+                message.updateTime = object.updateTime;
+            else if (typeof object.updateTime === "object")
+                message.updateTime = new $util.LongBits(object.updateTime.low >>> 0, object.updateTime.high >>> 0).toNumber();
+        if (object.nickName != null)
+            message.nickName = String(object.nickName);
+        if (object.avatar != null)
+            message.avatar = String(object.avatar);
+        if (object.gender != null)
+            if ($util.Long)
+                (message.gender = $util.Long.fromValue(object.gender)).unsigned = false;
+            else if (typeof object.gender === "string")
+                message.gender = parseInt(object.gender, 10);
+            else if (typeof object.gender === "number")
+                message.gender = object.gender;
+            else if (typeof object.gender === "object")
+                message.gender = new $util.LongBits(object.gender.low >>> 0, object.gender.high >>> 0).toNumber();
+        if (object.gold != null)
+            message.gold = Boolean(object.gold);
+        if (object.verified != null)
+            message.verified = Boolean(object.verified);
+        if (object.hidden != null)
+            message.hidden = Boolean(object.hidden);
+        return message;
+    };
+
+    Profile.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.updateTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.updateTime = options.longs === String ? "0" : 0;
+            object.nickName = "";
+            object.avatar = "";
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.gender = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.gender = options.longs === String ? "0" : 0;
+            object.gold = false;
+            object.verified = false;
+            object.hidden = false;
+        }
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
+            if (typeof message.updateTime === "number")
+                object.updateTime = options.longs === String ? String(message.updateTime) : message.updateTime;
+            else
+                object.updateTime = options.longs === String ? $util.Long.prototype.toString.call(message.updateTime) : options.longs === Number ? new $util.LongBits(message.updateTime.low >>> 0, message.updateTime.high >>> 0).toNumber() : message.updateTime;
+        if (message.nickName != null && message.hasOwnProperty("nickName"))
+            object.nickName = message.nickName;
+        if (message.avatar != null && message.hasOwnProperty("avatar"))
+            object.avatar = message.avatar;
+        if (message.gender != null && message.hasOwnProperty("gender"))
+            if (typeof message.gender === "number")
+                object.gender = options.longs === String ? String(message.gender) : message.gender;
+            else
+                object.gender = options.longs === String ? $util.Long.prototype.toString.call(message.gender) : options.longs === Number ? new $util.LongBits(message.gender.low >>> 0, message.gender.high >>> 0).toNumber() : message.gender;
+        if (message.gold != null && message.hasOwnProperty("gold"))
+            object.gold = message.gold;
+        if (message.verified != null && message.hasOwnProperty("verified"))
+            object.verified = message.verified;
+        if (message.hidden != null && message.hasOwnProperty("hidden"))
+            object.hidden = message.hidden;
+        return object;
+    };
+
+    Profile.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return Profile;
+})();
+
+$root.ProfileList = (function() {
+
+    function ProfileList(properties) {
+        this.profiles = [];
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    ProfileList.prototype.profiles = $util.emptyArray;
+
+    ProfileList.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.profiles != null && message.profiles.length)
+            for (var i = 0; i < message.profiles.length; ++i)
+                $root.Profile.encode(message.profiles[i], writer.uint32(10).fork()).ldelim();
+        return writer;
+    };
+
+    ProfileList.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ProfileList();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                if (!(message.profiles && message.profiles.length))
+                    message.profiles = [];
+                message.profiles.push($root.Profile.decode(reader, reader.uint32()));
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    ProfileList.fromObject = function fromObject(object) {
+        if (object instanceof $root.ProfileList)
+            return object;
+        var message = new $root.ProfileList();
+        if (object.profiles) {
+            if (!Array.isArray(object.profiles))
+                throw TypeError(".ProfileList.profiles: array expected");
+            message.profiles = [];
+            for (var i = 0; i < object.profiles.length; ++i) {
+                if (typeof object.profiles[i] !== "object")
+                    throw TypeError(".ProfileList.profiles: object expected");
+                message.profiles[i] = $root.Profile.fromObject(object.profiles[i]);
+            }
+        }
+        return message;
+    };
+
+    ProfileList.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.arrays || options.defaults)
+            object.profiles = [];
+        if (message.profiles && message.profiles.length) {
+            object.profiles = [];
+            for (var j = 0; j < message.profiles.length; ++j)
+                object.profiles[j] = $root.Profile.toObject(message.profiles[j], options);
+        }
+        return object;
+    };
+
+    ProfileList.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return ProfileList;
+})();
+
 $root.GetChat = (function() {
 
     function GetChat(properties) {
@@ -3657,6 +4179,605 @@ $root.ChatAction = (function() {
     };
 
     return ChatAction;
+})();
+
+$root.ProfileOnline = (function() {
+
+    function ProfileOnline(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    ProfileOnline.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ProfileOnline.prototype.updateTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    ProfileOnline.prototype.nickName = "";
+    ProfileOnline.prototype.avatar = "";
+    ProfileOnline.prototype.gold = false;
+    ProfileOnline.prototype.verified = false;
+
+    ProfileOnline.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(8).int64(message.uid);
+        if (message.updateTime != null && Object.hasOwnProperty.call(message, "updateTime"))
+            writer.uint32(16).int64(message.updateTime);
+        if (message.nickName != null && Object.hasOwnProperty.call(message, "nickName"))
+            writer.uint32(26).string(message.nickName);
+        if (message.avatar != null && Object.hasOwnProperty.call(message, "avatar"))
+            writer.uint32(34).string(message.avatar);
+        if (message.gold != null && Object.hasOwnProperty.call(message, "gold"))
+            writer.uint32(40).bool(message.gold);
+        if (message.verified != null && Object.hasOwnProperty.call(message, "verified"))
+            writer.uint32(48).bool(message.verified);
+        return writer;
+    };
+
+    ProfileOnline.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.ProfileOnline();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.uid = reader.int64();
+                break;
+            case 2:
+                message.updateTime = reader.int64();
+                break;
+            case 3:
+                message.nickName = reader.string();
+                break;
+            case 4:
+                message.avatar = reader.string();
+                break;
+            case 5:
+                message.gold = reader.bool();
+                break;
+            case 6:
+                message.verified = reader.bool();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    ProfileOnline.fromObject = function fromObject(object) {
+        if (object instanceof $root.ProfileOnline)
+            return object;
+        var message = new $root.ProfileOnline();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        if (object.updateTime != null)
+            if ($util.Long)
+                (message.updateTime = $util.Long.fromValue(object.updateTime)).unsigned = false;
+            else if (typeof object.updateTime === "string")
+                message.updateTime = parseInt(object.updateTime, 10);
+            else if (typeof object.updateTime === "number")
+                message.updateTime = object.updateTime;
+            else if (typeof object.updateTime === "object")
+                message.updateTime = new $util.LongBits(object.updateTime.low >>> 0, object.updateTime.high >>> 0).toNumber();
+        if (object.nickName != null)
+            message.nickName = String(object.nickName);
+        if (object.avatar != null)
+            message.avatar = String(object.avatar);
+        if (object.gold != null)
+            message.gold = Boolean(object.gold);
+        if (object.verified != null)
+            message.verified = Boolean(object.verified);
+        return message;
+    };
+
+    ProfileOnline.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.updateTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.updateTime = options.longs === String ? "0" : 0;
+            object.nickName = "";
+            object.avatar = "";
+            object.gold = false;
+            object.verified = false;
+        }
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        if (message.updateTime != null && message.hasOwnProperty("updateTime"))
+            if (typeof message.updateTime === "number")
+                object.updateTime = options.longs === String ? String(message.updateTime) : message.updateTime;
+            else
+                object.updateTime = options.longs === String ? $util.Long.prototype.toString.call(message.updateTime) : options.longs === Number ? new $util.LongBits(message.updateTime.low >>> 0, message.updateTime.high >>> 0).toNumber() : message.updateTime;
+        if (message.nickName != null && message.hasOwnProperty("nickName"))
+            object.nickName = message.nickName;
+        if (message.avatar != null && message.hasOwnProperty("avatar"))
+            object.avatar = message.avatar;
+        if (message.gold != null && message.hasOwnProperty("gold"))
+            object.gold = message.gold;
+        if (message.verified != null && message.hasOwnProperty("verified"))
+            object.verified = message.verified;
+        return object;
+    };
+
+    ProfileOnline.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return ProfileOnline;
+})();
+
+$root.UsrOnline = (function() {
+
+    function UsrOnline(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    UsrOnline.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    UsrOnline.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(8).int64(message.uid);
+        return writer;
+    };
+
+    UsrOnline.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.UsrOnline();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.uid = reader.int64();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    UsrOnline.fromObject = function fromObject(object) {
+        if (object instanceof $root.UsrOnline)
+            return object;
+        var message = new $root.UsrOnline();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        return message;
+    };
+
+    UsrOnline.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults)
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        return object;
+    };
+
+    UsrOnline.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return UsrOnline;
+})();
+
+$root.UsrOffline = (function() {
+
+    function UsrOffline(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    UsrOffline.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    UsrOffline.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(8).int64(message.uid);
+        return writer;
+    };
+
+    UsrOffline.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.UsrOffline();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.uid = reader.int64();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    UsrOffline.fromObject = function fromObject(object) {
+        if (object instanceof $root.UsrOffline)
+            return object;
+        var message = new $root.UsrOffline();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        return message;
+    };
+
+    UsrOffline.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults)
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        return object;
+    };
+
+    UsrOffline.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return UsrOffline;
+})();
+
+$root.FetchSpark = (function() {
+
+    function FetchSpark(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    FetchSpark.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    FetchSpark.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        return writer;
+    };
+
+    FetchSpark.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.FetchSpark();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    FetchSpark.fromObject = function fromObject(object) {
+        if (object instanceof $root.FetchSpark)
+            return object;
+        var message = new $root.FetchSpark();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        return message;
+    };
+
+    FetchSpark.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults)
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        return object;
+    };
+
+    FetchSpark.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return FetchSpark;
+})();
+
+$root.Spark = (function() {
+
+    function Spark(properties) {
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    Spark.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Spark.prototype.nickName = "";
+    Spark.prototype.avatar = "";
+    Spark.prototype.pic = "";
+
+    Spark.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(8).int64(message.uid);
+        if (message.nickName != null && Object.hasOwnProperty.call(message, "nickName"))
+            writer.uint32(18).string(message.nickName);
+        if (message.avatar != null && Object.hasOwnProperty.call(message, "avatar"))
+            writer.uint32(26).string(message.avatar);
+        if (message.pic != null && Object.hasOwnProperty.call(message, "pic"))
+            writer.uint32(34).string(message.pic);
+        return writer;
+    };
+
+    Spark.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.Spark();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.uid = reader.int64();
+                break;
+            case 2:
+                message.nickName = reader.string();
+                break;
+            case 3:
+                message.avatar = reader.string();
+                break;
+            case 4:
+                message.pic = reader.string();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    Spark.fromObject = function fromObject(object) {
+        if (object instanceof $root.Spark)
+            return object;
+        var message = new $root.Spark();
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        if (object.nickName != null)
+            message.nickName = String(object.nickName);
+        if (object.avatar != null)
+            message.avatar = String(object.avatar);
+        if (object.pic != null)
+            message.pic = String(object.pic);
+        return message;
+    };
+
+    Spark.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+            object.nickName = "";
+            object.avatar = "";
+            object.pic = "";
+        }
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        if (message.nickName != null && message.hasOwnProperty("nickName"))
+            object.nickName = message.nickName;
+        if (message.avatar != null && message.hasOwnProperty("avatar"))
+            object.avatar = message.avatar;
+        if (message.pic != null && message.hasOwnProperty("pic"))
+            object.pic = message.pic;
+        return object;
+    };
+
+    Spark.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return Spark;
+})();
+
+$root.Sparks = (function() {
+
+    function Sparks(properties) {
+        this.sparks = [];
+        if (properties)
+            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    Sparks.prototype.sign = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+    Sparks.prototype.sparks = $util.emptyArray;
+
+    Sparks.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sign != null && Object.hasOwnProperty.call(message, "sign"))
+            writer.uint32(8).int64(message.sign);
+        if (message.sparks != null && message.sparks.length)
+            for (var i = 0; i < message.sparks.length; ++i)
+                $root.Spark.encode(message.sparks[i], writer.uint32(18).fork()).ldelim();
+        return writer;
+    };
+
+    Sparks.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.Sparks();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.sign = reader.int64();
+                break;
+            case 2:
+                if (!(message.sparks && message.sparks.length))
+                    message.sparks = [];
+                message.sparks.push($root.Spark.decode(reader, reader.uint32()));
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    Sparks.fromObject = function fromObject(object) {
+        if (object instanceof $root.Sparks)
+            return object;
+        var message = new $root.Sparks();
+        if (object.sign != null)
+            if ($util.Long)
+                (message.sign = $util.Long.fromValue(object.sign)).unsigned = false;
+            else if (typeof object.sign === "string")
+                message.sign = parseInt(object.sign, 10);
+            else if (typeof object.sign === "number")
+                message.sign = object.sign;
+            else if (typeof object.sign === "object")
+                message.sign = new $util.LongBits(object.sign.low >>> 0, object.sign.high >>> 0).toNumber();
+        if (object.sparks) {
+            if (!Array.isArray(object.sparks))
+                throw TypeError(".Sparks.sparks: array expected");
+            message.sparks = [];
+            for (var i = 0; i < object.sparks.length; ++i) {
+                if (typeof object.sparks[i] !== "object")
+                    throw TypeError(".Sparks.sparks: object expected");
+                message.sparks[i] = $root.Spark.fromObject(object.sparks[i]);
+            }
+        }
+        return message;
+    };
+
+    Sparks.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        var object = {};
+        if (options.arrays || options.defaults)
+            object.sparks = [];
+        if (options.defaults)
+            if ($util.Long) {
+                var long = new $util.Long(0, 0, false);
+                object.sign = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sign = options.longs === String ? "0" : 0;
+        if (message.sign != null && message.hasOwnProperty("sign"))
+            if (typeof message.sign === "number")
+                object.sign = options.longs === String ? String(message.sign) : message.sign;
+            else
+                object.sign = options.longs === String ? $util.Long.prototype.toString.call(message.sign) : options.longs === Number ? new $util.LongBits(message.sign.low >>> 0, message.sign.high >>> 0).toNumber() : message.sign;
+        if (message.sparks && message.sparks.length) {
+            object.sparks = [];
+            for (var j = 0; j < message.sparks.length; ++j)
+                object.sparks[j] = $root.Spark.toObject(message.sparks[j], options);
+        }
+        return object;
+    };
+
+    Sparks.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    return Sparks;
 })();
 
 module.exports = $root;

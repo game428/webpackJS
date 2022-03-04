@@ -182,6 +182,16 @@ function createPromise(type, msim, localObj) {
     case OPERATION_TYPE.GetCosKey:
       promise = msim.getCosKey();
       break;
+    // TODO Ddemo API 打包屏蔽
+    case OPERATION_TYPE.GetProfile:
+      promise = msim.getProfile();
+      break;
+    case OPERATION_TYPE.GetProfileList:
+      promise = msim.getProfileList();
+      break;
+    case OPERATION_TYPE.GetSpark:
+      promise = msim.getSpark();
+      break;
     default:
       promise = false;
       break;

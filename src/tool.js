@@ -109,7 +109,7 @@ function createOnlyId(conversationID, fromUid, sign) {
 
 // 生成sign
 function createSign(date) {
-  return Math.round((date || new Date().getTime() + Math.random()) * 1000);
+  return Math.round((date || Date.now() + Math.random()) * 1000);
 }
 
 // 失败回调参数
@@ -265,8 +265,7 @@ function addMsgContent(msg, newMsg) {
 
 // 把会话转为本地格式
 function formatChat(chat, uid) {
-  let localChat = { ...chat };
-  delete localChat.sign;
+  let localChat = { ...chat, sign: undefined };
   localChat.showTime = parseInt(chat.showMsgTime / 1000);
   localChat.conversationID = splicingC2CId(chat.uid);
   if (chat.msgEnd) localChat.showMsgFromUid = chat.myMove ? chat.uid : uid;
@@ -278,7 +277,7 @@ function createCallEvent(Global, options) {
   Global.callEvents.set(options.callSign, {
     tabId: Global.tabId,
     type: options.type,
-    timeOut: new Date().getTime() + Global.timeOut,
+    timeOut: Date.now() + Global.timeOut,
     callSuc: (res) => {
       Global.callEvents.delete(options.callSign);
       options.callSuc && options.callSuc(res);

@@ -17,15 +17,15 @@ import localDexie from "./dexieDB";
  * 会话对象
  * @typedef {Object} Chat 消息对象
  * @property {string} Chat.conversationID - 会话id
- * @property {string} Chat.uid - 用户Id
- * @property {string} Chat.msgEnd - 最后一条消息id
- * @property {string} Chat.msgLastRead - 对方最后一条标记为已读的消息id
- * @property {string} Chat.showMsgId - 显示的最后一条显示的消息id
+ * @property {number} Chat.uid - 用户Id
+ * @property {number} Chat.msgEnd - 最后一条消息id
+ * @property {number} Chat.msgLastRead - 对方最后一条标记为已读的消息id
+ * @property {number} Chat.showMsgId - 显示的最后一条显示的消息id
  * @property {number} Chat.showMsgType - 显示的最后一条消息类型
  * @property {string} Chat.showMsg - 显示的最后一条消息内容
  * @property {number} Chat.showMsgTime - 显示的最后一条消息服务器时间
  * @property {number} Chat.showTime - 显示的最后一条消息客户端显示时间
- * @property {string} Chat.showMsgFromUid - 显示的最后一条消息的发送方id
+ * @property {number} Chat.showMsgFromUid - 显示的最后一条消息的发送方id
  * @property {number} Chat.unread - 未读消息数
  * @property {boolean} Chat.matched - 是否是matched
  * @property {boolean} Chat.newMsg - 是否以newmessage显示

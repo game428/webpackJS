@@ -15,6 +15,12 @@ import localDexie from "./dexieDB";
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import { getConversationProvider } from "./sdkChats";
+// TODO Demo 相关 打包屏蔽
+import {
+  handleProfileUpdate,
+  handleUsrOffline,
+  handleUsrOnline,
+} from "./demo/demoHandle";
 
 let Global, msim;
 
@@ -46,6 +52,16 @@ function handleMessage(GlobalObj, msimObj, options) {
       break;
     case HANDLE_TYPE.ChatR:
       handleMsg(options);
+      break;
+    // TODO Demo 相关 打包屏蔽
+    case HANDLE_TYPE.DemoUpdateProfile:
+      handleProfileUpdate(GlobalObj, msimObj, options);
+      break;
+    case HANDLE_TYPE.DemoUsrOffline:
+      handleUsrOffline(GlobalObj, msimObj, options);
+      break;
+    case HANDLE_TYPE.DemoUsrOnline:
+      handleUsrOnline(GlobalObj, msimObj, options);
       break;
   }
 }
@@ -199,6 +215,7 @@ function handleError(options) {
   switch (options.data.code) {
     case ERROR_CODE.KICKED_OUT:
     case ERROR_CODE.NO_REGISTER:
+    case ERROR_CODE.SUBAPP_NOT_EXIST:
       if (msim[EVENT.KICKED_OUT]) {
         let result = tool.resultNotice(EVENT.KICKED_OUT, options.data);
         msim[EVENT.KICKED_OUT](result);
@@ -212,6 +229,12 @@ function handleError(options) {
           options.data.code
         );
         msim[EVENT.TOKEN_NOT_FOUND](result);
+      }
+      break;
+    default:
+      if (msim[EVENT.LOGIN_FAILED]) {
+        let result = tool.resultNotice(EVENT.LOGIN_FAILED, options.data);
+        msim[EVENT.LOGIN_FAILED](result);
       }
       break;
   }

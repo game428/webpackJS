@@ -14,6 +14,34 @@ import localNotice from "./localNotice";
 import localDexie from "./dexieDB";
 
 /**
+ * 消息对象
+ * @typedef {Object} Message 消息对象
+ * @property {string} Message.onlyId - 消息唯一id
+ * @property {string} Message.conversationID - 所属会话id
+ * @property {number} Message.fromUid - 发送方用户ID
+ * @property {number} Message.toUid - 接收方用户ID
+ * @property {number} Message.msgId - 消息id
+ * @property {number} Message.msgTime - 消息时间（以服务器为准 精确到百万分之一秒的时间戳）
+ * @property {number} Message.showMsgTime - 消息时间（以服务器为准 精确到毫秒的时间戳）
+ * @property {number} Message.sendStatus - 消息发送状态
+ * @property {string} [Message.text] - 文本消息，消息内容
+ * @property {string} [Message.url] -  图片消息，图片路径
+ * @property {number} [Message.type] - 消息类型
+ * @property {string} [Message.title] - 推送的消息标题
+ * @property {number} [Message.thumb] - 封面图
+ * @property {number} [Message.width] - 封面图的宽度
+ * @property {number} [Message.height] - 封面图的高度
+ * @property {number} [Message.duration] - 时长
+ * @property {number} [Message.lat] - 维度
+ * @property {number} [Message.lng] - 经度
+ * @property {number} [Message.zoom] - 地图缩放层级
+ * @property {string} [Message.content] - 未定义type，传输的body
+ * @property {string} [Message.body] - 消息内容
+ * @property {number} [Message.sput] - sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
+ * @property {boolean} [Message.newMsg] - 是否显示 new message
+ */
+
+/**
  * 获取消息列表
  * @memberof SDK
  * @param {Object} options - 接口参数
@@ -553,34 +581,6 @@ function createBusinessMessage(Global, options) {
     message: newMsg,
   };
 }
-
-/**
- * 消息对象
- * @typedef {Object} Message 消息对象
- * @property {string} Message.onlyId - 消息唯一id
- * @property {string} Message.conversationID - 所属会话id
- * @property {number} Message.fromUid - 发送方用户ID
- * @property {number} Message.toUid - 接收方用户ID
- * @property {number} Message.msgId - 消息id
- * @property {number} Message.msgTime - 消息时间（以服务器为准 精确到百万分之一秒的时间戳）
- * @property {number} Message.showMsgTime - 消息时间（以服务器为准 精确到毫秒的时间戳）
- * @property {number} Message.sendStatus - 消息发送状态
- * @property {string} [Message.text] - 文本消息，消息内容
- * @property {string} [Message.url] -  图片消息，图片路径
- * @property {number} [Message.type] - 消息类型
- * @property {string} [Message.title] - 推送的消息标题
- * @property {number} [Message.thumb] - 封面图
- * @property {number} [Message.width] - 封面图的宽度
- * @property {number} [Message.height] - 封面图的高度
- * @property {number} [Message.duration] - 时长
- * @property {number} [Message.lat] - 维度
- * @property {number} [Message.lng] - 经度
- * @property {number} [Message.zoom] - 地图缩放层级
- * @property {string} [Message.content] - 未定义type，传输的body
- * @property {string} [Message.body] - 消息内容
- * @property {number} [Message.sput] - sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
- * @property {boolean} [Message.newMsg] - 是否显示 new message
- */
 
 export {
   getMessageList,
