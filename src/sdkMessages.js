@@ -11,7 +11,7 @@ import {
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
-import localDexie from "./dexieDB";
+import localData from "./localData";
 
 /**
  * 消息对象
@@ -35,8 +35,9 @@ import localDexie from "./dexieDB";
  * @property {number} [Message.lat] - 维度
  * @property {number} [Message.lng] - 经度
  * @property {number} [Message.zoom] - 地图缩放层级
+ * @property {boolean} [Message.toRead] - 接收方是否已查看
+ * @property {boolean} [Message.fromRead] - 发送方是否已查看
  * @property {string} [Message.content] - 未定义type，传输的body
- * @property {string} [Message.body] - 消息内容
  * @property {number} [Message.sput] - sender_profile_update_time 发送人的profile更新时间（精确到秒的时间戳）
  * @property {boolean} [Message.newMsg] - 是否显示 new message
  */
@@ -84,8 +85,8 @@ function getMessageList(Global, options) {
       pageSize: Global.msgPageSize,
       ...options,
     };
-    localDexie.addChatKey(defaultOption.conversationID);
-    let data = tool.getMsgList(
+    Global.getChatHistorys.add(defaultOption.conversationID);
+    let data = localData.getMsgList(
       Global,
       defaultOption.conversationID,
       defaultOption.msgEnd
@@ -147,7 +148,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
       }
     });
     if (newMsgs.length > 0) {
-      tool.addMsgList(Global, defaultOption.conversationID, newMsgs);
+      localData.addMsgList(Global, defaultOption.conversationID, newMsgs);
     }
     if (msgs?.length) {
       newMsgs.push(...msgs);
@@ -155,7 +156,7 @@ function getMsgsSuc(Global, defaultOption, res, resolve, msgs) {
     resultMsgs(defaultOption, resolve, newMsgs);
   } else {
     if (res.messages.length > 0) {
-      tool.addMsgList(Global, defaultOption.conversationID, res.messages);
+      localData.addMsgList(Global, defaultOption.conversationID, res.messages);
     }
     resultMsgs(defaultOption, resolve, res.messages);
   }

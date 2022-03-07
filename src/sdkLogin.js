@@ -7,6 +7,7 @@ import {
   HANDLE_TYPE,
   OPERATION_TYPE,
   IM_LOGIN_STATE,
+  LOCAL_STORAGE_KEYS,
 } from "./sdkTypes";
 import proFormat from "./proFormat";
 import { connectWs, closeWs, sendWsMsg, resetReconnectNum } from "./ws";
@@ -52,8 +53,8 @@ function getSdkState(Global) {
       resolve(Global.sdkState);
     } else {
       let callSign = tool.createSign();
-      window.localStorage.setItem("im_getSdkState", Global.tabId);
-      window.localStorage.removeItem("im_getSdkState");
+      window.localStorage.setItem(LOCAL_STORAGE_KEYS.GetSdkState, Global.tabId);
+      window.localStorage.removeItem(LOCAL_STORAGE_KEYS.GetSdkState);
       Global.stateCallEvents.has(callSign) && (callSign += 1);
       Global.stateCallEvents.set(callSign, {
         timeOut: Date.now() + 3000,
@@ -74,19 +75,60 @@ function getSdkState(Global) {
   });
 }
 
+function getChatList(Global) {
+  return new Promise((resolve, reject) => {
+    let callSign = tool.createSign();
+    Global.chatCallEvents.has(callSign) && (callSign += 1);
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEYS.GetChats,
+      JSON.stringify({
+        tabId: Global.tabId,
+        callSign: callSign,
+      })
+    );
+    window.localStorage.removeItem(LOCAL_STORAGE_KEYS.GetChats);
+    Global.chatCallEvents.set(callSign, {
+      callSuc: (res) => {
+        Global.chatCallEvents.delete(callSign);
+        res.chats.forEach((chat) => {
+          // 如果内存已有该chat，则通过对象合并更新
+          if (Global.chatKeys.has(chat.conversationID)) {
+            let oldChat = Global.chatKeys.get(chat.conversationID);
+            Object.assign(oldChat, chat);
+          } else {
+            Global.chatKeys.set(chat.conversationID, chat);
+          }
+        });
+        resolve(res);
+      },
+      callErr: (err) => {
+        Global.chatCallEvents.delete(callSign);
+        resolve({
+          chats: [],
+        });
+      },
+    });
+  });
+}
+
 function handleLogin(Global, config, resolve, reject) {
   getSdkState(Global).then((info) => {
     if (info.loginState === IM_LOGIN_STATE.NOT_LOGIN) {
-      Global.clearData(true);
+      Global.clearData();
       loginWs(Global, config, resolve, reject);
     } else if (info?.imToken !== config.imToken) {
       logout(Global).then(() => {
         loginWs(Global, config, resolve, reject);
       });
     } else if (info.loginState === IM_LOGIN_STATE.LOGGED) {
-      if (info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+      if (!Global.curTab && info.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
         delete info.chatsSync;
-        Global.initChats();
+        getChatList(Global).then(() => {
+          Global.sdkState.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;
+          Global.chatCallEvents.forEach((callEvent, key) => {
+            callEvent.callSuc();
+          });
+        });
       }
       Object.assign(Global.sdkState, info);
       let result = tool.resultSuc(OPERATION_TYPE.Login, {
@@ -99,7 +141,7 @@ function handleLogin(Global, config, resolve, reject) {
 }
 
 function loginWs(Global, config, resolve, reject) {
-  window.localStorage.setItem("im_wsCurId", Global.tabId);
+  window.localStorage.setItem(LOCAL_STORAGE_KEYS.SetCurTab, Global.tabId);
   // 启动全局定时器
   Global.globalTimer();
   Object.assign(Global.sdkState, {
@@ -142,7 +184,7 @@ function loginWs(Global, config, resolve, reject) {
 }
 
 function reconnection(Global) {
-  window.localStorage.setItem("im_wsCurId", Global.tabId);
+  window.localStorage.setItem(LOCAL_STORAGE_KEYS.SetCurTab, Global.tabId);
   // 启动全局定时器
   Global.globalTimer();
   getSdkState(Global).then((info) => {
@@ -157,7 +199,6 @@ function reconnection(Global) {
       callSign: callSign,
       callSuc: (res) => {
         resetReconnectNum();
-        resolve(res);
       },
       callErr: (err) => {
         closeWs();
@@ -167,8 +208,6 @@ function reconnection(Global) {
             data: err,
           });
         }
-        let errResult = tool.serverErr(err, OPERATION_TYPE.Login);
-        reject(errResult);
       },
     });
     let wsOptions = {
@@ -186,6 +225,7 @@ function reconnection(Global) {
 
 // webSocket连接成功回调
 function connSuc(Global, wsOptions) {
+  console.log("开始连接im", wsOptions);
   Global.handleMessage({
     type: HANDLE_TYPE.WsStateChange,
     state: WS_STATE.NET_STATE_CONNECTED,
@@ -238,7 +278,7 @@ function connClose(Global, wsOptions, err) {
     type: HANDLE_TYPE.WsStateChange,
     state: WS_STATE.NET_STATE_DISCONNECTED,
   });
-  console.warn("连接失败回调", JSON.stringify(Global.sdkState));
+  console.log("连接失败回调", err, wsOptions, Global.sdkState);
 }
 
 // 登录服务器

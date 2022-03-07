@@ -75,15 +75,6 @@ const LOCAL_MESSAGE_TYPE = {
 };
 
 /***
- * 多tab操作通讯类型
- * @enum
- */
-const LOCAL_OPERATION_TYPE = {
-  Message: "im_onMessage_",
-  WS: "im_onWebsocket_",
-};
-
-/***
  * 业务操作类型
  * @param Login - 登录im
  * @param Logout - 退出im
@@ -354,6 +345,34 @@ const HANDLE_TYPE = {
   DemoUsrOffline: "UsrOffline",
 };
 
+/***
+ * 多tab操作通讯类型
+ * @param WsTabs - 窗口uuid集合
+ * @param ReconnectTab - 指定uuid窗口重连
+ * @param WindowHeart - 窗口心跳
+ * @param SetCurTab - 设置当前活跃窗口
+ * @param UpdateTabs - 更新窗口集合
+ * @param GetSdkState - 获取SDK状态
+ * @param SetSdkState - 设置SDK状态
+ * @param GetChats - 获取会话列表
+ * @param SetChats - 设置会话列表
+ * @param WS - 处理wsAPI调用
+ * @param Notice - 处理多Tab通知调用
+ */
+const LOCAL_STORAGE_KEYS = {
+  WsTabs: "im_wsTabs",
+  ReconnectTab: "im_wsConnTab",
+  WindowHeart: "im_windowHeartBeat",
+  SetCurTab: "im_wsCurId",
+  UpdateTabs: "im_update_tabs_",
+  GetSdkState: "im_getSdkState",
+  SetSdkState: "im_setSdkState",
+  GetChats: "im_getChatList",
+  SetChats: "im_setChatList",
+  WS: "im_onWs_",
+  Notice: "im_onNotice_",
+};
+
 export {
   PID,
   EVENT,
@@ -369,6 +388,6 @@ export {
   IM_LOGIN_STATE,
   CHAT_UPDATE_EVENT,
   LOCAL_MESSAGE_TYPE,
-  LOCAL_OPERATION_TYPE,
+  LOCAL_STORAGE_KEYS,
   LOCAL_OPERATION_STATUS,
 };

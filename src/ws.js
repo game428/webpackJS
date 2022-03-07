@@ -40,10 +40,12 @@ let loginCode = [
 function connectWs(Global, wsOptions) {
   reset();
   wsConfig.Global = Global;
+  wsConfig.wsOptions = wsOptions;
   wsConfig.closeReconnect = false;
   createWs(wsOptions);
-  window.removeEventListener("online", online(wsOptions));
-  window.addEventListener("online", online(wsOptions));
+  window.addEventListener("online", () => {
+    online(wsOptions);
+  });
   window.addEventListener("offline", () => {
     wsConfig.ws.close();
   });
@@ -80,6 +82,7 @@ function reset() {
   if (wsConfig.reconnectTimer) clearTimeout(wsConfig.reconnectTimer);
   wsConfig.ws = null;
   wsConfig.Global = null;
+  wsConfig.wsOptions = null;
   wsConfig.heartBeatTime = null;
   wsConfig.reconnectSpace = false;
   wsConfig.closeReconnect = true;
@@ -104,9 +107,11 @@ function createWs(wsOptions) {
   };
   ws.onmessage = onMessage;
   ws.onclose = (err) => {
-    console.log("Connection closed.", err);
-    reconnect(wsOptions);
-    wsOptions.connErr(wsOptions, err);
+    console.log("Connection closed.", err, { ...wsConfig }, wsOptions);
+    if (wsOptions.imToken === wsConfig?.wsOptions.imToken) {
+      reconnect(wsOptions);
+      wsOptions.connErr(wsOptions, err);
+    }
   };
   ws.onerror = (err) => {
     console.log("Connection Error", err);
@@ -128,9 +133,14 @@ function sendPing() {
 
 // 重连
 function reconnect(wsOptions) {
-  if (wsConfig.reconnectSpace || wsConfig.closeReconnect) return;
+  if (
+    wsConfig.reconnectSpace ||
+    wsConfig.closeReconnect ||
+    wsOptions.imToken !== wsConfig?.wsOptions.imToken
+  )
+    return;
   wsConfig.reconnectSpace = true;
-  wsConfig.reconnectTimer = setTimeout(function () {
+  wsConfig.reconnectTimer = setTimeout(function() {
     if (wsConfig.reconnectNum === 0) {
       wsConfig.reconnectNum = 250;
     } else if (wsConfig.reconnectNum <= wsConfig.maxReconnectTime / 2) {
@@ -145,6 +155,7 @@ function reconnect(wsOptions) {
 
 // 处理回调队列
 function handleCallEvent(resultPro) {
+  if (!wsConfig.Global) return null;
   var callEvents = wsConfig.Global.callEvents;
   var callEvent = null;
   if (Object.prototype.hasOwnProperty.call(resultPro, "sign")) {
@@ -289,12 +300,14 @@ function handleResult(result) {
     case ERROR_CODE.KICKED_OUT: // 被踢下线
     case ERROR_CODE.SUBAPP_NOT_EXIST: // TODO 子app不存在时不要一直登录
       wsConfig.closeReconnect = true;
-      wsConfig.ws.close();
-      wsConfig.Global.handleMessage({
-        type: HANDLE_TYPE.ResultError,
-        data: resultPro,
-      });
-      callEvent?.callErr && callEvent.callErr(resultPro);
+      wsConfig.ws && wsConfig.ws.close();
+      if (wsConfig.Global) {
+        wsConfig.Global.handleMessage({
+          type: HANDLE_TYPE.ResultError,
+          data: resultPro,
+        });
+        callEvent?.callErr && callEvent.callErr(resultPro);
+      }
       break;
     case 12: // 用户的会话列表为空
       callEvent?.callSuc &&

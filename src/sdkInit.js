@@ -11,11 +11,11 @@ import {
   DEMO_EVENT,
   HANDLE_TYPE,
   IM_LOGIN_STATE,
+  LOCAL_STORAGE_KEYS,
 } from "./sdkTypes";
 import { closeWs, sendPing } from "./ws";
 import localNotice from "./localNotice";
 import tool from "./tool";
-import localDexie from "./dexieDB";
 import handleMessage from "./sdkHandleMsg";
 import { reconnection, login, logout } from "./sdkLogin";
 import {
@@ -129,6 +129,7 @@ function initGlobal() {
     chatCallEvents: new Map(), // 会话列表异步回调
     stateCallEvents: new Map(), // sdk状态异步回调
     chatKeys: new Map(), // 本地所有可显示会话
+    getChatHistorys: new Set(),
     msgList: new Map(), // 本地所有消息历史
     msgHandleList: [], // 消息处理队列
     handleMsgState: false, // 队列处理状态
@@ -148,13 +149,11 @@ function initGlobal() {
     handleMessage: (options) => handleMessage(Global, msim, options),
     globalTimer: globalTimer,
     clearData: clearData,
-    initChats: initChats,
   };
 }
 
 // 退出时清理所有
-function clearData(isClearDB) {
-  if (isClearDB) localDexie.clear();
+function clearData() {
   localNotice.clear();
   closeWs();
   Global.sdkState = {
@@ -166,6 +165,7 @@ function clearData(isClearDB) {
   Global.chatCallEvents = new Map();
   Global.stateCallEvents = new Map();
   Global.chatKeys = new Map();
+  Global.getChatHistorys = new Set();
   Global.msgList = new Map();
   Global.msgHandleList = [];
   Global.handleMsgState = false;
@@ -187,28 +187,32 @@ function create() {
     }
     initGlobal();
     let tabId = tool.uuid();
-    let windowHeartBeat = window.localStorage.getItem("im_windowHeartBeat");
-    let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
+    let windowHeartBeat = window.localStorage.getItem(
+      LOCAL_STORAGE_KEYS.WindowHeart
+    );
+    let imWsTabs = JSON.parse(
+      window.localStorage.getItem(LOCAL_STORAGE_KEYS.WsTabs) || "[]"
+    );
     imWsTabs.push(tabId);
-    window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEYS.WsTabs,
+      JSON.stringify(imWsTabs)
+    );
     Global.tabId = tabId;
     let time = Date.now();
     if ((windowHeartBeat || 0) < time - 3000) {
       localNotice.clear();
       closeWs();
-      localDexie.deleteDB();
-      window.localStorage.setItem("im_wsCurId", tabId);
+      window.localStorage.setItem(LOCAL_STORAGE_KEYS.SetCurTab, tabId);
       // 启动全局定时器
       globalTimer();
     }
     window.addEventListener("unload", onunload);
-    localDexie.initDB(() => {
-      msim = initSDK();
-      window.addEventListener("storage", (storage) => {
-        localNotice.watchStorage(storage, msim, Global);
-      });
-      resolve(msim);
+    msim = initSDK();
+    window.addEventListener("storage", (storage) => {
+      localNotice.watchStorage(storage, msim, Global);
     });
+    resolve(msim);
   });
 }
 
@@ -216,19 +220,22 @@ function create() {
  * 浏览器Tab关闭
  */
 function onunload() {
-  let imWsTabs = JSON.parse(window.localStorage.getItem("im_wsTabs") || "[]");
+  let imWsTabs = JSON.parse(
+    window.localStorage.getItem(LOCAL_STORAGE_KEYS.WsTabs) || "[]"
+  );
   imWsTabs = imWsTabs.filter((tab) => tab != Global.tabId);
-  window.localStorage.setItem("im_wsTabs", JSON.stringify(imWsTabs));
+  window.localStorage.setItem(
+    LOCAL_STORAGE_KEYS.WsTabs,
+    JSON.stringify(imWsTabs)
+  );
   localNotice.clear(imWsTabs.length === 0);
   closeWs();
-  if (imWsTabs.length === 0) {
-    localDexie.deleteDB();
-  } else if (Global.curTab) {
+  if (Global.curTab) {
     Global.clearTimer();
     if (Global.sdkState.loginState === IM_LOGIN_STATE.LOGGED) {
-      window.localStorage.setItem("im_wsConnTab", imWsTabs[0]);
+      window.localStorage.setItem(LOCAL_STORAGE_KEYS.ReconnectTab, imWsTabs[0]);
     } else {
-      window.localStorage.setItem("im_wsCurId", imWsTabs[0]);
+      window.localStorage.setItem(LOCAL_STORAGE_KEYS.SetCurTab, imWsTabs[0]);
     }
   }
 }
@@ -240,7 +247,7 @@ function globalTimer() {
   if (Global.heartBeatTimer) clearInterval(Global.heartBeatTimer);
   Global.heartBeatTimer = setInterval(() => {
     let time = Date.now();
-    window.localStorage.setItem("im_windowHeartBeat", time);
+    window.localStorage.setItem(LOCAL_STORAGE_KEYS.WindowHeart, time);
     count += 1;
     if (count % 20 === 0) {
       sendPing();
@@ -259,25 +266,6 @@ function globalTimer() {
       }
     });
   }, 50);
-}
-
-// 初始化会话列表
-function initChats() {
-  localDexie.getChatList().then((chats) => {
-    chats.forEach((chat) => {
-      // 如果内存已有该chat，则通过对象合并更新
-      if (Global.chatKeys.has(chat.conversationID)) {
-        let oldChat = Global.chatKeys.get(chat.conversationID);
-        Object.assign(oldChat, chat);
-      } else {
-        Global.chatKeys.set(chat.conversationID, chat);
-      }
-    });
-    Global.sdkState.chatsSync = SYNC_CHAT.SYNC_CHAT_SUCCESS;
-    Global.chatCallEvents.forEach((callEvent, key) => {
-      callEvent.callSuc();
-    });
-  });
 }
 
 export default IM;

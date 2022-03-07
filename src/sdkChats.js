@@ -11,7 +11,6 @@ import {
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import localNotice from "./localNotice";
-import localDexie from "./dexieDB";
 
 /**
  * 会话对象
@@ -57,11 +56,7 @@ function syncChats(Global) {
         Global.updateTime = res.updateTime;
       }
       if (res.chats.length > 0) {
-        if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
-          syncMsgs(Global, res.chats);
-        } else {
-          getChatsSuc(Global, res.chats);
-        }
+        mergeChats(Global, res.chats);
       } else {
         Global.handleMessage({
           type: HANDLE_TYPE.SyncChatsChange,
@@ -83,26 +78,17 @@ function syncChats(Global) {
   sendWsMsg(msg, PID.GetChatList);
 }
 
-// 初始化同步
-function getChatsSuc(Global, chats) {
-  mergeChats(Global, chats);
-}
-
-// 增量同步
-function syncMsgs(Global, chats) {
-  localDexie.getChatKeys().then((chathistorys) => {
-    mergeChats(Global, chats, chathistorys);
-  });
-}
-
 // 处理会话列表合并
-function mergeChats(Global, chats, chathistorys) {
+function mergeChats(Global, chats) {
+  let chathistorys = new Set();
+  if (Global.sdkState.chatsSync === SYNC_CHAT.SYNC_CHAT_SUCCESS) {
+    // 增量同步
+    chathistorys = Global.getChatHistorys;
+  }
   let newArr = chats.map((chatItem) => {
     let newChat = tool.formatChat(chatItem, Global.sdkState.uid);
     let conversationID = newChat.conversationID;
-    if (
-      chathistorys?.find((history) => history.conversationID === conversationID)
-    ) {
+    if (chathistorys.has(conversationID)) {
       let oldChat = Global.chatKeys.get(conversationID);
       getSyncMsgs(Global, oldChat?.msgEnd, newChat);
     }
@@ -113,9 +99,6 @@ function mergeChats(Global, chats, chathistorys) {
     }
     return newChat;
   });
-  if (newArr?.length) {
-    localDexie.addChatList(newArr);
-  }
   Global.handleMessage({
     type: HANDLE_TYPE.SyncChatsChange,
     state: SYNC_CHAT.SYNC_CHAT_SUCCESS,
@@ -329,14 +312,7 @@ function getConversationProvider(Global, options) {
       let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
       resolve(result);
     } else {
-      localDexie.getChat(options.conversationID).then((chat) => {
-        if (chat) {
-          let result = tool.resultSuc(OPERATION_TYPE.GetChat, chat);
-          return resolve(result);
-        } else {
-          getWsChat(Global, options.conversationID, resolve, reject);
-        }
-      });
+      getWsChat(Global, options.conversationID, resolve, reject);
     }
   });
 }
@@ -350,7 +326,6 @@ function getWsChat(Global, conversationID, resolve, reject) {
     callSuc: (res) => {
       if (res.data) {
         let newChat = tool.formatChat(res.data, Global.sdkState.uid);
-        localDexie.updateChat(newChat);
         let result = tool.resultSuc(OPERATION_TYPE.GetChat, newChat);
         resolve(result);
       }
@@ -397,20 +372,12 @@ function updateConversationProvider(Global, options) {
       let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
       resolve(result);
     } else {
-      localDexie.getChat(options.conversationID).then((chat) => {
-        if (chat) {
-          let newChat = Object.assign(chat, options);
-          let result = tool.resultSuc(OPERATION_TYPE.UpdateLocalChat, newChat);
-          resolve(result);
-        } else {
-          let errResult = tool.resultErr(
-            "Failed to update local session information",
-            OPERATION_TYPE.UpdateLocalChat,
-            ERROR_CODE.ERROR
-          );
-          reject(errResult);
-        }
-      });
+      let errResult = tool.resultErr(
+        "Failed to update local session information",
+        OPERATION_TYPE.UpdateLocalChat,
+        ERROR_CODE.ERROR
+      );
+      reject(errResult);
     }
   });
 }

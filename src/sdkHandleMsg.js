@@ -1,4 +1,5 @@
 import tool from "./tool";
+import localData from "./localData";
 import {
   PID,
   EVENT,
@@ -9,9 +10,9 @@ import {
   IM_LOGIN_STATE,
   CHAT_UPDATE_EVENT,
   LOCAL_MESSAGE_TYPE,
+  LOCAL_STORAGE_KEYS,
 } from "./sdkTypes";
 import localNotice from "./localNotice";
-import localDexie from "./dexieDB";
 import proFormat from "./proFormat";
 import { sendWsMsg } from "./ws";
 import { getConversationProvider } from "./sdkChats";
@@ -72,17 +73,17 @@ function handleSyncMsgs(options) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.SyncMsgs, options);
   }
   if (options.isDeleteMsgsHistory) {
-    tool.deleteMsgs(Global, options.conversationID);
+    localData.deleteMsgs(Global, options.conversationID);
   }
   if (options.msgList.length > 0) {
-    tool.addMsgList(Global, options.conversationID, options.msgList);
+    localData.addMsgList(Global, options.conversationID, options.msgList);
     if (msim[EVENT.MESSAGE_RECEIVED]) {
       let msgList = tool.resultNotice(EVENT.MESSAGE_RECEIVED, options.msgList);
       msim[EVENT.MESSAGE_RECEIVED](msgList);
     }
   }
   if (options.deleteMsgIds.length > 0) {
-    tool.deleteMsgs(Global, options.conversationID, options.deleteMsgIds);
+    localData.deleteMsgs(Global, options.conversationID, options.deleteMsgIds);
     if (msim[EVENT.MESSAGE_DELETE]) {
       let deleteList = tool.resultNotice(EVENT.MESSAGE_DELETE, {
         conversationID: options.conversationID,
@@ -92,7 +93,7 @@ function handleSyncMsgs(options) {
     }
   }
   if (options.revokeList.length > 0 && msim[EVENT.MESSAGE_REVOKED]) {
-    tool.updateMsgs(Global, options.conversationID, options.revokeList);
+    localData.updateMsgs(Global, options.conversationID, options.revokeList);
     if (msim[EVENT.MESSAGE_REVOKED]) {
       let revokeList = tool.resultNotice(
         EVENT.MESSAGE_REVOKED,
@@ -168,10 +169,13 @@ function handleLogin(options) {
   Object.assign(Global.sdkState, options.data);
   if (Global.curTab) {
     Global.updateTabs = [Global.tabId];
-    window.localStorage.setItem("im_wsTabs", JSON.stringify(Global.updateTabs));
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEYS.WsTabs,
+      JSON.stringify(Global.updateTabs)
+    );
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Online, options);
   } else {
-    let key = "im_update_tabs_" + Global.tabId;
+    let key = LOCAL_STORAGE_KEYS.UpdateTabs + Global.tabId;
     window.localStorage.setItem(key, Global.tabId);
     window.localStorage.removeItem(key);
   }
@@ -192,7 +196,7 @@ function handleLogout(options) {
     let msg = proFormat.logoutPro(callSign);
     sendWsMsg(msg, PID.ImLogout);
   }
-  Global.clearData(options.data.isBroadcast);
+  Global.clearData();
   if (options.data.isBroadcast) {
     options.data.isBroadcast = false;
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.Offline, options);
@@ -211,7 +215,7 @@ function handleError(options) {
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ErrorType, options);
   }
-  Global.clearData(Global.curTab);
+  Global.clearData();
   switch (options.data.code) {
     case ERROR_CODE.KICKED_OUT:
     case ERROR_CODE.NO_REGISTER:
@@ -309,7 +313,7 @@ function handleRevokeMsg(msg, resolve) {
     msgId: parseInt(msg.text),
     type: MSG_TYPE.Revoked,
   };
-  tool.updateMsgs(Global, msg.conversationID, [newMsg]);
+  localData.updateMsgs(Global, msg.conversationID, [newMsg]);
   if (msim[EVENT.MESSAGE_REVOKED]) {
     let result = tool.resultNotice(EVENT.MESSAGE_REVOKED, [newMsg]);
     msim[EVENT.MESSAGE_REVOKED](result);
@@ -322,9 +326,9 @@ function handleRevokeMsg(msg, resolve) {
     updateChat({
       conversationID: msg.conversationID,
       msgEnd: msg.msgId,
-      showMsgId: newMsg.msgId,
-      showMsgTime: msg.msgTime,
       showMsgType: MSG_TYPE.Recall,
+      customContent: newMsg.msgId,
+      updateTime: msg.msgTime,
     });
   }
   resolve();
@@ -341,9 +345,9 @@ function handleUnmatchMsg(msg, resolve) {
     }
     updateChat({
       conversationID: msg.conversationID,
-      msgEnd: msg.msgId,
-      showMsgTime: msg.msgTime,
       showMsgType: MSG_TYPE.Unmatch,
+      msgEnd: msg.msgId,
+      updateTime: msg.msgTime,
     });
     resolve();
   }
@@ -358,16 +362,15 @@ function handleSysDeleteMsg(msg, resolve) {
       type: HANDLE_TYPE.ChatR,
       data: msg,
     });
-  }
-  tool.deleteMsgs(Global, msg.conversationID, msg.content);
-  let chat = Global.chatKeys.get(msg.conversationID);
-  if (msg.content.includes(chat?.showMsgId)) {
     updateChat({
       conversationID: msg.conversationID,
       showMsgType: MSG_TYPE.Deleted,
-      showMsg: "",
+      msgEnd: msg.msgId,
+      customContent: msg.content,
+      updateTime: msg.msgTime,
     });
   }
+  localData.deleteMsgs(Global, msg.conversationID, msg.content);
   if (msim[EVENT.MESSAGE_DELETE]) {
     let result = tool.resultNotice(EVENT.MESSAGE_DELETE, {
       conversationID: msg.conversationID,
@@ -386,7 +389,7 @@ function handleFlashMsg(msg, resolve) {
     type: MSG_TYPE.ClickView,
     fromUid: msg.fromUid,
   };
-  tool.updateFlashMsg(Global, newMsg);
+  localData.updateFlashMsg(Global, newMsg);
   if (msim[EVENT.MESSAGE_READ]) {
     let result = tool.resultNotice(EVENT.MESSAGE_READ, [newMsg]);
     msim[EVENT.MESSAGE_READ](result);
@@ -395,6 +398,12 @@ function handleFlashMsg(msg, resolve) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReadMsg, {
       type: HANDLE_TYPE.ChatR,
       data: msg,
+    });
+    updateChat({
+      conversationID: msg.conversationID,
+      showMsgType: MSG_TYPE.ClickView,
+      msgEnd: msg.msgId,
+      updateTime: msg.msgTime,
     });
   }
   resolve();
@@ -406,6 +415,12 @@ function handleNotificationMsg(msg, resolve) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.NotificationMsg, {
       type: HANDLE_TYPE.ChatR,
       data: msg,
+    });
+    updateChat({
+      conversationID: msg.conversationID,
+      showMsgType: MSG_TYPE.Notification,
+      msgEnd: msg.msgId,
+      updateTime: msg.msgTime,
     });
   }
   if (msim[EVENT.MESSAGE_NOTIFICATION]) {
@@ -422,7 +437,7 @@ function handleShowMsg(msg, resolve) {
     let result = tool.resultNotice(EVENT.MESSAGE_RECEIVED, [newMsg]);
     msim[EVENT.MESSAGE_RECEIVED](result);
   }
-  tool.addMsgList(Global, newMsg.conversationID, [newMsg]);
+  localData.addMsgList(Global, newMsg.conversationID, [newMsg]);
   if (Global.curTab) {
     localNotice.onMessageNotice(LOCAL_MESSAGE_TYPE.ReceivedMsg, {
       type: HANDLE_TYPE.ChatR,
@@ -482,40 +497,56 @@ async function updateChat(updateChat) {
       }
     );
   }
-  let newChat;
   if (updateChat.event) {
-    newChat = handleServerUpdate(updateChat, oldChat);
+    handleServerUpdate(updateChat, oldChat);
   } else {
-    // 如果更新时间低于当前会话的时间则不更新
-    if (updateChat.showMsgTime < oldChat.showMsgTime) return;
-    newChat = handleNewMsgUpdate(updateChat, oldChat);
+    handleNewMsgUpdate(updateChat, oldChat);
   }
-  updateChatNotice(newChat);
 }
 
 // 处理接收到新消息时更新会话
 function handleNewMsgUpdate(updateChat, oldChat) {
+  // 如果更新时间低于当前会话的时间则不更新
+  if (updateChat.msgEnd < oldChat.msgEnd) return;
   let newChat = { ...oldChat };
   // 如果更新会话时,消息时间大于所有会话标记时间
-  if (updateChat.showMsgTime > Global.updateTime) {
-    Global.updateTime = updateChat.showMsgTime;
+  if ((updateChat.updateTime || updateChat.showMsgTime) > Global.updateTime) {
+    Global.updateTime = updateChat.updateTime || updateChat.showMsgTime;
+  }
+  let isUpdateNotice = true;
+  if (updateChat.msgEnd < newChat.msgEnd) {
+    updateChat.msgEnd = newChat.msgEnd;
   }
   if (Global.curTab) {
     switch (updateChat.showMsgType) {
       case MSG_TYPE.Recall:
-        if (updateChat.showMsgId === newChat.showMsgId) {
+        newChat.msgEnd = updateChat.msgEnd;
+        if (updateChat.customContent === newChat.showMsgId) {
           // 撤回的是最后一条消息
-          newChat.msgEnd = updateChat.msgEnd;
           newChat.showMsgType = MSG_TYPE.Revoked;
           newChat.showMsg = "";
-        } else if (newChat.msgEnd < updateChat.msgEnd) {
-          // 撤回的不是最后一条消息
-          newChat.msgEnd = updateChat.msgEnd;
+        } else {
+          isUpdateNotice = false;
+        }
+        break;
+      case MSG_TYPE.ClickView:
+        newChat.msgEnd = updateChat.msgEnd;
+        isUpdateNotice = false;
+        break;
+      case MSG_TYPE.Deleted:
+        newChat.msgEnd = updateChat.msgEnd;
+        if (updateChat.customContent.includes(newChat.showMsgId)) {
+          // 撤回的是最后一条消息
+          newChat.showMsgType = MSG_TYPE.Deleted;
+          newChat.showMsg = "";
+        } else {
+          isUpdateNotice = false;
         }
         break;
       case MSG_TYPE.Unmatch:
         newChat.msgEnd = updateChat.msgEnd;
         newChat.matched = false;
+        isUpdateNotice = false;
         break;
       default:
         if (updateChat.unread && updateChat.msgEnd > newChat.msgEnd) {
@@ -527,7 +558,7 @@ function handleNewMsgUpdate(updateChat, oldChat) {
         break;
     }
   }
-  return newChat;
+  isUpdateNotice && updateChatNotice(newChat);
 }
 
 // 处理服务器下发的更新会话
@@ -557,7 +588,7 @@ function handleServerUpdate(options, chat) {
   if (options.updateTime > Global.updateTime) {
     Global.updateTime = options.updateTime;
   }
-  return newChat;
+  updateChatNotice(newChat);
 }
 
 // 更新会话通知
@@ -577,7 +608,6 @@ function updateChatNotice(newChat) {
       type: HANDLE_TYPE.ChatItemUpdate,
       data: newChat,
     });
-    localDexie.updateChat(newChat);
   }
 }
 

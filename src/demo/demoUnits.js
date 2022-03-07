@@ -33,6 +33,7 @@ function getProfileList(Global, profiles) {
       localNotice.onWebSocketNotice(OPERATION_TYPE.GetProfileList, {
         callSign: callSign,
         tabId: Global.tabId,
+        options: profiles,
         state: LOCAL_OPERATION_STATUS.Pending,
       });
     }
@@ -67,6 +68,7 @@ function getProfile(Global, profile) {
       localNotice.onWebSocketNotice(OPERATION_TYPE.GetProfile, {
         callSign: callSign,
         tabId: Global.tabId,
+        options: profile,
         state: LOCAL_OPERATION_STATUS.Pending,
       });
     }
