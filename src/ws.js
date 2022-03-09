@@ -19,6 +19,7 @@ import { PID, ERROR_CODE, HANDLE_TYPE, OPERATION_TYPE } from "./sdkTypes";
 let wsConfig = {
   ws: null,
   Global: null,
+  wsOptions: null, // ws信息配置
   heartRate: 30000, // 心跳检查时间
   maxReconnectTime: 15000, // 最大重连间隔时间
   heartBeatTime: null, // 上次发送消息时间
@@ -115,7 +116,9 @@ function createWs(wsOptions) {
   };
   ws.onerror = (err) => {
     console.log("Connection Error", err);
-    reconnect(wsOptions);
+    if (wsOptions.imToken === wsConfig?.wsOptions.imToken) {
+      reconnect(wsOptions);
+    }
   };
   wsConfig.ws = ws;
 }

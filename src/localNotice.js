@@ -3,8 +3,12 @@ import {
   LOCAL_STORAGE_KEYS,
   LOCAL_OPERATION_STATUS,
 } from "./sdkTypes";
-let storageKeys = [];
-
+let localKey = [
+  LOCAL_STORAGE_KEYS.WindowHeart,
+  LOCAL_STORAGE_KEYS.SetCurTab,
+  LOCAL_STORAGE_KEYS.WsTabs,
+  LOCAL_STORAGE_KEYS.ReconnectTab,
+];
 let localNotice = {
   clear,
   watchStorage,
@@ -14,26 +18,17 @@ let localNotice = {
 
 // 设置本地缓存
 function setLocal(key, val) {
-  storageKeys.push(key);
   window.localStorage.setItem(key, JSON.stringify(val));
-}
-
-// 删除本地缓存
-function removeLocal(key) {
   window.localStorage.removeItem(key);
-  storageKeys = storageKeys.filter((k) => k !== key);
 }
 
 function clear(isAll) {
-  while (storageKeys.length > 0) {
-    let key = storageKeys.pop();
-    window.localStorage.removeItem(key);
-  }
-  if (isAll) {
-    window.localStorage.removeItem(LOCAL_STORAGE_KEYS.WindowHeart);
-    window.localStorage.removeItem(LOCAL_STORAGE_KEYS.SetCurTab);
-    window.localStorage.removeItem(LOCAL_STORAGE_KEYS.WsTabs);
-    window.localStorage.removeItem(LOCAL_STORAGE_KEYS.ReconnectTab);
+  for (let key in window.localStorage) {
+    if (key.startsWith("imSdk_de4_")) {
+      if (!localKey.includes(key) || isAll) {
+        window.localStorage.removeItem(key);
+      }
+    }
   }
 }
 
@@ -140,8 +135,7 @@ function watchStorage(storage, msim, Global) {
 }
 
 // 操作完成回调
-function noticeCall(key, Global, localObj) {
-  removeLocal(key);
+function noticeCall(Global, localObj) {
   let callEvent = Global.callEvents.get(localObj.callSign);
   if (localObj.state === LOCAL_OPERATION_STATUS.Fulfilled) {
     callEvent?.callSuc && callEvent.callSuc(localObj);
@@ -256,7 +250,7 @@ function handleWSNotice(storage, msim, Global) {
         noticeCatch(err, storage.key, localObj);
       });
   } else if (localObj.tabId === Global.tabId) {
-    noticeCall(storage.key, Global, localObj);
+    noticeCall(Global, localObj);
   }
 }
 
@@ -270,7 +264,6 @@ function onWebSocketNotice(type, data) {
 function onMessageNotice(type, data) {
   let key = LOCAL_STORAGE_KEYS.Notice + type;
   setLocal(key, data);
-  removeLocal(key);
 }
 
 export default localNotice;

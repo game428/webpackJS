@@ -1,6 +1,5 @@
 /***
  * protobuf 类型ID
- * @enum
  */
 const PID = {
   Ping: 0,
@@ -43,7 +42,6 @@ const PID = {
  */
 /**
  * @memberof TYPES#
- * @enum
  * @property {WS_STATE} WS_STATE - websocket连接状态
  * @property {SYNC_CHAT} SYNC_CHAT - 同步会话状态{@link SYNC_CHAT}
  * @property {SYNC_CHAT} SEND_STATE - 消息发送状态{@link SEND_STATE}
@@ -54,7 +52,6 @@ const PID = {
 
 /***
  * 多tab通知通讯类型
- * @enum
  */
 const LOCAL_MESSAGE_TYPE = {
   SyncChatsChange: "syncChatsChange",
@@ -111,7 +108,6 @@ const OPERATION_TYPE = {
 
 /**
  * websocket连接状态
- * @enum
  * @property {string} NET_STATE_DISCONNECTED - websocket未连接状态,连接失败也会进入未连接状态
  * @property {string} NET_STATE_CONNECTING - websocket连接中
  * @property {string} NET_STATE_CONNECTED - websocket连接成功
@@ -124,7 +120,6 @@ const WS_STATE = {
 
 /**
  * im登录状态
- * @enum
  * @property {string} NOT_LOGIN - im未登录状态,连接失败也会进入未登录状态
  * @property {string} LOGGING - im登陆中
  * @property {string} LOGGED - im登录成功
@@ -137,7 +132,6 @@ const IM_LOGIN_STATE = {
 
 /**
  * 会话同步状态
- * @enum
  * @property {string} NOT_SYNC_CHAT - 未开始同步会话
  * @property {string} SYNC_CHAT_START - im登陆成功后，开始同步会话
  * @property {string} SYNC_CHAT_SUCCESS - 会话同步成功
@@ -152,7 +146,6 @@ const SYNC_CHAT = {
 
 /**
  * 消息发送状态
- * @enum
  * @property {number} BFIM_MSG_STATUS_SENDING - 消息发送中
  * @property {number} BFIM_MSG_STATUS_SEND_SUCC - 消息发送成功
  * @property {number} BFIM_MSG_STATUS_SEND_FAIL - 消息发送失败
@@ -165,7 +158,6 @@ const SEND_STATE = {
 
 /***
  * 已读状态
- * @enum
  * @property {number} BFIM_MSG_STATUS_UNREAD - 消息未读
  * @property {number} BFIM_MSG_STATUS_READ - 消息已读
  */
@@ -176,7 +168,6 @@ const READ_STATE = {
 
 /***
  * 多TAB通讯状态
- * @enum
  */
 const LOCAL_OPERATION_STATUS = {
   Pending: 0,
@@ -186,7 +177,6 @@ const LOCAL_OPERATION_STATUS = {
 
 /***
  * 错误类型code码
- * @enum
  * @property {number} SUCCESS - 成功
  * @property {number} ERROR - 失败
  * @property {number} TOKEN_NOT_FOUND - token不存在
@@ -224,7 +214,6 @@ const ERROR_CODE = {
 
 /**
  * 消息类型
- * @enum
  * @property {number} Text - 文本
  * @property {number} Img - 图片
  * @property {number} Audio - 音频
@@ -261,7 +250,6 @@ const MSG_TYPE = {
 
 /***
  * 服务器下发的更新会话的类型
- * @enum
  */
 const CHAT_UPDATE_EVENT = {
   MsgLastRead: 0,
@@ -272,7 +260,6 @@ const CHAT_UPDATE_EVENT = {
 
 /**
  * 监听事件名称
- * @enum
  * @property {string} CONNECT_CHANGE - 连接状态通知
  * @property {string} LOGIN - 登录成功
  * @property {string} LOGOUT - 退出成功
@@ -360,17 +347,17 @@ const HANDLE_TYPE = {
  * @param Notice - 处理多Tab通知调用
  */
 const LOCAL_STORAGE_KEYS = {
-  WsTabs: "im_wsTabs",
-  ReconnectTab: "im_wsConnTab",
-  WindowHeart: "im_windowHeartBeat",
-  SetCurTab: "im_wsCurId",
-  UpdateTabs: "im_update_tabs_",
-  GetSdkState: "im_getSdkState",
-  SetSdkState: "im_setSdkState",
-  GetChats: "im_getChatList",
-  SetChats: "im_setChatList",
-  WS: "im_onWs_",
-  Notice: "im_onNotice_",
+  WsTabs: "imSdk_de4_wsTabs",
+  ReconnectTab: "imSdk_de4_wsConnTab",
+  WindowHeart: "imSdk_de4_windowHeartBeat",
+  SetCurTab: "imSdk_de4_wsCurId",
+  UpdateTabs: "imSdk_de4_update_tabs_",
+  GetSdkState: "imSdk_de4_getSdkState",
+  SetSdkState: "imSdk_de4_setSdkState",
+  GetChats: "imSdk_de4_getChatList",
+  SetChats: "imSdk_de4_setChatList",
+  WS: "imSdk_de4_onWs_",
+  Notice: "imSdk_de4_onNotice_",
 };
 
 export {
