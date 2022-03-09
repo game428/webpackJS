@@ -24,7 +24,7 @@ function setLocal(key, val) {
 
 function clear(isAll) {
   for (let key in window.localStorage) {
-    if (key.startsWith("imSdk_de4_")) {
+    if (key.startsWith("im_") || key.startsWith("imSdk_de4_")) {
       if (!localKey.includes(key) || isAll) {
         window.localStorage.removeItem(key);
       }
