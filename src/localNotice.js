@@ -232,7 +232,7 @@ function handleWSNotice(storage, msim, Global) {
     return;
   }
   if (Global.curTab && localObj.state === LOCAL_OPERATION_STATUS.Pending) {
-    let type = storage.key.split("_")[2];
+    let type = storage.key.split("_")[3];
     let promise = createPromise(type, msim, localObj);
     if (!promise) return;
     promise

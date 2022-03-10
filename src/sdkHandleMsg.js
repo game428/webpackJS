@@ -489,18 +489,22 @@ function handleShowMsg(msg, resolve) {
 async function updateChat(updateChat) {
   let conversationID =
     updateChat.conversationID || tool.splicingC2CId(updateChat.uid);
-  let oldChat = updateChat;
   if (Global.curTab) {
     await getConversationProvider(Global, { conversationID }).then(
       ({ data }) => {
-        oldChat = data;
+        if (updateChat.event) {
+          handleServerUpdate(updateChat, data);
+        } else {
+          handleNewMsgUpdate(updateChat, data);
+        }
       }
     );
-  }
-  if (updateChat.event) {
-    handleServerUpdate(updateChat, oldChat);
   } else {
-    handleNewMsgUpdate(updateChat, oldChat);
+    if (updateChat.event) {
+      handleServerUpdate(updateChat, updateChat);
+    } else {
+      handleNewMsgUpdate(updateChat, updateChat);
+    }
   }
 }
 
@@ -582,12 +586,7 @@ function handleServerUpdate(options, chat) {
       isNotice = false;
       break;
     case CHAT_UPDATE_EVENT.Deleted:
-      if (options.deleted) {
-        newChat.deleted = options.deleted;
-        if (Global.chatKeys.has(chat.conversationID)) {
-          Global.chatKeys.delete(chat.conversationID);
-        }
-      }
+      newChat.deleted = options.deleted;
       break;
   }
   isNotice && updateChatNotice(newChat);
@@ -596,8 +595,12 @@ function handleServerUpdate(options, chat) {
 // 更新会话通知
 function updateChatNotice(newChat) {
   if (Global.chatKeys.has(newChat.conversationID)) {
-    let oldChat = Global.chatKeys.get(newChat.conversationID);
-    Object.assign(oldChat, newChat);
+    if (newChat.delete) {
+      Global.chatKeys.delete(chat.conversationID);
+    } else {
+      let oldChat = Global.chatKeys.get(newChat.conversationID);
+      Object.assign(oldChat, newChat);
+    }
   } else if (newChat.deleted !== true) {
     Global.chatKeys.set(newChat.conversationID, newChat);
   }
