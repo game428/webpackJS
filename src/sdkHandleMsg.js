@@ -564,6 +564,11 @@ function handleNewMsgUpdate(updateChat, oldChat) {
 // 处理服务器下发的更新会话
 function handleServerUpdate(options, chat) {
   let newChat = { ...chat };
+  // 如果更新会话时,更新会话时间大于所有会话标记时间
+  if (options.updateTime > Global.updateTime) {
+    Global.updateTime = options.updateTime;
+  }
+  let isNotice = true;
   switch (options.event) {
     case CHAT_UPDATE_EVENT.MsgLastRead:
       newChat.msgLastRead = options.msgLastRead;
@@ -574,6 +579,7 @@ function handleServerUpdate(options, chat) {
     case CHAT_UPDATE_EVENT.IBlockU:
       // TODO 暂未实现拉黑
       newChat.iBlockU = options.iBlockU;
+      isNotice = false;
       break;
     case CHAT_UPDATE_EVENT.Deleted:
       if (options.deleted) {
@@ -584,11 +590,7 @@ function handleServerUpdate(options, chat) {
       }
       break;
   }
-  // 如果更新会话时,更新会话时间大于所有会话标记时间
-  if (options.updateTime > Global.updateTime) {
-    Global.updateTime = options.updateTime;
-  }
-  updateChatNotice(newChat);
+  isNotice && updateChatNotice(newChat);
 }
 
 // 更新会话通知
