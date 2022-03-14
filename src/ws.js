@@ -109,14 +109,14 @@ function createWs(wsOptions) {
   ws.onmessage = onMessage;
   ws.onclose = (err) => {
     console.log("Connection closed.", err, { ...wsConfig }, wsOptions);
-    if (wsOptions.imToken === wsConfig?.wsOptions.imToken) {
+    if (wsOptions.imToken === wsConfig?.wsOptions?.imToken) {
       reconnect(wsOptions);
       wsOptions.connErr(wsOptions, err);
     }
   };
   ws.onerror = (err) => {
     console.log("Connection Error", err);
-    if (wsOptions.imToken === wsConfig?.wsOptions.imToken) {
+    if (wsOptions.imToken === wsConfig?.wsOptions?.imToken) {
       reconnect(wsOptions);
     }
   };
@@ -139,7 +139,7 @@ function reconnect(wsOptions) {
   if (
     wsConfig.reconnectSpace ||
     wsConfig.closeReconnect ||
-    wsOptions.imToken !== wsConfig?.wsOptions.imToken
+    wsOptions.imToken !== wsConfig?.wsOptions?.imToken
   )
     return;
   wsConfig.reconnectSpace = true;
